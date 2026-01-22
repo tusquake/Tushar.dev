@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Uploads (user uploaded images)
+uploads/
+
 # Environment files
 .env
 .env.local

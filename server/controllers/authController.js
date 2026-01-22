@@ -1,6 +1,9 @@
 const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/tokenUtils');
 
+// Admin email - this user gets admin role automatically
+const ADMIN_EMAIL = 'sethtushar111@gmail.com';
+
 // @desc    Register new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -17,11 +20,12 @@ const register = async (req, res) => {
             });
         }
 
-        // Create user
+        // Create user with admin role if matching admin email
         const user = await User.create({
             name,
             email,
-            password
+            password,
+            role: email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'ADMIN' : 'USER'
         });
 
         // Generate tokens
@@ -218,9 +222,9 @@ const getProfile = async (req, res) => {
                 bio: 'Passionate developer with expertise in React, Node.js, and modern web technologies.',
                 skills: ['React', 'Node.js', 'MongoDB', 'Express', 'JavaScript', 'TypeScript', 'Python'],
                 social: {
-                    github: 'https://github.com/tusharseth',
-                    linkedin: 'https://linkedin.com/in/tusharseth',
-                    email: 'tushar.seth@example.com'
+                    github: 'https://github.com/tusquake',
+                    linkedin: 'https://www.linkedin.com/in/sethtushar111/',
+                    email: 'sethtushar111@gmail.com'
                 }
             }
         });

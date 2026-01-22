@@ -6,7 +6,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, isAdmin, user, logout } = useAuth();
     const location = useLocation();
 
     // Handle scroll effect
@@ -46,11 +46,12 @@ const Navbar = () => {
         setIsOpen(false);
     }, [location]);
 
+    // Navigation links - Learning tab only for admin, Resources for everyone
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'Projects', path: '/projects' },
         { name: 'Certificates', path: '/certificates' },
-        { name: 'Learning', path: '/learning' },
+        { name: 'Resources', path: '/learning' },
         { name: 'Contact', path: '/contact' },
     ];
 
@@ -70,9 +71,9 @@ const Navbar = () => {
                     {/* Logo */}
                     <Link
                         to="/"
-                        className="flex items-center space-x-2 text-2xl font-display font-bold"
+                        className="flex items-center text-2xl font-display font-bold"
                     >
-                        <span className="gradient-text">Tushar.dev</span>
+                        <span className="gradient-text">Tushar</span>
                         <span className="text-dark-700 dark:text-white">.dev</span>
                     </Link>
 

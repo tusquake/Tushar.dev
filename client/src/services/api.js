@@ -105,4 +105,27 @@ export const contactAPI = {
     delete: (id) => api.delete(`/contact/${id}`),
 };
 
+// Learning Resources API
+export const learningResourcesAPI = {
+    getAll: () => api.get('/learning-resources'),
+    getAllAdmin: () => api.get('/learning-resources/all'),
+    create: (data) => api.post('/learning-resources', data),
+    update: (id, data) => api.put(`/learning-resources/${id}`, data),
+    delete: (id) => api.delete(`/learning-resources/${id}`),
+};
+
+// Upload API
+export const uploadAPI = {
+    uploadImage: (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+        return api.post('/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
+};
+
 export default api;
+

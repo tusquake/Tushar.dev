@@ -2,27 +2,27 @@ const nodemailer = require('nodemailer');
 
 // Create transporter
 const createTransporter = () => {
-    return nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_PORT === '465',
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        }
-    });
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_PORT === '465',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
 };
 
 // Send contact form email
 const sendContactEmail = async ({ name, email, subject, message }) => {
-    const transporter = createTransporter();
+  const transporter = createTransporter();
 
-    const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: process.env.EMAIL_TO,
-        replyTo: email,
-        subject: `Portfolio Contact: ${subject || 'New Message'} from ${name}`,
-        html: `
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: process.env.EMAIL_TO,
+    replyTo: email,
+    subject: `Portfolio Contact: ${subject || 'New Message'} from ${name}`,
+    html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333; border-bottom: 2px solid #6366f1; padding-bottom: 10px;">
           New Contact Form Submission
@@ -41,15 +41,15 @@ const sendContactEmail = async ({ name, email, subject, message }) => {
         </p>
       </div>
     `
-    };
+  };
 
-    try {
-        await transporter.sendMail(mailOptions);
-        return { success: true };
-    } catch (error) {
-        console.error('Email sending failed:', error);
-        return { success: false, error: error.message };
-    }
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Email sending failed:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 module.exports = { sendContactEmail };

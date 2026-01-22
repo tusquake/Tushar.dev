@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { projectsAPI, certificatesAPI, contactAPI } from '../services/api';
+import { projectsAPI, certificatesAPI, contactAPI, uploadAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -22,6 +22,8 @@ const Dashboard = () => {
     const [editItem, setEditItem] = useState(null);
     const [formData, setFormData] = useState({});
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [imagePreview, setImagePreview] = useState(null);
 
     useEffect(() => {
         fetchAllData();
@@ -64,9 +66,9 @@ const Dashboard = () => {
     const getEmptyForm = (type) => {
         switch (type) {
             case 'project':
-                return { title: '', description: '', techStack: '', githubLink: '', liveDemo: '', featured: false };
+                return { title: '', description: '', techStack: '', githubLink: '', liveDemo: '', image: '', featured: false };
             case 'certificate':
-                return { name: '', issuer: '', issueDate: '', credentialUrl: '' };
+                return { name: '', issuer: '', issueDate: '', credentialUrl: '', image: '' };
             default:
                 return {};
         }
@@ -160,8 +162,8 @@ const Dashboard = () => {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-4 py-3 font-medium transition-all relative ${activeTab === tab.id
-                                    ? 'text-primary-500'
-                                    : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-300'
+                                ? 'text-primary-500'
+                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-300'
                                 }`}
                         >
                             {tab.label}
@@ -372,6 +374,41 @@ const Dashboard = () => {
                                             value={formData.liveDemo || ''}
                                             onChange={(e) => setFormData({ ...formData, liveDemo: e.target.value })}
                                         />
+                                        <div>
+                                            <label className="label">Project Image</label>
+                                            <div className="flex items-center gap-4">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setUploading(true);
+                                                            try {
+                                                                const res = await uploadAPI.uploadImage(file);
+                                                                setFormData({ ...formData, image: res.data.data.imageUrl });
+                                                                setImagePreview(URL.createObjectURL(file));
+                                                            } catch (error) {
+                                                                console.error('Upload failed:', error);
+                                                                alert('Failed to upload image');
+                                                            } finally {
+                                                                setUploading(false);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="input text-sm"
+                                                    disabled={uploading}
+                                                />
+                                                {uploading && <span className="text-sm text-primary-500">Uploading...</span>}
+                                            </div>
+                                            {(imagePreview || formData.image) && (
+                                                <img
+                                                    src={imagePreview || `http://localhost:5000${formData.image}`}
+                                                    alt="Preview"
+                                                    className="mt-2 w-32 h-20 object-cover rounded-lg border"
+                                                />
+                                            )}
+                                        </div>
                                         <label className="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
@@ -410,6 +447,41 @@ const Dashboard = () => {
                                             value={formData.credentialUrl || ''}
                                             onChange={(e) => setFormData({ ...formData, credentialUrl: e.target.value })}
                                         />
+                                        <div>
+                                            <label className="label">Certificate Image</label>
+                                            <div className="flex items-center gap-4">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setUploading(true);
+                                                            try {
+                                                                const res = await uploadAPI.uploadImage(file);
+                                                                setFormData({ ...formData, image: res.data.data.imageUrl });
+                                                                setImagePreview(URL.createObjectURL(file));
+                                                            } catch (error) {
+                                                                console.error('Upload failed:', error);
+                                                                alert('Failed to upload image');
+                                                            } finally {
+                                                                setUploading(false);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="input text-sm"
+                                                    disabled={uploading}
+                                                />
+                                                {uploading && <span className="text-sm text-primary-500">Uploading...</span>}
+                                            </div>
+                                            {(imagePreview || formData.image) && (
+                                                <img
+                                                    src={imagePreview || `http://localhost:5000${formData.image}`}
+                                                    alt="Preview"
+                                                    className="mt-2 w-32 h-20 object-cover rounded-lg border"
+                                                />
+                                            )}
+                                        </div>
                                     </>
                                 )}
 

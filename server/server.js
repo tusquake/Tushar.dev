@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // Import routes
@@ -10,7 +11,9 @@ const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const learningRoutes = require('./routes/learningRoutes');
+const learningResourceRoutes = require('./routes/learningResourceRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // Initialize express app
 const app = express();
@@ -36,6 +39,9 @@ app.use(express.urlencoded({ extended: true }));
 // Cookie parser
 app.use(cookieParser());
 
+// Serve static files (uploaded images)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({
@@ -51,7 +57,9 @@ app.use('/api/user', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/learning', learningRoutes);
+app.use('/api/learning-resources', learningResourceRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // 404 handler
 app.use((req, res) => {

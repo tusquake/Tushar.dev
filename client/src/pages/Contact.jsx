@@ -46,8 +46,8 @@ const Contact = () => {
                 </svg>
             ),
             label: 'Email',
-            value: 'tushar.seth@example.com',
-            href: 'mailto:tushar.seth@example.com',
+            value: 'sethtushar111@gmail.com',
+            href: 'mailto:sethtushar111@gmail.com',
         },
         {
             icon: (
@@ -66,8 +66,8 @@ const Contact = () => {
                 </svg>
             ),
             label: 'GitHub',
-            value: 'github.com/tusharseth',
-            href: 'https://github.com/tusharseth',
+            value: 'github.com/tusquake',
+            href: 'https://github.com/tusquake',
         },
         {
             icon: (
@@ -77,7 +77,7 @@ const Contact = () => {
             ),
             label: 'LinkedIn',
             value: 'linkedin.com/in/tusharseth',
-            href: 'https://linkedin.com/in/tusharseth',
+            href: 'https://www.linkedin.com/in/sethtushar111/',
         },
     ];
 
