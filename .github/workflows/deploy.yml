@@ -30,18 +30,6 @@ jobs:
         run: |-
           gcloud auth configure-docker ${REGION}-docker.pkg.dev
 
-      - name: Create Artifact Registry Repository
-        run: |-
-          if ! gcloud artifacts repositories describe ${ARTIFACT_REGISTRY} --location=${REGION} &>/dev/null; then
-            echo "Creating Artifact Registry repository..."
-            gcloud artifacts repositories create ${ARTIFACT_REGISTRY} \
-              --repository-format=docker \
-              --location=${REGION} \
-              --description="Docker repository for portfolio"
-          else
-            echo "Artifact Registry repository already exists."
-          fi
-
       - name: Build and Push Container
         run: |-
           docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REGISTRY}/${BACKEND_SERVICE_NAME}:${{ github.sha }} ./server
