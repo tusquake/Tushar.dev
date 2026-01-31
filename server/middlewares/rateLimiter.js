@@ -11,7 +11,10 @@ const createRateLimiter = (windowMs, max, message) => {
         },
         standardHeaders: true,
         legacyHeaders: false,
-        validate: { xForwardedForHeader: false } // Avoid crash if proxy trust is handled at app level
+        validate: {
+            xForwardedForHeader: false,
+            trustProxy: false
+        } // Avoid crash if proxy trust is handled at app level
     });
 };
 
