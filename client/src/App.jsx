@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -15,6 +16,23 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 
+// Wrapper to redirect direct access to home
+const DirectAccessRedirect = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if this is a direct entry (history length is 1 or 2 depending on browser/load)
+    const isDirectEntry = window.history.length <= 2;
+
+    if (isDirectEntry && location.pathname !== '/') {
+      navigate('/', { replace: true });
+    }
+  }, [navigate, location.pathname]);
+
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -24,9 +42,23 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="projects" element={<Projects />} />
-            <Route path="certificates" element={<Certificates />} />
+            <Route
+              path="certificates"
+              element={
+                <DirectAccessRedirect>
+                  <Certificates />
+                </DirectAccessRedirect>
+              }
+            />
             <Route path="skills" element={<Skills />} />
-            <Route path="experience" element={<Experience />} />
+            <Route
+              path="experience"
+              element={
+                <DirectAccessRedirect>
+                  <Experience />
+                </DirectAccessRedirect>
+              }
+            />
             <Route path="learning" element={<Learning />} />
             <Route path="contact" element={<Contact />} />
             <Route path="login" element={<Login />} />

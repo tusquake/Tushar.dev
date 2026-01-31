@@ -26,8 +26,9 @@ app.use(helmet());
 
 // CORS configuration
 const allowedOrigins = [
-    'http://localhost:5173',
-    'https://tushar-dev-1.onrender.com'
+    'https://tushar-dev-1.onrender.com',
+    'https://portfolio-tushar-bf51e.web.app',
+    'https://portfolio-tushar-bf51e.firebaseapp.com'
 ];
 
 app.use(cors({
@@ -77,10 +78,14 @@ app.use('/api/upload', uploadRoutes);
 
 // 404 handler
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'API endpoint not found'
-    });
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({
+            success: false,
+            message: 'API endpoint not found'
+        });
+    }
+    // For non-API routes, we just return 404
+    res.status(404).send('Not Found');
 });
 
 // Global error handler
