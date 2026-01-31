@@ -26,9 +26,17 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
+      - name: 'Debug GCP Info'
+        run: |-
+          echo "Project ID: ${{ env.PROJECT_ID }}"
+          echo "Region: ${{ env.REGION }}"
+          echo "Repository Name: ${{ env.ARTIFACT_REGISTRY }}"
+          echo "Listing repositories in ${{ env.REGION }}:"
+          gcloud artifacts repositories list --location=${{ env.REGION }} || echo "Failed to list repos"
+
       - name: 'Docker Auth'
         run: |-
-          gcloud auth configure-docker ${REGION}-docker.pkg.dev
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
       - name: Build and Push Container
         run: |-
