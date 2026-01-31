@@ -7,6 +7,8 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
 import Certificates from './pages/Certificates';
+import Skills from './pages/Skills';
+import Experience from './pages/Experience';
 import Learning from './pages/Learning';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -23,6 +25,8 @@ function App() {
             <Route index element={<Home />} />
             <Route path="projects" element={<Projects />} />
             <Route path="certificates" element={<Certificates />} />
+            <Route path="skills" element={<Skills />} />
+            <Route path="experience" element={<Experience />} />
             <Route path="learning" element={<Learning />} />
             <Route path="contact" element={<Contact />} />
             <Route path="login" element={<Login />} />

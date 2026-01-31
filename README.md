@@ -160,10 +160,6 @@ SMTP_PASS=your_app_password
 CLIENT_URL=http://localhost:5173
 ```
 
-## License
-
-MIT License - feel free to use this project for your own portfolio!
-
 ---
 
 Built by Tushar Seth

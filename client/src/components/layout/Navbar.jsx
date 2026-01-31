@@ -46,9 +46,11 @@ const Navbar = () => {
         setIsOpen(false);
     }, [location]);
 
-    // Navigation links - Learning tab only for admin, Resources for everyone
+    // Navigation links
     const navLinks = [
         { name: 'Home', path: '/' },
+        { name: 'Experience', path: '/experience' },
+        { name: 'Skills', path: '/skills' },
         { name: 'Projects', path: '/projects' },
         { name: 'Certificates', path: '/certificates' },
         { name: 'Resources', path: '/learning' },

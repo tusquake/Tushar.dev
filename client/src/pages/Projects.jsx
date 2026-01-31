@@ -3,6 +3,9 @@ import { projectsAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
 
+// Server URL for static files (without /api suffix)
+const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+
 const Projects = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -93,8 +96,8 @@ const Projects = () => {
                     <button
                         onClick={() => setFilter('all')}
                         className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === 'all'
-                                ? 'bg-primary-500 text-white'
-                                : 'bg-dark-100 dark:bg-dark-800 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700'
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-dark-100 dark:bg-dark-800 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700'
                             }`}
                     >
                         All Projects
@@ -102,8 +105,8 @@ const Projects = () => {
                     <button
                         onClick={() => setFilter('featured')}
                         className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === 'featured'
-                                ? 'bg-primary-500 text-white'
-                                : 'bg-dark-100 dark:bg-dark-800 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700'
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-dark-100 dark:bg-dark-800 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700'
                             }`}
                     >
                         Featured
@@ -118,9 +121,19 @@ const Projects = () => {
                             className="p-0 overflow-hidden group"
                             style={{ animationDelay: `${index * 100}ms` }}
                         >
-                            {/* Project image placeholder */}
+                            {/* Project image */}
                             <div className="h-48 bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center relative overflow-hidden">
-                                <span className="text-6xl opacity-50">🚀</span>
+                                {project.image ? (
+                                    <img
+                                        src={`${SERVER_URL}${project.image}`}
+                                        alt={project.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <svg className="w-16 h-16 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                )}
                                 <div className="absolute inset-0 bg-dark-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                                     {project.githubLink && (
                                         <a
@@ -180,7 +193,9 @@ const Projects = () => {
                 {/* Empty state */}
                 {filteredProjects.length === 0 && (
                     <div className="text-center py-12">
-                        <span className="text-6xl mb-4 block">📭</span>
+                        <svg className="w-16 h-16 mx-auto mb-4 text-dark-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
                         <h3 className="text-xl font-semibold text-dark-900 dark:text-white mb-2">
                             No projects found
                         </h3>

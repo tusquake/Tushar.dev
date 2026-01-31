@@ -4,70 +4,72 @@ import './skills.css';
 const SkillsOrbit = () => {
     const containerRef = useRef(null);
 
-    // Skills data with icons (using simple text/emoji for now, can be replaced with devicons)
+    // Skills data with icons for the orbital animation (21 skills for 3 rings: 6+7+8)
     const skills = [
-        { name: 'Java', icon: '☕', color: '#f89820' },
-        { name: 'JavaScript', icon: 'JS', color: '#f7df1e' },
-        { name: 'React', icon: '⚛️', color: '#61dafb' },
-        { name: 'Node.js', icon: '⬢', color: '#68a063' },
-        { name: 'Spring Boot', icon: '🍃', color: '#6db33f' },
-        { name: 'MongoDB', icon: '🍃', color: '#47a248' },
-        { name: 'PostgreSQL', icon: '🐘', color: '#336791' },
-        { name: 'AWS', icon: '☁️', color: '#ff9900' },
-        { name: 'Docker', icon: '🐳', color: '#2496ed' },
-        { name: 'Git', icon: '📦', color: '#f05032' },
-        { name: 'Redis', icon: '🔴', color: '#dc382d' },
-        { name: 'TypeScript', icon: 'TS', color: '#3178c6' },
+
     ];
 
-    // Skill categories for display
+    // Skill categories for display - matching resume exactly
     const categories = [
         {
-            title: 'Languages',
-            skills: ['Java', 'JavaScript', 'C++', 'TypeScript']
+            title: 'Programming Languages',
+            skills: ['Java', 'JavaScript', 'C++']
         },
         {
-            title: 'Frameworks',
-            skills: ['Spring Boot', 'React.js', 'Node.js', 'Express', 'FastAPI']
+            title: 'Frontend Development',
+            skills: ['React.js', 'SAPUI5', 'HTML5', 'CSS3', 'Tailwind CSS']
+        },
+        {
+            title: 'Backend Development',
+            skills: ['Spring Boot', 'Spring Security', 'Spring Data JPA', 'Node.js', 'REST APIs', 'Microservices']
         },
         {
             title: 'Databases',
-            skills: ['PostgreSQL', 'MongoDB', 'Redis', 'SAP HANA']
+            skills: ['PostgreSQL', 'SAP HANA', 'MongoDB', 'Redis']
         },
         {
-            title: 'Cloud & Tools',
-            skills: ['AWS', 'Docker', 'Git', 'Kafka', 'Postman']
+            title: 'Cloud & DevOps',
+            skills: ['SAP BTP', 'SAP WorkZone', 'AWS EC2', 'AWS S3', 'Render']
+        },
+        {
+            title: 'Tools',
+            skills: ['Git', 'GitHub', 'Postman', 'Apache Kafka', 'Maven']
+        },
+        {
+            title: 'Core Concepts',
+            skills: ['OOP', 'DSA', 'DBMS', 'Low-Level Design']
         }
     ];
 
     return (
         <section className="py-20 px-4 overflow-hidden">
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-16">
+                {/* <div className="text-center mb-16">
                     <h2 className="section-title">Skills & Expertise</h2>
                     <p className="mt-4 section-subtitle mx-auto">
                         Technologies I work with to bring ideas to life
                     </p>
-                </div>
+                </div> */}
 
                 {/* 3D Orbital Animation */}
-                <div className="skills-orbit-container" ref={containerRef}>
+                {/* <div className="skills-orbit-container" ref={containerRef}>
                     <div className="orbit-wrapper">
-                        {/* Center element */}
+
                         <div className="orbit-center">
-                            <span className="text-4xl">💻</span>
+                            <svg className="w-10 h-10 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
                             <span className="text-sm font-medium mt-2 text-dark-600 dark:text-dark-300">Full Stack</span>
                         </div>
 
-                        {/* Orbital rings */}
                         <div className="orbit-ring orbit-ring-1">
-                            {skills.slice(0, 4).map((skill, index) => (
+                            {skills.slice(0, 6).map((skill, index) => (
                                 <div
                                     key={skill.name}
                                     className="orbit-item"
                                     style={{
                                         '--index': index,
-                                        '--total': 4,
+                                        '--total': 6,
                                         '--color': skill.color
                                     }}
                                 >
@@ -80,13 +82,13 @@ const SkillsOrbit = () => {
                         </div>
 
                         <div className="orbit-ring orbit-ring-2">
-                            {skills.slice(4, 8).map((skill, index) => (
+                            {skills.slice(6, 13).map((skill, index) => (
                                 <div
                                     key={skill.name}
                                     className="orbit-item"
                                     style={{
                                         '--index': index,
-                                        '--total': 4,
+                                        '--total': 7,
                                         '--color': skill.color
                                     }}
                                 >
@@ -99,13 +101,13 @@ const SkillsOrbit = () => {
                         </div>
 
                         <div className="orbit-ring orbit-ring-3">
-                            {skills.slice(8, 12).map((skill, index) => (
+                            {skills.slice(13, 21).map((skill, index) => (
                                 <div
                                     key={skill.name}
                                     className="orbit-item"
                                     style={{
                                         '--index': index,
-                                        '--total': 4,
+                                        '--total': 8,
                                         '--color': skill.color
                                     }}
                                 >
@@ -117,10 +119,10 @@ const SkillsOrbit = () => {
                             ))}
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Skills Categories Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {categories.map((category, idx) => (
                         <div
                             key={category.title}

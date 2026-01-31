@@ -1,0 +1,208 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[colorlinks = true,
+            linkcolor = black,
+            urlcolor  = black,
+            citecolor = black,
+            anchorcolor = black]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{multicol}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+
+\hypersetup{pdfborder = 0 0 0}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting - ATS friendly standard headers
+\titleformat{\section}{
+  \vspace{-8pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-6pt}]
+
+% Ensure PDF text is extractable for ATS
+\pdfgentounicode=1
+
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\begin{document}
+
+% ATS-Friendly Header - Plain text without icons
+\begin{center}
+    {\Huge \scshape \textbf{Tushar Seth}} \\ \vspace{5pt}
+    \small
+    \textbf{Software Engineer} \\ \vspace{3pt}
+    +91-9836939801 $|$ 
+    \href{mailto:sethtushar111@gmail.com}{sethtushar111@gmail.com} $|$ 
+    \href{https://www.linkedin.com/in/sethtushar111/}{linkedin.com/in/sethtushar111} $|$
+    \href{https://github.com/tusquake}{github.com/tusquake}
+    \vspace{-8pt}
+\end{center}
+
+%-----------PROFESSIONAL SUMMARY-----------
+\section{Professional Summary}
+\small{Results-driven Software Engineer with 2+ years of experience in designing and developing scalable enterprise applications. Proficient in Java, Spring Boot, React.js, and cloud platforms including SAP BTP and AWS. Demonstrated expertise in building RESTful APIs, microservices architecture, and full-stack web applications. Strong problem-solving skills with 1200+ Data Structures and Algorithms problems solved.}
+\vspace{-10pt}
+
+%-----------EXPERIENCE-----------
+\section{Work Experience}
+\resumeSubHeadingListStart
+
+\resumeSubheading
+    {Incture Technologies}{October 2024 -- Present}
+    {Associate Software Engineer}{Kolkata, West Bengal}
+    \vspace{-2pt}
+    
+\small{\textbf{Technologies:} Java, Spring Boot, Spring Data JPA, REST APIs, JWT Authentication, JavaScript, React.js, SAPUI5, HTML5, CSS3, SAP BTP, SAP WorkZone, SAP HANA, PostgreSQL, Git, GitHub, Maven}
+
+    \vspace{-5pt}
+\resumeItemListStart
+
+\resumeItem{Developed a metadata-driven reusable checklist component with internationalization (i18n) support for 50+ languages, deployed across 15+ modules, and built an automated workflow engine with scheduler-based triggers, role-based approvals, and activity logging for process tracking.}
+
+\resumeItem{Designed approval status services handling 10,000+ submission records, implementing server-side pagination and sorting to ensure scalable data retrieval and improved performance.}
+
+\resumeItem{Built a chart payload builder using the Strategy Design Pattern to support 10+ chart types, with Factory Pattern for strategy selection and an orchestrator layer for payload construction, reducing client-side code by 60\%.}
+
+\resumeItem{Engineered a real-time monitoring system using WebSockets to detect asset failures and trigger instant alerts, reducing incident response time by 35\%; developed a GenAI-based worker recommendation system using cosine similarity to match technicians from historical permit data.}
+
+\resumeItem{Optimized a data-intensive dashboard by consolidating multiple REST API calls into batch requests, eliminating redundant data fetching and reducing API response time from 15+ seconds to under 2 seconds.}
+
+\resumeItem{Built a centralized document management system using SAP Object Store with multipart file uploads and streaming downloads for large files, improving performance by 30\%.}
+
+\resumeItem{Developed a configuration-driven deviation rule engine enabling admin-configurable ranges via REST APIs, enforcing overlap-free validation rules, and reducing UI change requests by 70\%.}
+
+\resumeItemListEnd
+
+\resumeSubHeadingListEnd
+\vspace{-12pt}
+
+%-----------PROJECTS-----------
+\section{Projects}
+\vspace{-5pt}
+\resumeSubHeadingListStart
+
+\resumeProjectHeading
+  {\textbf{HomeGenie - Smart Maintenance Management System} $|$ \href{https://github.com/tusquake/HomeGenie}{GitHub} $|$ \href{https://homegenie-ucu3.onrender.com/}{Live Demo}}{}
+  
+  \vspace{-5pt}
+\small{\textbf{Technologies:} Spring Boot, Microservices, React, Tailwind CSS, FastAPI, PostgreSQL, AWS Elastic Beanstalk, AWS S3, SMTP, Hugging Face API, Gemini API, Google Speech Recognition, gTTS}
+\vspace{-5pt}
+\resumeItemListStart
+\resumeItem{Architected an AI-powered maintenance platform with an integrated Voice Assistant enabling Admin, Resident, and Technician users to manage over 200+ monthly requests via voice or text with 30\% faster resolution.}
+\resumeItem{Engineered a microservices-based architecture with separate User, Maintenance, and Voice AI services, integrating FastAPI, Gemini 2.0 Flash, Hugging Face, and Google Speech Recognition for real-time intent detection, speech processing, and automated issue classification, deployed on AWS Elastic Beanstalk.}
+\resumeItemListEnd
+
+\vspace{-16pt}
+
+\resumeProjectHeading
+  {\textbf{SpendWise - AI-Powered Expense Tracker} $|$ \href{https://github.com/tusquake/SpendWise}{GitHub} $|$ \href{https://spendwise-1-bcdd.onrender.com/}{Live Demo}}{}
+  
+  \vspace{-5pt}
+  \small{\textbf{Technologies:} Spring Boot, OAuth 2.0, Spring Security, React, PostgreSQL, Tailwind CSS, Google Cloud Console}
+  \vspace{-5pt}
+  \resumeItemListStart
+    \resumeItem{Built AI-powered expense tracker with automatic categorization using Gemini API, OAuth 2.0 authentication, and interactive React dashboards for real-time budget tracking and spending analysis.}
+    \resumeItem{Integrated an AI chatbot for insights, optimized backend with in-memory caching achieving 40\% faster response, implemented rate limiting (30 requests per day per user), and circuit breaker pattern to handle Gemini API failures with instant fallback alerts.}
+\resumeItemListEnd
+
+\resumeSubHeadingListEnd
+\vspace{-8pt}
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.1in, label={}]
+\small{\item{
+\textbf{Programming Languages:} Java, JavaScript, C++ \\
+\textbf{Frontend Development:} React.js, SAPUI5, HTML5, CSS3, Tailwind CSS \\
+\textbf{Backend Development:} Spring Boot, Spring Security, Spring Data JPA, Node.js, REST APIs, Microservices Architecture \\
+\textbf{Databases:} PostgreSQL, SAP HANA, MongoDB, Redis \\
+\textbf{Cloud Platforms and DevOps:} SAP BTP, SAP WorkZone, Amazon Web Services (AWS EC2, IAM, EBS, S3), Render \\
+\textbf{Tools:} Git, GitHub, Postman, Apache Kafka, Maven \\
+\textbf{Core Concepts:} Object-Oriented Programming (OOP), Data Structures and Algorithms (DSA), Database Management Systems (DBMS), Low-Level Design (LLD)
+}}
+\end{itemize}
+\vspace{-12pt}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {St. Thomas' College Of Engineering and Technology}{August 2020 -- June 2024}
+      {Bachelor of Technology in Computer Science and Engineering}{GPA: 9.01/10}
+      \vspace{2pt}
+      \small{Kolkata, West Bengal}
+      
+    \resumeSubheading
+      {Hariyana Vidya Mandir}{April 2018 -- March 2020}
+      {Senior Secondary Education (CBSE - Class 12th)}{Percentage: 93.2\%}
+      \vspace{2pt}
+      \small{Kolkata, West Bengal}
+      
+\resumeSubHeadingListEnd
+\vspace{-8pt}
+
+%-----------ACHIEVEMENTS-----------
+\section{Achievements and Certifications}
+\vspace{-3pt}
+\resumeItemListStart
+\resumeItem{Received \href{https://www.linkedin.com/in/sethtushar111/overlay/1752914910849/single-media-viewer/?profileId=ACoAADMZ-9wBarryFpx94aY8Zf3pilEOGK9RVA0}{Rising Star Award (Q4 2024)} at Incture Technologies for consistent performance and positive client feedback.}
+\resumeItem{Solved 600+ Data Structures and Algorithms problems on \href{https://leetcode.com/u/Tushar_Seth/}{LeetCode} and 600+ on \href{https://www.geeksforgeeks.org/user/tusharrealme/}{GeeksforGeeks}.}
+\resumeItem{Worked as a \href{https://drive.google.com/file/d/1M6rrt0oB7shMnPUY9bNR3ReOE8gDAC5D/view?usp=sharing}{Technical Content Writer} at GeeksforGeeks, creating technical articles and tutorials.}
+\resumeItem{Contributed to open-source projects under \href{https://github.com/tusquake/GameZone}{GirlScript Summer of Code (GSSoC)}.}
+\resumeItem{Participated in national hackathons including \href{https://drive.google.com/file/d/1Tpc8oi0x5tv7tvJ-b9yS8QUmGDjEfl7J/view?usp=sharing}{Flipkart Grid} and \href{https://drive.google.com/file/d/1Cq-w0SmKoDMQMmP1VNjrkfBk_VwszXx1/view?usp=sharing}{Walmart Converge}.}
+\resumeItemListEnd
+
+\end{document}

@@ -5,6 +5,42 @@ import { learningResourcesAPI, learningAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
 
+// Sample resources to ensure visibility of key repositories
+const sampleResources = [
+    {
+        _id: 'sample-1',
+        title: 'Backend Concepts',
+        description: 'Comprehensive guide and examples for backend development concepts.',
+        category: 'backend',
+        url: 'https://github.com/tusquake/Backend-Concepts',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-2',
+        title: 'DSA PatternWise',
+        description: 'Data Structures and Algorithms problems categorized by patterns.',
+        category: 'dsa',
+        url: 'https://github.com/tusquake/DSA-PatternWise',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-3',
+        title: 'Low-Level Design',
+        description: 'Standard LLD problems and solutions with class diagrams and design patterns.',
+        category: 'lld',
+        url: 'https://github.com/tusquake/Low-Level-Design',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-4',
+        title: 'High-Level Design',
+        description: 'HLD concepts, system design patterns, and case studies.',
+        category: 'hld',
+        url: 'https://github.com/tusquake/High-Level-Design',
+        type: 'repository'
+    }
+];
+
 const Learning = () => {
     const { isAuthenticated, isAdmin } = useAuth();
     const [resources, setResources] = useState([]);
@@ -20,7 +56,17 @@ const Learning = () => {
         try {
             // Fetch public resources
             const resourcesRes = await learningResourcesAPI.getAll();
-            setResources(resourcesRes.data.data || []);
+            const apiResources = resourcesRes.data.data || [];
+
+            // Combine API resources with sample resources (avoiding duplicates by URL)
+            const combinedResources = [...apiResources];
+            sampleResources.forEach(sample => {
+                if (!combinedResources.some(r => r.url === sample.url)) {
+                    combinedResources.push(sample);
+                }
+            });
+
+            setResources(combinedResources);
 
             // If admin, also fetch learning topics
             if (isAdmin) {
@@ -29,19 +75,21 @@ const Learning = () => {
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
+            // Fallback to sample resources if API fails or returns error
+            setResources(sampleResources);
         } finally {
             setLoading(false);
         }
     };
 
     const categories = [
-        { id: 'all', name: 'All Resources', icon: '📚' },
-        { id: 'dsa', name: 'DSA', icon: '🧮' },
-        { id: 'hld', name: 'System Design', icon: '🏗️' },
-        { id: 'lld', name: 'LLD', icon: '🔧' },
-        { id: 'backend', name: 'Backend', icon: '⚙️' },
-        { id: 'frontend', name: 'Frontend', icon: '🎨' },
-        { id: 'devops', name: 'DevOps', icon: '🚀' },
+        { id: 'all', name: 'All Resources' },
+        { id: 'dsa', name: 'DSA' },
+        { id: 'hld', name: 'System Design' },
+        { id: 'lld', name: 'LLD' },
+        { id: 'backend', name: 'Backend' },
+        { id: 'frontend', name: 'Frontend' },
+        { id: 'devops', name: 'DevOps' },
     ];
 
     const filteredResources = activeCategory === 'all'
@@ -50,13 +98,25 @@ const Learning = () => {
 
     const getTypeIcon = (type) => {
         switch (type) {
-            case 'repository': return '📦';
-            case 'course': return '🎓';
-            case 'article': return '📄';
-            case 'tutorial': return '📹';
-            case 'book': return '📖';
-            default: return '🔗';
+            case 'repository': return 'repo';
+            case 'course': return 'course';
+            case 'article': return 'article';
+            case 'tutorial': return 'tutorial';
+            case 'book': return 'book';
+            default: return 'link';
         }
+    };
+
+    const TypeIcon = ({ type }) => {
+        const icons = {
+            repo: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>,
+            course: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>,
+            article: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+            tutorial: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
+            book: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
+            link: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+        };
+        return <div className="text-primary-500">{icons[type] || icons.link}</div>;
     };
 
     if (loading) return <Loading fullScreen />;
@@ -89,7 +149,6 @@ const Learning = () => {
                                 : 'bg-dark-100 dark:bg-dark-800 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700'
                                 }`}
                         >
-                            <span className="mr-2">{cat.icon}</span>
                             {cat.name}
                         </button>
                     ))}
@@ -107,7 +166,7 @@ const Learning = () => {
                                 className="card p-6 hover:scale-105 transition-transform duration-300 group"
                             >
                                 <div className="flex items-start justify-between mb-4">
-                                    <span className="text-3xl">{getTypeIcon(resource.type)}</span>
+                                    <TypeIcon type={getTypeIcon(resource.type)} />
                                     <span className="badge badge-primary text-xs capitalize">
                                         {resource.category}
                                     </span>
@@ -131,7 +190,9 @@ const Learning = () => {
                     </div>
                 ) : (
                     <div className="text-center py-16">
-                        <span className="text-6xl mb-4 block">📚</span>
+                        <svg className="w-16 h-16 mx-auto mb-4 text-dark-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
                         <h3 className="text-xl font-semibold text-dark-700 dark:text-dark-300 mb-2">
                             No resources available yet
                         </h3>
@@ -163,7 +224,7 @@ const Learning = () => {
                             View GitHub
                         </a>
                         <a
-                            href="https://leetcode.com/tusharseth"
+                            href="https://leetcode.com/u/Tushar_Seth/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-6 py-3 bg-white/20 text-white font-medium rounded-xl hover:bg-white/30 transition-colors flex items-center"

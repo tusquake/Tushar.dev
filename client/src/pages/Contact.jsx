@@ -214,9 +214,19 @@ const Contact = () => {
                             ))}
                         </div>
 
-                        {/* Map placeholder */}
-                        <Card className="h-48 bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center overflow-hidden">
-                            <span className="text-4xl">🌍</span>
+                        {/* Google Maps - Kolkata, West Bengal */}
+                        <Card className="h-64 overflow-hidden">
+                            <iframe
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3684.4894012850044!2d88.3629337!3d22.5651428!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a0277bf5b1e5c09%3A0x37d6dc2d0b5d1f1e!2sKolkata%2C%20West%20Bengal%2C%20India!5e0!3m2!1sen!2sin!4v1706709600000!5m2!1sen!2sin"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                allowFullScreen=""
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                title="Location Map"
+                                className="rounded-xl"
+                            ></iframe>
                         </Card>
                     </div>
                 </div>
