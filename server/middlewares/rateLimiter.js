@@ -10,7 +10,8 @@ const createRateLimiter = (windowMs, max, message) => {
             message: message || 'Too many requests, please try again later.'
         },
         standardHeaders: true,
-        legacyHeaders: false
+        legacyHeaders: false,
+        validate: { xForwardedForHeader: false } // Avoid crash if proxy trust is handled at app level
     });
 };
 
