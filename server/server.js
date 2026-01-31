@@ -18,6 +18,9 @@ const uploadRoutes = require('./routes/uploadRoutes');
 // Initialize express app
 const app = express();
 
+// Trust proxy for rate limiting (Cloud Run/Render)
+app.set('trust proxy', 1);
+
 // Connect to MongoDB
 connectDB();
 
