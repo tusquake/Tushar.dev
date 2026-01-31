@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const isAdmin = user?.role === 'ADMIN';
+    const isAdmin = user?.role === 'ADMIN' && user?.email === 'sethtushar111@gmail.com';
 
     const value = {
         user,

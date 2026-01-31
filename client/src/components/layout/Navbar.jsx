@@ -119,12 +119,14 @@ const Navbar = () => {
                         {/* Auth buttons */}
                         {isAuthenticated ? (
                             <div className="flex items-center space-x-3">
-                                <Link
-                                    to="/dashboard"
-                                    className="px-4 py-2 text-sm font-medium text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400"
-                                >
-                                    Dashboard
-                                </Link>
+                                {isAdmin && (
+                                    <Link
+                                        to="/dashboard"
+                                        className="px-4 py-2 text-sm font-medium text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400"
+                                    >
+                                        Dashboard
+                                    </Link>
+                                )}
                                 <button
                                     onClick={handleLogout}
                                     className="btn-secondary text-sm py-2"
@@ -204,12 +206,14 @@ const Navbar = () => {
                     <div className="pt-4 border-t border-dark-100 dark:border-dark-800 space-y-2">
                         {isAuthenticated ? (
                             <>
-                                <Link
-                                    to="/dashboard"
-                                    className="block px-4 py-3 rounded-lg font-medium text-dark-600 dark:text-dark-300"
-                                >
-                                    Dashboard
-                                </Link>
+                                {isAdmin && (
+                                    <Link
+                                        to="/dashboard"
+                                        className="block px-4 py-3 rounded-lg font-medium text-dark-600 dark:text-dark-300"
+                                    >
+                                        Dashboard
+                                    </Link>
+                                )}
                                 <button
                                     onClick={handleLogout}
                                     className="w-full btn-secondary"

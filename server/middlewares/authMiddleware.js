@@ -51,12 +51,13 @@ const protect = async (req, res, next) => {
 
 // Admin only middleware
 const adminOnly = (req, res, next) => {
-    if (req.user && req.user.role === 'ADMIN') {
+    const adminEmail = 'sethtushar111@gmail.com';
+    if (req.user && req.user.role === 'ADMIN' && req.user.email === adminEmail) {
         next();
     } else {
         return res.status(403).json({
             success: false,
-            message: 'Access denied. Admin only.'
+            message: 'Access denied. Authorized admin only.'
         });
     }
 };
