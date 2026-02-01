@@ -36,7 +36,7 @@ const Home = () => {
                             </svg>
                         </Link>
                         <a
-                            href="https://drive.google.com/file/d/1XJN0_7pEkAgVzbQO_sgKdtHQhf-ELDN7/view?usp=sharing"
+                            href="https://drive.google.com/file/d/1-kNtzoWdD8AayoovpQN50b0bdpuGAy6n/view?usp=sharing"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn-secondary"
