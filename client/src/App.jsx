@@ -15,6 +15,9 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import ResumeBuilder from './pages/ResumeBuilder';
+import AtsReviewer from './pages/AtsReviewer';
+import Settings from './pages/Settings';
 
 // Wrapper to redirect direct access to home
 const DirectAccessRedirect = ({ children }) => {
@@ -51,6 +54,9 @@ function App() {
 
             <Route path="learning" element={<Learning />} />
             <Route path="contact" element={<Contact />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="resume/builder" element={<ResumeBuilder />} />
+            <Route path="resume/reviewer" element={<AtsReviewer />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
