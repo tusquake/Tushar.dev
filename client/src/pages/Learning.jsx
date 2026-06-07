@@ -65,10 +65,10 @@ const Learning = () => {
     const [syncStatus, setSyncStatus] = useState('local'); // 'local', 'syncing', 'synced', 'error'
     const [confirmReset, setConfirmReset] = useState(false);
 
-    // Fetch resources and admin topics
+    // Fetch resources and user roadmap topics
     useEffect(() => {
         fetchData();
-    }, [isAdmin]);
+    }, [isAuthenticated]);
 
     const fetchData = async () => {
         try {
@@ -86,8 +86,8 @@ const Learning = () => {
 
             setResources(combinedResources);
 
-            // If admin, also fetch learning topics
-            if (isAdmin) {
+            // If authenticated, also fetch learning topics
+            if (isAuthenticated) {
                 const topicsRes = await learningAPI.getAll();
                 setLearningTopics(topicsRes.data.data || []);
             }
@@ -401,8 +401,8 @@ const Learning = () => {
                             </div>
                         </div>
 
-                        {/* Admin Section - Learning Tracker */}
-                        {isAdmin && (
+                        {/* User Section - Learning Tracker */}
+                        {isAuthenticated && (
                             <div className="mt-16 border-t border-dark-200 dark:border-dark-800 pt-16">
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="text-2xl font-bold text-dark-900 dark:text-white font-display">
@@ -421,11 +421,11 @@ const Learning = () => {
                                                     <h4 className="font-semibold text-dark-900 dark:text-white">
                                                         {topic.title}
                                                     </h4>
-                                                    <span className={`badge text-xs uppercase ${topic.status === 'COMPLETED' ? 'badge-success' :
-                                                        topic.status === 'IN_PROGRESS' ? 'badge-warning' :
+                                                    <span className={`badge text-xs uppercase ${topic.status === 'completed' ? 'badge-success' :
+                                                        topic.status === 'in-progress' ? 'badge-warning' :
                                                             'badge-gray'
                                                         }`}>
-                                                        {topic.status.replace('_', ' ')}
+                                                        {topic.status.replace('-', ' ')}
                                                     </span>
                                                 </div>
                                                 {topic.description && (

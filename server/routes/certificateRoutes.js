@@ -7,12 +7,15 @@ const {
     updateCertificate,
     deleteCertificate
 } = require('../controllers/certificateController');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
 
 // Public routes
 router.get('/', getCertificates);
 router.get('/:id', getCertificate);
-router.post('/', createCertificate);
-router.put('/:id', updateCertificate);
-router.delete('/:id', deleteCertificate);
+
+// Admin only routes
+router.post('/', protect, adminOnly, createCertificate);
+router.put('/:id', protect, adminOnly, updateCertificate);
+router.delete('/:id', protect, adminOnly, deleteCertificate);
 
 module.exports = router;

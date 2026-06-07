@@ -44,8 +44,8 @@ const Footer = () => {
 
     const quickLinks = [
         { name: 'Home', path: '/' },
+        { name: 'Learning Hub', path: '/learning' },
         { name: 'Projects', path: '/projects' },
-        { name: 'Certificates', path: '/certificates' },
         { name: 'Contact', path: '/contact' },
     ];
 
@@ -56,12 +56,11 @@ const Footer = () => {
                     {/* Brand */}
                     <div className="md:col-span-2">
                         <Link to="/" className="inline-flex items-center space-x-2 text-2xl font-display font-bold">
-                            <span className="gradient-text">Tushar</span>
-                            <span className="text-dark-700 dark:text-white">.dev</span>
+                            <span className="gradient-text">DevLearn</span>
+                            <span className="text-dark-700 dark:text-white">.hub</span>
                         </Link>
                         <p className="mt-4 text-dark-500 dark:text-dark-400 max-w-md">
-                            Full Stack Developer passionate about building modern web applications
-                            with cutting-edge technologies. Always learning, always growing.
+                            An interactive developer platform to track DSA preparation, organize study roadmaps, write notes, and level up software engineering skills.
                         </p>
                         {/* Social Links */}
                         <div className="flex items-center space-x-4 mt-6">
@@ -123,9 +122,9 @@ const Footer = () => {
                 </div>
 
                 {/* Bottom bar */}
-                <div className="mt-12 pt-8 border-t border-dark-200 dark:border-dark-800">
+                <div className="mt-12 pt-8 border-t border-dark-200 dark:border-dark-800 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <p className="text-center text-dark-500 dark:text-dark-400 text-sm">
-                        © {currentYear} Tushar Seth. All rights reserved.
+                        © {currentYear} DevLearn.hub. Developed by Tushar Seth.
                     </p>
                 </div>
             </div>

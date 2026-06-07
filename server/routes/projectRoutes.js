@@ -7,12 +7,15 @@ const {
     updateProject,
     deleteProject
 } = require('../controllers/projectController');
+const { protect, adminOnly } = require('../middlewares/authMiddleware');
 
 // Public routes
 router.get('/', getProjects);
 router.get('/:id', getProject);
-router.post('/', createProject);
-router.put('/:id', updateProject);
-router.delete('/:id', deleteProject);
+
+// Admin only routes
+router.post('/', protect, adminOnly, createProject);
+router.put('/:id', protect, adminOnly, updateProject);
+router.delete('/:id', protect, adminOnly, deleteProject);
 
 module.exports = router;

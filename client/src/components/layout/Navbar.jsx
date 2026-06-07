@@ -6,7 +6,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
-    const { isAuthenticated, isAdmin, user, logout } = useAuth();
+    const { isAuthenticated, isAdmin, logout } = useAuth();
     const location = useLocation();
 
     // Handle scroll effect
@@ -49,11 +49,11 @@ const Navbar = () => {
     // Navigation links
     const navLinks = [
         { name: 'Home', path: '/' },
+        { name: 'Learning Hub', path: '/learning' },
+        { name: 'Projects', path: '/projects' },
         { name: 'Experience', path: '/experience' },
         { name: 'Skills', path: '/skills' },
-        { name: 'Projects', path: '/projects' },
         { name: 'Certificates', path: '/certificates' },
-        { name: 'Resources', path: '/learning' },
         { name: 'Contact', path: '/contact' },
     ];
 
@@ -64,7 +64,7 @@ const Navbar = () => {
     return (
         <nav
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-                ? 'bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl shadow-lg'
+                ? 'bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl shadow-lg border-b border-dark-200/20 dark:border-dark-800/35'
                 : 'bg-transparent'
                 }`}
         >
@@ -75,8 +75,8 @@ const Navbar = () => {
                         to="/"
                         className="flex items-center text-2xl font-display font-bold"
                     >
-                        <span className="gradient-text">Tushar</span>
-                        <span className="text-dark-700 dark:text-white">.dev</span>
+                        <span className="gradient-text">DevLearn</span>
+                        <span className="text-dark-705 dark:text-white">.hub</span>
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -86,7 +86,7 @@ const Navbar = () => {
                                 key={link.path}
                                 to={link.path}
                                 className={({ isActive }) =>
-                                    `px-4 py-2 rounded-lg font-medium transition-all duration-200 ${isActive
+                                    `px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${isActive
                                         ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
                                         : 'text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-dark-50 dark:hover:bg-dark-800'
                                     }`
@@ -102,7 +102,7 @@ const Navbar = () => {
                         {/* Dark mode toggle */}
                         <button
                             onClick={toggleDarkMode}
-                            className="p-2 rounded-lg text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
+                            className="p-2 rounded-lg text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors cursor-pointer"
                             aria-label="Toggle dark mode"
                         >
                             {darkMode ? (
@@ -119,17 +119,15 @@ const Navbar = () => {
                         {/* Auth buttons */}
                         {isAuthenticated ? (
                             <div className="flex items-center space-x-3">
-                                {isAdmin && (
-                                    <Link
-                                        to="/dashboard"
-                                        className="px-4 py-2 text-sm font-medium text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400"
-                                    >
-                                        Dashboard
-                                    </Link>
-                                )}
+                                <Link
+                                    to="/dashboard"
+                                    className="px-4 py-2 text-sm font-medium text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400"
+                                >
+                                    Dashboard
+                                </Link>
                                 <button
                                     onClick={handleLogout}
-                                    className="btn-secondary text-sm py-2"
+                                    className="btn-secondary text-sm py-2 cursor-pointer"
                                 >
                                     Logout
                                 </button>
@@ -142,7 +140,7 @@ const Navbar = () => {
                                 >
                                     Login
                                 </Link>
-                                <Link to="/register" className="btn-primary text-sm py-2">
+                                <Link to="/register" className="btn-primary text-sm py-2 cursor-pointer">
                                     Get Started
                                 </Link>
                             </div>
@@ -206,17 +204,15 @@ const Navbar = () => {
                     <div className="pt-4 border-t border-dark-100 dark:border-dark-800 space-y-2">
                         {isAuthenticated ? (
                             <>
-                                {isAdmin && (
-                                    <Link
-                                        to="/dashboard"
-                                        className="block px-4 py-3 rounded-lg font-medium text-dark-600 dark:text-dark-300"
-                                    >
-                                        Dashboard
-                                    </Link>
-                                )}
+                                <Link
+                                    to="/dashboard"
+                                    className="block px-4 py-3 rounded-lg font-medium text-dark-600 dark:text-dark-300"
+                                >
+                                    Dashboard
+                                </Link>
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full btn-secondary"
+                                    className="w-full btn-secondary cursor-pointer"
                                 >
                                     Logout
                                 </button>
@@ -229,7 +225,7 @@ const Navbar = () => {
                                 >
                                     Login
                                 </Link>
-                                <Link to="/register" className="block btn-primary text-center">
+                                <Link to="/register" className="block btn-primary text-center cursor-pointer">
                                     Get Started
                                 </Link>
                             </>
