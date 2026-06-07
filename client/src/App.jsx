@@ -17,6 +17,7 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import ResumeBuilder from './pages/ResumeBuilder';
 import AtsReviewer from './pages/AtsReviewer';
+import LatexResume from './pages/LatexResume';
 import Settings from './pages/Settings';
 
 // Wrapper to redirect direct access to home
@@ -57,6 +58,7 @@ function App() {
             <Route path="settings" element={<Settings />} />
             <Route path="resume/builder" element={<ResumeBuilder />} />
             <Route path="resume/reviewer" element={<AtsReviewer />} />
+            <Route path="resume/latex" element={<LatexResume />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />

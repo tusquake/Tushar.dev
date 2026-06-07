@@ -34,6 +34,18 @@ const ResumeHeader = () => {
             >
               ATS Reviewer
             </NavLink>
+            <NavLink
+              to="/resume/latex"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  isActive
+                    ? 'bg-primary-500 text-white dark:text-dark-950 shadow-sm'
+                    : 'text-dark-600 dark:text-dark-300 hover:text-dark-900 dark:hover:text-white'
+                }`
+              }
+            >
+              LaTeX Resume
+            </NavLink>
           </div>
         </div>
       </div>
