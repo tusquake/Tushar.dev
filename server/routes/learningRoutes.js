@@ -6,7 +6,8 @@ const {
     createLearningTopic,
     updateLearningTopic,
     updateLearningStatus,
-    deleteLearningTopic
+    deleteLearningTopic,
+    getActivityHistory
 } = require('../controllers/learningController');
 const {
     getDsaProgress,
@@ -22,9 +23,10 @@ const {
 // All routes require authentication
 router.use(protect);
 
-// DSA Progress routes (defined before parameterized routes to avoid conflicts)
+// DSA Progress & Activity History routes (defined before parameterized routes to avoid conflicts)
 router.get('/dsa/progress', learningGetLimiter, getDsaProgress);
 router.post('/dsa/progress', learningMutateLimiter, updateDsaProgress);
+router.get('/activity', learningGetLimiter, getActivityHistory);
 
 // GET routes with rate limiting
 router.get('/', learningGetLimiter, getLearningTopics);

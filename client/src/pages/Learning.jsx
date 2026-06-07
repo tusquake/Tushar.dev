@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { learningResourcesAPI, learningAPI, dsaProgressAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
+import Heatmap from '../components/common/Heatmap';
 
 // Configure marked options
 marked.setOptions({
@@ -439,6 +440,7 @@ const Learning = () => {
         sw: true
     });
     const [completedQuestions, setCompletedQuestions] = useState([]);
+    const [activities, setActivities] = useState([]);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [syncStatus, setSyncStatus] = useState('local'); // 'local', 'syncing', 'synced', 'error'
     const [confirmReset, setConfirmReset] = useState(false);
@@ -499,10 +501,14 @@ const Learning = () => {
             if (isAuthenticated) {
                 try {
                     setSyncStatus('syncing');
-                    const res = await dsaProgressAPI.getProgress();
+                    const [res, actRes] = await Promise.all([
+                        dsaProgressAPI.getProgress(),
+                        learningAPI.getActivityHistory()
+                    ]);
                     const dbData = res.data.completedQuestions || [];
                     const merged = Array.from(new Set([...localData, ...dbData]));
                     setCompletedQuestions(merged);
+                    setActivities(actRes.data.data || []);
                     if (localData.some(id => !dbData.includes(id))) {
                         await dsaProgressAPI.updateProgress(merged);
                     }
@@ -533,6 +539,9 @@ const Learning = () => {
                 try {
                     await dsaProgressAPI.updateProgress(completedQuestions);
                     setSyncStatus('synced');
+                    // Fetch fresh activity log to update the heatmap in real time
+                    const actRes = await learningAPI.getActivityHistory();
+                    setActivities(actRes.data.data || []);
                 } catch (err) {
                     console.error('Failed to sync progress:', err);
                     setSyncStatus('error');
@@ -1159,6 +1168,11 @@ const Learning = () => {
                                 )}
                             </div>
                         </div>
+
+                        {/* Heatmap for authenticated users */}
+                        {isAuthenticated && (
+                            <Heatmap activities={activities} />
+                        )}
 
                         {/* Stats Dashboard Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">

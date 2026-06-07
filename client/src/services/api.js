@@ -97,6 +97,7 @@ export const learningAPI = {
     update: (id, data) => api.put(`/learning/${id}`, data),
     updateStatus: (id, status) => api.patch(`/learning/${id}/status`, { status }),
     delete: (id) => api.delete(`/learning/${id}`),
+    getActivityHistory: () => api.get('/learning/activity'),
 };
 
 // Contact API

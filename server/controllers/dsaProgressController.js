@@ -51,12 +51,42 @@ const updateDsaProgress = async (req, res) => {
             });
         }
 
+        // Get existing progress to check for changes
+        const existingProgress = await DsaProgress.findOne({ user: req.user._id });
+        const oldQuestions = existingProgress ? existingProgress.completedQuestions : [];
+
         // Upsert progress document
         const progress = await DsaProgress.findOneAndUpdate(
             { user: req.user._id },
             { completedQuestions },
             { new: true, upsert: true, runValidators: true }
         );
+
+        // Track changes in Activity model
+        const Activity = require('../models/Activity');
+        const newlyCompleted = completedQuestions.filter(q => !oldQuestions.includes(q));
+        const removedQuestions = oldQuestions.filter(q => !completedQuestions.includes(q));
+
+        if (newlyCompleted.length > 0) {
+            const activityPromises = newlyCompleted.map(gid => {
+                return Activity.create({
+                    user: req.user._id,
+                    activityType: 'DSA_SOLVED',
+                    referenceId: String(gid),
+                    detail: `Solved DSA Question #${gid}`,
+                    date: new Date()
+                });
+            });
+            await Promise.all(activityPromises);
+        }
+
+        if (removedQuestions.length > 0) {
+            await Activity.deleteMany({
+                user: req.user._id,
+                activityType: 'DSA_SOLVED',
+                referenceId: { $in: removedQuestions.map(String) }
+            });
+        }
 
         res.json({
             success: true,

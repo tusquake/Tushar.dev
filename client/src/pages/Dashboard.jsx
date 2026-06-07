@@ -7,6 +7,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Loading from '../components/common/Loading';
 import { ALL_QUESTIONS } from '../data/dsaQuestions';
+import Heatmap from '../components/common/Heatmap';
 
 const Dashboard = () => {
     const { user, isAdmin, loading: authLoading } = useAuth();
@@ -18,6 +19,7 @@ const Dashboard = () => {
         contacts: [],
         learningTopics: [],
         dsaProgress: [],
+        activities: [],
     });
 
     // Modal states
@@ -55,9 +57,10 @@ const Dashboard = () => {
                     dsaProgress: [],
                 });
             } else {
-                const [topicsRes, dsaRes] = await Promise.all([
+                const [topicsRes, dsaRes, activitiesRes] = await Promise.all([
                     learningAPI.getAll(),
                     dsaProgressAPI.getProgress(),
+                    learningAPI.getActivityHistory(),
                 ]);
 
                 setData({
@@ -66,6 +69,7 @@ const Dashboard = () => {
                     contacts: [],
                     learningTopics: topicsRes.data.data || [],
                     dsaProgress: dsaRes.data.completedQuestions || [],
+                    activities: activitiesRes.data.data || [],
                 });
             }
         } catch (error) {
@@ -172,6 +176,12 @@ const Dashboard = () => {
                     topic._id === id ? { ...topic, status: newStatus } : topic
                 )
             }));
+            // Fetch fresh activity log to update the heatmap in real time
+            const activityRes = await learningAPI.getActivityHistory();
+            setData(prev => ({
+                ...prev,
+                activities: activityRes.data.data || []
+            }));
         } catch (error) {
             console.error('Failed to update status:', error);
             fetchAllData(); // rollback to DB state if failed
@@ -249,6 +259,11 @@ const Dashboard = () => {
                         </Link>
                     )}
                 </div>
+
+                {/* Heatmap for standard users */}
+                {!isAdmin && (
+                    <Heatmap activities={data.activities} />
+                )}
 
                 {/* Role-Based Navigation Tabs */}
                 <div className="flex gap-2 mb-6 border-b border-dark-200 dark:border-dark-800">

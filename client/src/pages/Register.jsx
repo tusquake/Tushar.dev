@@ -444,6 +444,7 @@ const Register = () => {
                                     GitHub
                                 </button>
                             </div>
+                        </div>
 
                         <div className="relative flex py-2 items-center mb-4">
                             <div className="flex-grow border-t border-dark-150 dark:border-dark-850"></div>

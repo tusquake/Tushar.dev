@@ -86,6 +86,18 @@ const createLearningTopic = async (req, res) => {
             user: req.user._id
         });
 
+        // Log activity if completed
+        if (status === 'completed') {
+            const Activity = require('../models/Activity');
+            await Activity.create({
+                user: req.user._id,
+                activityType: 'TOPIC_COMPLETED',
+                referenceId: String(topic._id),
+                detail: `Completed topic: ${title}`,
+                date: new Date()
+            });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Learning topic created successfully',
@@ -106,16 +118,37 @@ const createLearningTopic = async (req, res) => {
 // @access  Private
 const updateLearningTopic = async (req, res) => {
     try {
+        const existingTopic = await Learning.findOne({ _id: req.params.id, user: req.user._id });
+        if (!existingTopic) {
+            return res.status(404).json({
+                success: false,
+                message: 'Learning topic not found'
+            });
+        }
+
+        const oldStatus = existingTopic.status;
+
         const topic = await Learning.findOneAndUpdate(
             { _id: req.params.id, user: req.user._id },
             req.body,
             { new: true, runValidators: true }
         );
 
-        if (!topic) {
-            return res.status(404).json({
-                success: false,
-                message: 'Learning topic not found'
+        // Track change in Activity model
+        const Activity = require('../models/Activity');
+        if (topic.status === 'completed' && oldStatus !== 'completed') {
+            await Activity.create({
+                user: req.user._id,
+                activityType: 'TOPIC_COMPLETED',
+                referenceId: String(topic._id),
+                detail: `Completed topic: ${topic.title}`,
+                date: new Date()
+            });
+        } else if (topic.status !== 'completed' && oldStatus === 'completed') {
+            await Activity.deleteMany({
+                user: req.user._id,
+                activityType: 'TOPIC_COMPLETED',
+                referenceId: String(topic._id)
             });
         }
 
@@ -148,16 +181,37 @@ const updateLearningStatus = async (req, res) => {
             });
         }
 
+        const existingTopic = await Learning.findOne({ _id: req.params.id, user: req.user._id });
+        if (!existingTopic) {
+            return res.status(404).json({
+                success: false,
+                message: 'Learning topic not found'
+            });
+        }
+
+        const oldStatus = existingTopic.status;
+
         const topic = await Learning.findOneAndUpdate(
             { _id: req.params.id, user: req.user._id },
             { status },
             { new: true }
         );
 
-        if (!topic) {
-            return res.status(404).json({
-                success: false,
-                message: 'Learning topic not found'
+        // Track change in Activity model
+        const Activity = require('../models/Activity');
+        if (status === 'completed' && oldStatus !== 'completed') {
+            await Activity.create({
+                user: req.user._id,
+                activityType: 'TOPIC_COMPLETED',
+                referenceId: String(topic._id),
+                detail: `Completed topic: ${topic.title}`,
+                date: new Date()
+            });
+        } else if (status !== 'completed' && oldStatus === 'completed') {
+            await Activity.deleteMany({
+                user: req.user._id,
+                activityType: 'TOPIC_COMPLETED',
+                referenceId: String(topic._id)
             });
         }
 
@@ -192,6 +246,14 @@ const deleteLearningTopic = async (req, res) => {
             });
         }
 
+        // Delete associated activities
+        const Activity = require('../models/Activity');
+        await Activity.deleteMany({
+            user: req.user._id,
+            activityType: 'TOPIC_COMPLETED',
+            referenceId: String(topic._id)
+        });
+
         res.json({
             success: true,
             message: 'Learning topic deleted successfully'
@@ -205,11 +267,73 @@ const deleteLearningTopic = async (req, res) => {
     }
 };
 
+// @desc    Get user activity history (heatmap ready)
+// @route   GET /api/learning/activity
+// @access  Private
+const getActivityHistory = async (req, res) => {
+    try {
+        const Activity = require('../models/Activity');
+        const DsaProgress = require('../models/DsaProgress');
+
+        // Fetch all logged activities for this user
+        let activities = await Activity.find({ user: req.user._id }).sort({ date: 1 });
+
+        // Intelligent Backfill: if empty, generate activities from current db progress to avoid empty heatmaps
+        if (activities.length === 0) {
+            const backfills = [];
+            const dsaProg = await DsaProgress.findOne({ user: req.user._id });
+            
+            if (dsaProg && dsaProg.completedQuestions.length > 0) {
+                dsaProg.completedQuestions.forEach((gid, index) => {
+                    const activityDate = new Date(dsaProg.updatedAt);
+                    activityDate.setDate(activityDate.getDate() - Math.min(index, 7)); // spread out over a few days
+                    backfills.push({
+                        user: req.user._id,
+                        activityType: 'DSA_SOLVED',
+                        referenceId: String(gid),
+                        detail: `Solved DSA Question #${gid}`,
+                        date: activityDate
+                    });
+                });
+            }
+
+            const completedTopics = await Learning.find({ user: req.user._id, status: 'completed' });
+            completedTopics.forEach((topic) => {
+                backfills.push({
+                    user: req.user._id,
+                    activityType: 'TOPIC_COMPLETED',
+                    referenceId: String(topic._id),
+                    detail: `Completed topic: ${topic.title}`,
+                    date: new Date(topic.updatedAt)
+                });
+            });
+
+            if (backfills.length > 0) {
+                await Activity.insertMany(backfills);
+                activities = await Activity.find({ user: req.user._id }).sort({ date: 1 });
+            }
+        }
+
+        res.json({
+            success: true,
+            count: activities.length,
+            data: activities
+        });
+    } catch (error) {
+        console.error('Get activity history error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch activity history'
+        });
+    }
+};
+
 module.exports = {
     getLearningTopics,
     getLearningTopic,
     createLearningTopic,
     updateLearningTopic,
     updateLearningStatus,
-    deleteLearningTopic
+    deleteLearningTopic,
+    getActivityHistory
 };
