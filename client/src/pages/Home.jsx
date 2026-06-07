@@ -316,7 +316,7 @@ const Home = () => {
 
                 {/* Right Side: Technical Diagram Grid */}
                 <div className="md:col-span-5 grid grid-cols-2 gap-4">
-                    {/* Two Pointers Card */}
+                    {/* DSA Card */}
                     <div 
                         className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float"
                         style={{ 
@@ -326,7 +326,7 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">Two Pointers</span>
+                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">DSA</span>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <TwoPointersSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} />
                         </div>
