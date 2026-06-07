@@ -280,74 +280,117 @@ const resolvePath = (base, relative) => {
 // Local custom parser: Markdown -> HTML
 const parseMarkdown = (markdown) => {
     if (!markdown) return '';
-    let html = markdown;
-
-    // Escape raw HTML tags for safety
-    html = html
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-    // Save and temporarily mask Code Blocks
+    
+    // Normalize newlines
+    let text = markdown.replace(/\r\n/g, '\n');
+    
+    // Save and mask Code Blocks first to protect their formatting
     const codeBlocks = [];
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+    text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
         const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
         codeBlocks.push({ lang: lang || 'text', code: code.trim() });
         return placeholder;
     });
 
-    // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-dark-100 dark:bg-dark-800 text-rose-500 font-mono text-xs font-semibold">$1</code>');
+    // Inline formatting function
+    const inlineParse = (str) => {
+        let s = str;
+        // Escape raw HTML tags for safety
+        s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        // Inline code
+        s = s.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-dark-100 dark:bg-dark-800 text-rose-500 font-mono text-xs font-semibold">$1</code>');
+        
+        // Bold
+        s = s.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-dark-900 dark:text-white">$1</strong>');
+        s = s.replace(/__([^_]+)__/g, '<strong class="font-bold text-dark-900 dark:text-white">$1</strong>');
+        
+        // Italic
+        s = s.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
+        s = s.replace(/_([^_]+)_/g, '<em class="italic">$1</em>');
 
-    // Headers
-    html = html.replace(/^# (.*?)$/gm, '<h1 class="text-2xl font-bold font-display text-dark-900 dark:text-white mt-6 mb-4 pb-2 border-b border-dark-200 dark:border-dark-800">$1</h1>');
-    html = html.replace(/^## (.*?)$/gm, '<h2 class="text-xl font-bold font-display text-dark-900 dark:text-white mt-5 mb-3 pb-1 border-b border-dark-200/50 dark:border-dark-800/60">$1</h2>');
-    html = html.replace(/^### (.*?)$/gm, '<h3 class="text-lg font-bold text-dark-850 dark:text-dark-100 mt-4 mb-2">$1</h3>');
-    html = html.replace(/^#### (.*?)$/gm, '<h4 class="text-base font-bold text-dark-800 dark:text-dark-200 mt-3 mb-2">$1</h4>');
+        // Links
+        s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, href) => {
+            if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#')) {
+                return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 hover:underline font-semibold inline-flex items-center gap-0.5">${label}</a>`;
+            } else {
+                return `<a href="#" data-relative-path="${href}" class="text-secondary-500 hover:underline font-bold relative-repo-link">${label}</a>`;
+            }
+        });
 
-    // Unordered lists
-    html = html.replace(/^\s*[-*]\s+(.*?)$/gm, '<li class="ml-4 list-disc text-sm text-dark-700 dark:text-dark-300 mb-1">$1</li>');
+        return s;
+    };
 
-    // Ordered lists
-    html = html.replace(/^\s*\d+\.\s+(.*?)$/gm, '<li class="ml-4 list-decimal text-sm text-dark-700 dark:text-dark-300 mb-1">$1</li>');
+    // Handle block level structures
+    const blocks = text.split(/\n\n+/);
+    const parsedBlocks = blocks.map(block => {
+        const trimmed = block.trim();
+        if (!trimmed) return '';
 
-    // Bold and Italic
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-    html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
-
-    // Blockquotes
-    html = html.replace(/^\s*&gt;\s+(.*?)$/gm, '<blockquote class="border-l-4 border-primary-500 pl-4 py-1 my-3 bg-dark-50 dark:bg-dark-900/40 rounded-r-xl text-dark-600 dark:text-dark-400 italic text-sm">$1</blockquote>');
-
-    // Links: check if relative or absolute
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, href) => {
-        if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#')) {
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 hover:underline font-semibold">${label}</a>`;
-        } else {
-            return `<a href="#" data-relative-path="${href}" class="text-secondary-500 hover:underline font-bold relative-repo-link">${label}</a>`;
+        // Code block placeholders
+        if (trimmed.startsWith('__CODE_BLOCK_PLACEHOLDER_')) {
+            return trimmed;
         }
+
+        // Headers
+        if (trimmed.startsWith('# ')) {
+            return `<h1 class="text-3xl font-extrabold font-display text-dark-900 dark:text-white mt-8 mb-4 pb-3 border-b border-dark-200 dark:border-dark-800 leading-tight">${trimmed.substring(2)}</h1>`;
+        }
+        if (trimmed.startsWith('## ')) {
+            return `<h2 class="text-2xl font-bold font-display text-dark-900 dark:text-white mt-7 mb-4 pb-2 border-b border-dark-200/50 dark:border-dark-800/60 leading-snug">${trimmed.substring(3)}</h2>`;
+        }
+        if (trimmed.startsWith('### ')) {
+            return `<h3 class="text-xl font-bold text-dark-850 dark:text-dark-100 mt-6 mb-3 leading-normal">${trimmed.substring(4)}</h3>`;
+        }
+        if (trimmed.startsWith('#### ')) {
+            return `<h4 class="text-lg font-bold text-dark-800 dark:text-dark-200 mt-5 mb-2">${trimmed.substring(5)}</h4>`;
+        }
+
+        // Blockquotes
+        if (trimmed.startsWith('> ') || trimmed.startsWith('&gt; ')) {
+            const content = trimmed.replace(/^(&gt;|>)\s*/gm, '');
+            return `<blockquote class="border-l-4 border-primary-500 pl-4 py-2 my-4 bg-dark-50 dark:bg-dark-900/40 rounded-r-xl text-dark-600 dark:text-dark-400 italic text-sm leading-relaxed">${content}</blockquote>`;
+        }
+
+        // Lists (Unordered)
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('+ ')) {
+            const items = trimmed.split(/\n[-*+]\s+/);
+            // clean first item prefix
+            items[0] = items[0].replace(/^[-*+]\s+/, '');
+            const renderedItems = items.map(item => {
+                return `<li class="text-sm text-dark-750 dark:text-dark-300 mb-2 leading-relaxed">${inlineParse(item)}</li>`;
+            }).join('');
+            return `<ul class="list-disc pl-6 my-4 space-y-1">${renderedItems}</ul>`;
+        }
+
+        // Lists (Ordered)
+        if (/^\d+\.\s+/.test(trimmed)) {
+            const items = trimmed.split(/\n\d+\.\s+/);
+            items[0] = items[0].replace(/^\d+\.\s+/, '');
+            const renderedItems = items.map(item => {
+                return `<li class="text-sm text-dark-750 dark:text-dark-300 mb-2 leading-relaxed">${inlineParse(item)}</li>`;
+            }).join('');
+            return `<ol class="list-decimal pl-6 my-4 space-y-1">${renderedItems}</ol>`;
+        }
+
+        // Standard Paragraph
+        return `<p class="mb-4 text-sm text-dark-700 dark:text-dark-300 leading-relaxed font-sans">${inlineParse(trimmed)}</p>`;
     });
 
-    // Horizontal rules
-    html = html.replace(/^---$/gm, '<hr class="my-6 border-t border-dark-200 dark:border-dark-800" />');
+    let html = parsedBlocks.join('\n');
 
     // Restore Code Blocks
     codeBlocks.forEach((block, idx) => {
         const placeholder = `__CODE_BLOCK_PLACEHOLDER_${idx}__`;
-        const renderedCode = `<div class="relative my-4 rounded-xl overflow-hidden border border-dark-300 dark:border-dark-800/80 bg-dark-900 font-mono text-xs">
-            <div class="flex justify-between items-center px-4 py-2 bg-dark-950 text-dark-400 border-b border-dark-850/60">
-                <span class="text-[9px] uppercase font-bold text-dark-500">${block.lang}</span>
-                <span class="text-[8px] text-dark-600">readme_code_block</span>
+        const renderedCode = `<div class="relative my-6 rounded-xl overflow-hidden border border-dark-200 dark:border-dark-800/80 bg-dark-900 font-mono text-xs shadow-sm">
+            <div class="flex justify-between items-center px-4 py-2 bg-dark-950 text-dark-400 border-b border-dark-850/60 select-none">
+                <span class="text-[9px] uppercase font-bold text-dark-500 tracking-wider">${block.lang}</span>
+                <span class="text-[9px] text-dark-600">code block</span>
             </div>
-            <pre class="p-4 overflow-x-auto text-dark-200 leading-relaxed"><code class="language-${block.lang}">${block.code}</code></pre>
+            <pre class="p-4 overflow-x-auto text-dark-200 leading-relaxed font-mono select-text"><code class="language-${block.lang}">${block.code}</code></pre>
         </div>`;
         html = html.replace(placeholder, renderedCode);
     });
-
-    // Newlines & Breaks
-    html = html.replace(/\n\n/g, '<div class="h-3"></div>');
-    html = html.replace(/\n/g, '<br />');
 
     return html;
 };
@@ -501,6 +544,18 @@ const Learning = () => {
             fetchRepoFile(selectedRepo.id, currentFilePath);
         }
     }, [selectedRepo, activeSection]);
+
+    // Lock outer viewport scrolling and hide footer when wiki tab is active
+    useEffect(() => {
+        if (activeSection === 'wiki') {
+            document.documentElement.classList.add('wiki-explorer-active');
+        } else {
+            document.documentElement.classList.remove('wiki-explorer-active');
+        }
+        return () => {
+            document.documentElement.classList.remove('wiki-explorer-active');
+        };
+    }, [activeSection]);
 
     const fetchData = async () => {
         try {
@@ -837,23 +892,25 @@ const Learning = () => {
     };
 
     return (
-        <div className="min-h-screen py-12 px-4 bg-dark-50 dark:bg-dark-950/20">
-            <div className="max-w-7xl mx-auto">
+        <div className={`min-h-screen bg-dark-50 dark:bg-dark-950/20 flex flex-col ${activeSection === 'wiki' ? 'h-screen overflow-hidden' : 'py-12 px-4'}`}>
+            <div className={`w-full flex-grow flex flex-col min-h-0 ${activeSection === 'wiki' ? 'overflow-hidden' : 'max-w-7xl mx-auto'}`}>
                 {/* Hero Section */}
-                <div className="text-center mb-10">
-                    <span className="inline-block px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full text-sm font-medium mb-6">
-                        Learning Portal
-                    </span>
-                    <h1 className="text-4xl md:text-5xl font-display font-bold text-dark-900 dark:text-white mb-6">
-                        Level Up Your Engineering Skills
-                    </h1>
-                    <p className="text-xl text-dark-500 dark:text-dark-400 max-w-2xl mx-auto">
-                        Curated resource guides, low-level & high-level designs, and an interactive coding sheet to track your progress.
-                    </p>
-                </div>
+                {activeSection !== 'wiki' && (
+                    <div className="text-center mb-10">
+                        <span className="inline-block px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full text-sm font-medium mb-6">
+                            Learning Portal
+                        </span>
+                        <h1 className="text-4xl md:text-5xl font-display font-bold text-dark-900 dark:text-white mb-6">
+                            Level Up Your Engineering Skills
+                        </h1>
+                        <p className="text-xl text-dark-505 dark:text-dark-400 max-w-2xl mx-auto">
+                            Curated resource guides, low-level & high-level designs, and an interactive coding sheet to track your progress.
+                        </p>
+                    </div>
+                )}
 
                 {/* Section Navigation Tabs */}
-                <div className="flex justify-center mb-12">
+                <div className={`flex justify-center flex-shrink-0 ${activeSection === 'wiki' ? 'mb-6' : 'mb-12'}`}>
                     <div className="inline-flex p-1 bg-dark-100 dark:bg-dark-850/80 backdrop-blur-md rounded-2xl border border-dark-200/50 dark:border-dark-800">
                         <button
                             onClick={() => setActiveSection('resources')}
@@ -969,9 +1026,9 @@ const Learning = () => {
 
                 {/* --- Tab 2: Syllabus Wiki Explorer --- */}
                 {activeSection === 'wiki' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in">
+                    <div className="flex-grow flex flex-col lg:flex-row gap-6 min-h-0 overflow-hidden animate-fade-in pb-4">
                         {/* Left Column: Repository Selector & File Explorer */}
-                        <div className="lg:col-span-4 space-y-6">
+                        <div className="w-full lg:w-80 flex flex-col gap-4 overflow-y-auto h-full flex-shrink-0">
                             {/* Repo Dropdown Selector */}
                             <Card className="p-4">
                                 <label className="block text-xs font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider mb-2">
@@ -994,13 +1051,13 @@ const Learning = () => {
                             </Card>
 
                             {/* File Explorer Tree */}
-                            <Card className="p-4">
-                                <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3 flex items-center justify-between">
+                            <Card className="p-4 flex flex-col min-h-0 flex-grow">
+                                <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3 flex items-center justify-between flex-shrink-0">
                                     <span>Repository Files</span>
                                     {treeLoading && <span className="text-[10px] text-primary-500 animate-pulse">Scanning...</span>}
                                 </h3>
                                 
-                                <div className="border border-dark-200/50 dark:border-dark-800 rounded-xl p-2.5 max-h-[360px] overflow-y-auto bg-dark-50/20 dark:bg-dark-900/10">
+                                <div className="border border-dark-200/50 dark:border-dark-800 rounded-xl p-2.5 overflow-y-auto bg-dark-50/20 dark:bg-dark-900/10 flex-grow min-h-0">
                                     {treeLoading ? (
                                         <div className="py-8 text-center text-xs text-dark-400 dark:text-dark-550">
                                             Scanning repository hierarchy...
@@ -1040,11 +1097,11 @@ const Learning = () => {
 
                             {/* Document Outline (headings from currently loaded file) */}
                             {markdownContent && !wikiLoading && (
-                                <Card className="p-4 hidden lg:block">
-                                    <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3">
+                                <Card className="p-4 hidden lg:block flex-shrink-0">
+                                    <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3 flex-shrink-0">
                                         Document Outline
                                     </h3>
-                                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
+                                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
                                         {getOutline(markdownContent).length > 0 ? (
                                             getOutline(markdownContent).map((h, i) => (
                                                 <div
@@ -1068,10 +1125,10 @@ const Learning = () => {
                         </div>
 
                         {/* Right Column: Markdown Reader Panel */}
-                        <div className="lg:col-span-8">
-                            <Card className="p-6 md:p-8 min-h-[640px] flex flex-col">
+                        <div className="flex-grow overflow-hidden h-full flex flex-col min-w-0">
+                            <Card className="p-6 md:p-8 h-full flex flex-col shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden min-h-0">
                                 {/* Header / Path bar */}
-                                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-dark-200 dark:border-dark-800 mb-6 text-sm">
+                                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-dark-200 dark:border-dark-800 mb-4 text-sm flex-shrink-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="font-bold text-primary-500">{selectedRepo.name}</span>
                                         <span className="text-dark-350 dark:text-dark-600">/</span>
@@ -1112,7 +1169,7 @@ const Learning = () => {
                                 </div>
 
                                 {/* Main Reader Panel */}
-                                <div className="flex-grow flex flex-col justify-start">
+                                <div className="flex-grow overflow-y-auto pr-2 min-h-0 mt-2 flex flex-col justify-start">
                                     {wikiLoading ? (
                                         <div className="flex-grow flex flex-col justify-center items-center py-20">
                                             <svg className="animate-spin h-8 w-8 text-primary-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
