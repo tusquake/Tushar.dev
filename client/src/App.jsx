@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -7,9 +7,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 // Pages
 import Home from './pages/Home';
 import Projects from './pages/Projects';
-import Certificates from './pages/Certificates';
-import Skills from './pages/Skills';
-import Experience from './pages/Experience';
+import AboutCreator from './pages/AboutCreator';
 import Learning from './pages/Learning';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -44,23 +42,13 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="projects" element={<Projects />} />
-            <Route
-              path="certificates"
-              element={
-                <DirectAccessRedirect>
-                  <Certificates />
-                </DirectAccessRedirect>
-              }
-            />
-            <Route path="skills" element={<Skills />} />
-            <Route
-              path="experience"
-              element={
-                <DirectAccessRedirect>
-                  <Experience />
-                </DirectAccessRedirect>
-              }
-            />
+            <Route path="about" element={<AboutCreator />} />
+            
+            {/* Redirect legacy portfolio subpages to AboutCreator */}
+            <Route path="experience" element={<Navigate to="/about" replace />} />
+            <Route path="skills" element={<Navigate to="/about" replace />} />
+            <Route path="certificates" element={<Navigate to="/about" replace />} />
+
             <Route path="learning" element={<Learning />} />
             <Route path="contact" element={<Contact />} />
             <Route path="login" element={<Login />} />

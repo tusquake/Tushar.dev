@@ -51,9 +51,7 @@ const Navbar = () => {
         { name: 'Home', path: '/' },
         { name: 'Learning Hub', path: '/learning' },
         { name: 'Projects', path: '/projects' },
-        { name: 'Experience', path: '/experience' },
-        { name: 'Skills', path: '/skills' },
-        { name: 'Certificates', path: '/certificates' },
+        { name: 'About Creator', path: '/about' },
         { name: 'Contact', path: '/contact' },
     ];
 
