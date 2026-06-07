@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { marked } from 'marked';
 import { useAuth } from '../context/AuthContext';
 import { learningResourcesAPI, learningAPI, dsaProgressAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
+
+// Configure marked options
+marked.setOptions({
+    gfm: true,
+    breaks: true
+});
 import { TOPICS, ALL_QUESTIONS } from '../data/dsaQuestions';
 
 const GITHUB_REPOS = [
@@ -277,122 +284,26 @@ const resolvePath = (base, relative) => {
     return baseParts.join('/');
 };
 
-// Local custom parser: Markdown -> HTML
+// Local custom parser: Markdown -> HTML using marked library
 const parseMarkdown = (markdown) => {
     if (!markdown) return '';
-    
-    // Normalize newlines
-    let text = markdown.replace(/\r\n/g, '\n');
-    
-    // Save and mask Code Blocks first to protect their formatting
-    const codeBlocks = [];
-    text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
-        codeBlocks.push({ lang: lang || 'text', code: code.trim() });
-        return placeholder;
-    });
-
-    // Inline formatting function
-    const inlineParse = (str) => {
-        let s = str;
-        // Escape raw HTML tags for safety
-        s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    try {
+        let html = marked.parse(markdown);
         
-        // Inline code
-        s = s.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-dark-100 dark:bg-dark-800 text-rose-500 font-mono text-xs font-semibold">$1</code>');
-        
-        // Bold
-        s = s.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-dark-900 dark:text-white">$1</strong>');
-        s = s.replace(/__([^_]+)__/g, '<strong class="font-bold text-dark-900 dark:text-white">$1</strong>');
-        
-        // Italic
-        s = s.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
-        s = s.replace(/_([^_]+)_/g, '<em class="italic">$1</em>');
-
-        // Links
-        s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, href) => {
-            if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#')) {
-                return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 hover:underline font-semibold inline-flex items-center gap-0.5">${label}</a>`;
+        // Post-process links to support relative repository links correctly
+        html = html.replace(/<a\s+([^>]*?)href="([^"]+)"([^>]*?)>/gi, (match, before, href, after) => {
+            if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#') || href.startsWith('mailto:')) {
+                return `<a ${before}href="${href}"${after} target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 hover:underline font-semibold inline-flex items-center gap-0.5">`;
             } else {
-                return `<a href="#" data-relative-path="${href}" class="text-secondary-500 hover:underline font-bold relative-repo-link">${label}</a>`;
+                return `<a href="#" data-relative-path="${href}" class="text-secondary-500 hover:underline font-bold relative-repo-link" ${before}${after}>`;
             }
         });
-
-        return s;
-    };
-
-    // Handle block level structures
-    const blocks = text.split(/\n\n+/);
-    const parsedBlocks = blocks.map(block => {
-        const trimmed = block.trim();
-        if (!trimmed) return '';
-
-        // Code block placeholders
-        if (trimmed.startsWith('__CODE_BLOCK_PLACEHOLDER_')) {
-            return trimmed;
-        }
-
-        // Headers
-        if (trimmed.startsWith('# ')) {
-            return `<h1 class="text-3xl font-extrabold font-display text-dark-900 dark:text-white mt-8 mb-4 pb-3 border-b border-dark-200 dark:border-dark-800 leading-tight">${trimmed.substring(2)}</h1>`;
-        }
-        if (trimmed.startsWith('## ')) {
-            return `<h2 class="text-2xl font-bold font-display text-dark-900 dark:text-white mt-7 mb-4 pb-2 border-b border-dark-200/50 dark:border-dark-800/60 leading-snug">${trimmed.substring(3)}</h2>`;
-        }
-        if (trimmed.startsWith('### ')) {
-            return `<h3 class="text-xl font-bold text-dark-850 dark:text-dark-100 mt-6 mb-3 leading-normal">${trimmed.substring(4)}</h3>`;
-        }
-        if (trimmed.startsWith('#### ')) {
-            return `<h4 class="text-lg font-bold text-dark-800 dark:text-dark-200 mt-5 mb-2">${trimmed.substring(5)}</h4>`;
-        }
-
-        // Blockquotes
-        if (trimmed.startsWith('> ') || trimmed.startsWith('&gt; ')) {
-            const content = trimmed.replace(/^(&gt;|>)\s*/gm, '');
-            return `<blockquote class="border-l-4 border-primary-500 pl-4 py-2 my-4 bg-dark-50 dark:bg-dark-900/40 rounded-r-xl text-dark-600 dark:text-dark-400 italic text-sm leading-relaxed">${content}</blockquote>`;
-        }
-
-        // Lists (Unordered)
-        if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('+ ')) {
-            const items = trimmed.split(/\n[-*+]\s+/);
-            // clean first item prefix
-            items[0] = items[0].replace(/^[-*+]\s+/, '');
-            const renderedItems = items.map(item => {
-                return `<li class="text-sm text-dark-750 dark:text-dark-300 mb-2 leading-relaxed">${inlineParse(item)}</li>`;
-            }).join('');
-            return `<ul class="list-disc pl-6 my-4 space-y-1">${renderedItems}</ul>`;
-        }
-
-        // Lists (Ordered)
-        if (/^\d+\.\s+/.test(trimmed)) {
-            const items = trimmed.split(/\n\d+\.\s+/);
-            items[0] = items[0].replace(/^\d+\.\s+/, '');
-            const renderedItems = items.map(item => {
-                return `<li class="text-sm text-dark-750 dark:text-dark-300 mb-2 leading-relaxed">${inlineParse(item)}</li>`;
-            }).join('');
-            return `<ol class="list-decimal pl-6 my-4 space-y-1">${renderedItems}</ol>`;
-        }
-
-        // Standard Paragraph
-        return `<p class="mb-4 text-sm text-dark-700 dark:text-dark-300 leading-relaxed font-sans">${inlineParse(trimmed)}</p>`;
-    });
-
-    let html = parsedBlocks.join('\n');
-
-    // Restore Code Blocks
-    codeBlocks.forEach((block, idx) => {
-        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${idx}__`;
-        const renderedCode = `<div class="relative my-6 rounded-xl overflow-hidden border border-dark-200 dark:border-dark-800/80 bg-dark-900 font-mono text-xs shadow-sm">
-            <div class="flex justify-between items-center px-4 py-2 bg-dark-950 text-dark-400 border-b border-dark-850/60 select-none">
-                <span class="text-[9px] uppercase font-bold text-dark-500 tracking-wider">${block.lang}</span>
-                <span class="text-[9px] text-dark-600">code block</span>
-            </div>
-            <pre class="p-4 overflow-x-auto text-dark-200 leading-relaxed font-mono select-text"><code class="language-${block.lang}">${block.code}</code></pre>
-        </div>`;
-        html = html.replace(placeholder, renderedCode);
-    });
-
-    return html;
+        
+        return html;
+    } catch (e) {
+        console.error('Error parsing markdown content', e);
+        return markdown;
+    }
 };
 
 // JavaScript Recursive File Tree Builder
