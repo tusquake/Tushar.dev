@@ -71,10 +71,13 @@ const Navbar = () => {
                     {/* Logo */}
                     <Link
                         to="/"
-                        className="flex items-center text-2xl font-display font-bold"
+                        className="flex items-center text-2xl font-bold tracking-tight transition-all duration-200"
+                        style={{
+                            fontFamily: darkMode ? 'monospace' : 'Inter, sans-serif'
+                        }}
                     >
-                        <span className="gradient-text">DevLearn</span>
-                        <span className="text-dark-705 dark:text-white">.hub</span>
+                        <span className={darkMode ? 'text-white' : 'text-[#1e1b4b]'}>DevLearn</span>
+                        <span className="gradient-text">.hub</span>
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -97,22 +100,43 @@ const Navbar = () => {
 
                     {/* Right side actions */}
                     <div className="hidden md:flex items-center space-x-4">
-                        {/* Dark mode toggle */}
-                        <button
-                            onClick={toggleDarkMode}
-                            className="p-2 rounded-lg text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors cursor-pointer"
-                            aria-label="Toggle dark mode"
-                        >
-                            {darkMode ? (
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
-                            )}
-                        </button>
+                        {/* Theme Swatch Toggle */}
+                        <div className="flex items-center gap-2 mr-2" title="Switch Theme">
+                            <button
+                                onClick={() => {
+                                    if (!darkMode) {
+                                        setDarkMode(true);
+                                        document.documentElement.classList.add('dark');
+                                        localStorage.setItem('theme', 'dark');
+                                    }
+                                }}
+                                className="w-5 h-5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
+                                style={{
+                                    backgroundColor: '#39d353',
+                                    border: darkMode ? '2px solid #ffffff' : 'none',
+                                    outline: darkMode ? '2px solid #39d353' : 'none',
+                                    outlineOffset: darkMode ? '2px' : 'none'
+                                }}
+                                aria-label="Terminal Green Theme"
+                            />
+                            <button
+                                onClick={() => {
+                                    if (darkMode) {
+                                        setDarkMode(false);
+                                        document.documentElement.classList.remove('dark');
+                                        localStorage.setItem('theme', 'light');
+                                    }
+                                }}
+                                className="w-5 h-5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
+                                style={{
+                                    backgroundColor: '#7c3aed',
+                                    border: !darkMode ? '2px solid #1e1b4b' : 'none',
+                                    outline: !darkMode ? '2px solid #7c3aed' : 'none',
+                                    outlineOffset: !darkMode ? '2px' : 'none'
+                                }}
+                                aria-label="Soft Purple Theme"
+                            />
+                        </div>
 
                         {/* Auth buttons */}
                         {isAuthenticated ? (
@@ -147,20 +171,43 @@ const Navbar = () => {
 
                     {/* Mobile menu button */}
                     <div className="md:hidden flex items-center space-x-3">
-                        <button
-                            onClick={toggleDarkMode}
-                            className="p-2 rounded-lg text-dark-500 dark:text-dark-400"
-                        >
-                            {darkMode ? (
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
-                            )}
-                        </button>
+                        {/* Mobile Theme Swatch Toggle */}
+                        <div className="flex items-center gap-1.5 mr-1">
+                            <button
+                                onClick={() => {
+                                    if (!darkMode) {
+                                        setDarkMode(true);
+                                        document.documentElement.classList.add('dark');
+                                        localStorage.setItem('theme', 'dark');
+                                    }
+                                }}
+                                className="w-4.5 h-4.5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
+                                style={{
+                                    backgroundColor: '#39d353',
+                                    border: darkMode ? '1.5px solid #ffffff' : 'none',
+                                    outline: darkMode ? '1.5px solid #39d353' : 'none',
+                                    outlineOffset: darkMode ? '1.5px' : 'none'
+                                }}
+                                aria-label="Terminal Green Theme"
+                            />
+                            <button
+                                onClick={() => {
+                                    if (darkMode) {
+                                        setDarkMode(false);
+                                        document.documentElement.classList.remove('dark');
+                                        localStorage.setItem('theme', 'light');
+                                    }
+                                }}
+                                className="w-4.5 h-4.5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
+                                style={{
+                                    backgroundColor: '#7c3aed',
+                                    border: !darkMode ? '1.5px solid #1e1b4b' : 'none',
+                                    outline: !darkMode ? '1.5px solid #7c3aed' : 'none',
+                                    outlineOffset: !darkMode ? '1.5px' : 'none'
+                                }}
+                                aria-label="Soft Purple Theme"
+                            />
+                        </div>
                         <button
                             onClick={() => setIsOpen(!isOpen)}
                             className="p-2 rounded-lg text-dark-500 dark:text-dark-400"
