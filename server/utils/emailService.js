@@ -52,4 +52,44 @@ const sendContactEmail = async ({ name, email, subject, message }) => {
   }
 };
 
-module.exports = { sendContactEmail };
+// Send reset password email
+const sendResetPasswordEmail = async ({ email, name, resetUrl }) => {
+  const transporter = createTransporter();
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'Portfolio: Reset Password Request',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b;">
+        <h2 style="color: #6366f1; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-family: 'Outfit', sans-serif;">
+          Reset Your Password
+        </h2>
+        <p>Hello ${name || 'User'},</p>
+        <p>You requested to reset your password. Please click the button below to set a new password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block;">
+            Reset Password
+          </a>
+        </div>
+        <p>Or copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; color: #64748b; font-size: 14px;"><a href="${resetUrl}">${resetUrl}</a></p>
+        <p>This link is valid for 1 hour. If you did not make this request, you can safely ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+        <p style="color: #94a3b8; font-size: 12px;">
+          Tushar Seth Portfolio Learning Portal
+        </p>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error('Reset email sending failed:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+module.exports = { sendContactEmail, sendResetPasswordEmail };

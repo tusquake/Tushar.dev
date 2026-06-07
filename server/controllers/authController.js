@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/tokenUtils');
+const { sendResetPasswordEmail } = require('../utils/emailService');
 
 // Admin email - this user gets admin role automatically
 const ADMIN_EMAIL = 'sethtushar111@gmail.com';
@@ -236,10 +238,139 @@ const getProfile = async (req, res) => {
     }
 };
 
+// @desc    Forgot password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide an email address'
+            });
+        }
+
+        const user = await User.findOne({ email });
+
+        // Security best practice: do not reveal user existence, but respond with a generic message
+        if (!user) {
+            return res.json({
+                success: true,
+                message: 'If the email is registered, a password reset link has been sent'
+            });
+        }
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+
+        // Hash token and save to database
+        user.resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+
+        // Set token expiration (1 hour)
+        user.resetPasswordExpire = Date.now() + 60 * 60 * 1000;
+
+        await user.save();
+
+        // Create reset URL pointing to frontend route
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+
+        // Send email
+        const mailResult = await sendResetPasswordEmail({
+            email: user.email,
+            name: user.name,
+            resetUrl
+        });
+
+        if (!mailResult.success) {
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpire = undefined;
+            await user.save();
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to send reset email'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'If the email is registered, a password reset link has been sent'
+        });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred while processing forgot password request'
+        });
+    }
+};
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password/:token
+// @access  Public
+const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        if (!password || password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 8 characters long'
+            });
+        }
+
+        // Hash the token to compare with DB value
+        const resetPasswordToken = crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+        // Find user by token & check if token hasn't expired
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired reset token'
+            });
+        }
+
+        // Update password and clear reset fields
+        user.password = password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Password reset successful! You can now log in.'
+        });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred while resetting password'
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
     refreshAccessToken,
     logout,
-    getProfile
+    getProfile,
+    forgotPassword,
+    resetPassword
 };

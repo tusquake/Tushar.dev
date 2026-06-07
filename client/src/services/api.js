@@ -67,6 +67,8 @@ export const authAPI = {
     logout: () => api.post('/auth/logout'),
     refreshToken: () => api.post('/auth/refresh'),
     getProfile: () => api.get('/user/profile'),
+    forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+    resetPassword: (token, password) => api.post(`/auth/reset-password/${token}`, { password }),
 };
 
 // Projects API
