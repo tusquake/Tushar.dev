@@ -1,7 +1,28 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 
 const Heatmap = ({ activities = [] }) => {
     const [filterType, setFilterType] = useState('all');
+    const [tooltip, setTooltip] = useState(null);
+    const containerRef = useRef(null);
+    const [cellSize, setCellSize] = useState(13);
+
+    // Recalculate cell size on resize so grid fills full width
+    useEffect(() => {
+        const calc = () => {
+            if (!containerRef.current) return;
+            const containerWidth = containerRef.current.clientWidth;
+            const DAY_LABEL_WIDTH = 32;
+            const GAP = 3;
+            const totalWeeks = Math.ceil(365 / 7) + 2;
+            const available = containerWidth - DAY_LABEL_WIDTH - (totalWeeks - 1) * GAP;
+            const size = Math.max(10, Math.floor(available / totalWeeks));
+            setCellSize(Math.min(size, 16));
+        };
+        calc();
+        const ro = new ResizeObserver(calc);
+        if (containerRef.current) ro.observe(containerRef.current);
+        return () => ro.disconnect();
+    }, []);
 
     // Filter activities based on selected type
     const filteredActivities = useMemo(() => {
@@ -21,53 +42,35 @@ const Heatmap = ({ activities = [] }) => {
         return map;
     }, [filteredActivities]);
 
-    // Calculate user streaks and stats
+    // Calculate streaks and stats
     const stats = useMemo(() => {
         const allDates = Object.keys(activityMap).sort();
-        if (allDates.length === 0) {
-            return { total: 0, activeDays: 0, currentStreak: 0, longestStreak: 0 };
-        }
+        if (allDates.length === 0) return { total: 0, activeDays: 0, currentStreak: 0, longestStreak: 0 };
 
-        let longestStreak = 0;
-        let currentStreak = 0;
-        let runningStreak = 0;
+        let longestStreak = 0, runningStreak = 0;
         let prevDate = null;
         const activeDatesSet = new Set(allDates);
 
-        // Find longest streak
-        allDates.forEach((dateStr) => {
+        allDates.forEach(dateStr => {
             const currentDate = new Date(dateStr);
             if (prevDate) {
-                const diffTime = Math.abs(currentDate - prevDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays === 1) {
-                    runningStreak++;
-                } else if (diffDays > 1) {
-                    runningStreak = 1;
-                }
+                const diffDays = Math.ceil(Math.abs(currentDate - prevDate) / 86400000);
+                runningStreak = diffDays === 1 ? runningStreak + 1 : 1;
             } else {
                 runningStreak = 1;
             }
-            if (runningStreak > longestStreak) {
-                longestStreak = runningStreak;
-            }
+            if (runningStreak > longestStreak) longestStreak = runningStreak;
             prevDate = currentDate;
         });
 
-        // Current streak counting backwards from today or yesterday
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
-        
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-        let streakDate = activeDatesSet.has(todayStr) 
-            ? today 
-            : (activeDatesSet.has(yesterdayStr) ? yesterday : null);
-
+        let currentStreak = 0;
+        let streakDate = activeDatesSet.has(todayStr) ? today : (activeDatesSet.has(yesterdayStr) ? yesterday : null);
         if (streakDate) {
-            currentStreak = 0;
             let checkStr = streakDate.toISOString().split('T')[0];
             while (activeDatesSet.has(checkStr)) {
                 currentStreak++;
@@ -84,216 +87,184 @@ const Heatmap = ({ activities = [] }) => {
         };
     }, [activityMap, filteredActivities]);
 
-    // Generate days for 1 year heatmap grid
+    // Generate days for full year grid
     const daysData = useMemo(() => {
         const list = [];
         const today = new Date();
-        const totalDays = 365;
-        
-        // Find starting Sunday 365 days ago
         const startDate = new Date();
-        startDate.setDate(today.getDate() - totalDays + 1);
-        const startDayOfWeek = startDate.getDay();
-        startDate.setDate(startDate.getDate() - startDayOfWeek);
+        startDate.setDate(today.getDate() - 364);
+        startDate.setDate(startDate.getDate() - startDate.getDay()); // align to Sunday
 
         const curr = new Date(startDate);
-        // Fill up to today and make sure it has full columns of 7
         while (curr <= today || list.length % 7 !== 0) {
             const dateStr = curr.toISOString().split('T')[0];
             const dayActs = activityMap[dateStr] || [];
-            
-            list.push({
-                date: new Date(curr),
-                dateStr,
-                activities: dayActs,
-                count: dayActs.length
-            });
+            list.push({ date: new Date(curr), dateStr, activities: dayActs, count: dayActs.length });
             curr.setDate(curr.getDate() + 1);
         }
         return list;
     }, [activityMap]);
 
-    // Color code depending on amount of daily completions
-    const getColorClass = (count) => {
-        if (count === 0) return 'bg-dark-150 dark:bg-dark-850/80 border border-dark-200/10 dark:border-dark-800/30';
-        if (count === 1) return 'bg-primary-100 dark:bg-primary-950/40 border border-primary-250/20 dark:border-primary-900/30';
-        if (count === 2) return 'bg-primary-300 dark:bg-primary-800/60 border border-primary-400/20 dark:border-primary-800/40';
-        if (count === 3) return 'bg-primary-500 dark:bg-primary-600 border border-primary-600/30 dark:border-primary-500/50';
-        return 'bg-primary-700 dark:bg-primary-400 border border-primary-850/30 dark:border-primary-350/50';
-    };
+    // Weeks column data
+    const weeks = useMemo(() => {
+        const w = [];
+        for (let i = 0; i < daysData.length; i += 7) w.push(daysData.slice(i, i + 7));
+        return w;
+    }, [daysData]);
 
-    // Construct months layout headers
+    // Month labels (one per month change)
     const monthLabels = useMemo(() => {
         const labels = [];
         let prevMonth = -1;
-        daysData.forEach((day, index) => {
-            if (index % 7 === 0) {
-                const month = day.date.getMonth();
-                if (month !== prevMonth) {
-                    const label = day.date.toLocaleString('default', { month: 'short' });
-                    labels.push({ label, index: Math.floor(index / 7) });
-                    prevMonth = month;
-                }
+        weeks.forEach((week, wi) => {
+            const month = week[0].date.getMonth();
+            if (month !== prevMonth) {
+                labels.push({ label: week[0].date.toLocaleString('default', { month: 'short' }).toUpperCase(), weekIndex: wi });
+                prevMonth = month;
             }
         });
         return labels;
-    }, [daysData]);
+    }, [weeks]);
 
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const getColorClass = (count) => {
+        if (count === 0) return 'bg-dark-150 dark:bg-dark-800/60';
+        if (count === 1) return 'bg-emerald-200 dark:bg-emerald-950/70';
+        if (count === 2) return 'bg-emerald-400 dark:bg-emerald-800';
+        if (count === 3) return 'bg-emerald-500 dark:bg-emerald-600';
+        return 'bg-emerald-600 dark:bg-emerald-400';
+    };
+
+    const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const gap = 3;
 
     return (
-        <div className="bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 rounded-2xl p-6 shadow-sm mb-8 relative overflow-hidden">
-            {/* Header section with Filter controls */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-dark-100 dark:border-dark-800/60">
+        <div className="bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 rounded-2xl p-6 shadow-sm mb-8 w-full">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-5 border-b border-dark-100 dark:border-dark-800/60">
                 <div>
-                    <h2 className="text-xl font-bold text-dark-900 dark:text-white font-display flex items-center gap-2">
-                        <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h2 className="text-lg font-bold text-dark-900 dark:text-white font-display flex items-center gap-2">
+                        <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        Activity Progress Heatmap
+                        Activity Heatmap
                     </h2>
-                    <p className="text-xs text-dark-450 dark:text-dark-500 mt-0.5">Visualize your daily practice consistency in real time.</p>
+                    <p className="text-xs text-dark-400 dark:text-dark-500 mt-0.5">Your daily practice consistency over the past year</p>
                 </div>
 
-                <div className="flex items-center gap-1.5 p-1 bg-dark-50 dark:bg-dark-950/40 border border-dark-200/50 dark:border-dark-800/50 rounded-xl self-start md:self-auto">
-                    <button
-                        onClick={() => setFilterType('all')}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all ${filterType === 'all'
-                            ? 'bg-white dark:bg-dark-850 text-primary-600 dark:text-primary-400 shadow-sm'
-                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'}`}
-                    >
-                        All
-                    </button>
-                    <button
-                        onClick={() => setFilterType('dsa')}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all ${filterType === 'dsa'
-                            ? 'bg-white dark:bg-dark-850 text-primary-600 dark:text-primary-400 shadow-sm'
-                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'}`}
-                    >
-                        DSA Solved
-                    </button>
-                    <button
-                        onClick={() => setFilterType('topic')}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all ${filterType === 'topic'
-                            ? 'bg-white dark:bg-dark-850 text-primary-600 dark:text-primary-400 shadow-sm'
-                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'}`}
-                    >
-                        Topics Completed
-                    </button>
+                <div className="flex items-center gap-1 p-1 bg-dark-100 dark:bg-dark-850 border border-dark-200/50 dark:border-dark-800 rounded-xl self-start sm:self-auto">
+                    {[['all', 'All'], ['dsa', 'DSA Solved'], ['topic', 'Topics']].map(([val, label]) => (
+                        <button
+                            key={val}
+                            onClick={() => setFilterType(val)}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all duration-200 ${filterType === val
+                                ? 'bg-white dark:bg-dark-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                                : 'text-dark-500 dark:text-dark-400 hover:text-dark-800 dark:hover:text-dark-200'}`}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Streak & KPI stats bar */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-3 bg-dark-50/50 dark:bg-dark-950/20 border border-dark-200/30 dark:border-dark-800/30 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary-500/10 dark:bg-primary-500/5 flex items-center justify-center text-primary-500">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+            {/* Stats Bar */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                {[
+                    { icon: '✅', label: 'Total Done', value: stats.total, color: 'text-primary-500', bg: 'bg-primary-500/10' },
+                    { icon: '📅', label: 'Active Days', value: stats.activeDays, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                    { icon: '🔥', label: 'Current Streak', value: `${stats.currentStreak}d`, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+                    { icon: '🏆', label: 'Longest Streak', value: `${stats.longestStreak}d`, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                ].map(({ icon, label, value, color, bg }) => (
+                    <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-dark-50/50 dark:bg-dark-950/30 border border-dark-200/30 dark:border-dark-800/30">
+                        <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center text-base`}>{icon}</div>
+                        <div>
+                            <div className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider">{label}</div>
+                            <div className={`text-lg font-extrabold font-mono leading-tight ${color}`}>{value}</div>
+                        </div>
                     </div>
-                    <div>
-                        <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase block">Total Done</span>
-                        <span className="text-base font-extrabold text-dark-900 dark:text-white font-mono leading-tight">{stats.total}</span>
-                    </div>
-                </div>
-
-                <div className="p-3 bg-dark-50/50 dark:bg-dark-950/20 border border-dark-200/30 dark:border-dark-800/30 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/5 flex items-center justify-center text-emerald-500">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase block">Active Days</span>
-                        <span className="text-base font-extrabold text-dark-900 dark:text-white font-mono leading-tight">{stats.activeDays}</span>
-                    </div>
-                </div>
-
-                <div className="p-3 bg-dark-50/50 dark:bg-dark-950/20 border border-dark-200/30 dark:border-dark-800/30 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-rose-500/10 dark:bg-rose-500/5 flex items-center justify-center text-rose-500 animate-pulse">
-                        🔥
-                    </div>
-                    <div>
-                        <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase block">Current Streak</span>
-                        <span className="text-base font-extrabold text-dark-900 dark:text-white font-mono leading-tight">{stats.currentStreak} days</span>
-                    </div>
-                </div>
-
-                <div className="p-3 bg-dark-50/50 dark:bg-dark-950/20 border border-dark-200/30 dark:border-dark-800/30 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-500/10 dark:bg-amber-500/5 flex items-center justify-center text-amber-500">
-                        🏆
-                    </div>
-                    <div>
-                        <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase block">Longest Streak</span>
-                        <span className="text-base font-extrabold text-dark-900 dark:text-white font-mono leading-tight">{stats.longestStreak} days</span>
-                    </div>
-                </div>
+                ))}
             </div>
 
-            {/* Heatmap Grid Calendar */}
-            <div className="w-full overflow-x-auto pb-2 scrollbar-thin">
-                <div className="min-w-[760px] flex flex-col">
-                    {/* Month Label Headers */}
-                    <div className="relative h-5 mb-1 text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wide">
-                        {monthLabels.map(({ label, index }, i) => (
-                            <span
-                                key={`${label}-${i}`}
-                                className="absolute"
-                                style={{ left: `${index * 13 + 30}px` }}
+            {/* Heatmap Grid — fills full width */}
+            <div ref={containerRef} className="w-full select-none">
+                {/* Month labels row */}
+                <div className="flex mb-1 pl-8" style={{ gap: `${gap}px` }}>
+                    {weeks.map((_, wi) => {
+                        const ml = monthLabels.find(m => m.weekIndex === wi);
+                        return (
+                            <div
+                                key={wi}
+                                style={{ width: `${cellSize}px`, flexShrink: 0 }}
+                                className="text-[9px] font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wide overflow-visible whitespace-nowrap"
                             >
-                                {label}
-                            </span>
+                                {ml ? ml.label : ''}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Day labels + grid */}
+                <div className="flex" style={{ gap: `${gap}px` }}>
+                    {/* Day-of-week labels */}
+                    <div className="flex flex-col" style={{ gap: `${gap}px`, width: '28px', flexShrink: 0 }}>
+                        {DAYS.map((d, i) => (
+                            <div
+                                key={d}
+                                style={{ height: `${cellSize}px`, lineHeight: `${cellSize}px` }}
+                                className="text-[9px] font-bold text-dark-400 dark:text-dark-500 text-right pr-1"
+                            >
+                                {i % 2 === 1 ? d.slice(0, 3) : ''}
+                            </div>
                         ))}
                     </div>
 
-                    <div className="flex gap-2">
-                        {/* Day Labels Column */}
-                        <div className="grid grid-rows-7 gap-[3px] text-[9px] font-bold text-dark-400 dark:text-dark-500 pt-[2px] w-6">
-                            {weekDays.map((day, i) => (
-                                <span key={day} className="h-[10px] leading-[10px]">
-                                    {i % 2 === 1 ? day : ''}
-                                </span>
-                            ))}
-                        </div>
+                    {/* Weeks */}
+                    <div className="flex flex-1" style={{ gap: `${gap}px` }}>
+                        {weeks.map((week, wi) => (
+                            <div key={wi} className="flex flex-col" style={{ gap: `${gap}px`, flex: 1 }}>
+                                {week.map((day) => {
+                                    const formattedDate = day.date.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                                    const tipText = day.count > 0
+                                        ? `${day.count} activit${day.count > 1 ? 'ies' : 'y'} on ${formattedDate}`
+                                        : `No activity on ${formattedDate}`;
 
-                        {/* Flat Grid cells mapped with column flow */}
-                        <div className="grid grid-flow-col grid-rows-7 gap-[3px] auto-cols-max">
-                            {daysData.map((day) => {
-                                const formattedDate = day.date.toLocaleDateString(undefined, {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                });
-                                const tooltipText = day.count > 0
-                                    ? `${day.count} active progress item${day.count > 1 ? 's' : ''} on ${formattedDate}:\n${day.activities.map(a => `• ${a.detail || a.activityType}`).join('\n')}`
-                                    : `No completed items on ${formattedDate}`;
-
-                                return (
-                                    <div
-                                        key={day.dateStr}
-                                        title={tooltipText}
-                                        className={`w-[10px] h-[10px] rounded-[2px] transition-colors duration-250 hover:ring-1 hover:ring-primary-500 cursor-help ${getColorClass(day.count)}`}
-                                    />
-                                );
-                            })}
-                        </div>
+                                    return (
+                                        <div
+                                            key={day.dateStr}
+                                            title={tipText}
+                                            onMouseEnter={e => setTooltip({ text: tipText, x: e.clientX, y: e.clientY })}
+                                            onMouseLeave={() => setTooltip(null)}
+                                            style={{ height: `${cellSize}px`, borderRadius: `${Math.max(2, cellSize * 0.2)}px` }}
+                                            className={`w-full transition-all duration-150 cursor-pointer hover:ring-2 hover:ring-emerald-500/60 hover:scale-110 ${getColorClass(day.count)}`}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* Bottom Heatmap Legend */}
-            <div className="flex items-center justify-between text-[10px] font-semibold text-dark-400 dark:text-dark-500 mt-4 pt-3 border-t border-dark-100 dark:border-dark-800/40">
-                <span>Hover over tiles to view completion logs</span>
-                <div className="flex items-center gap-1.5">
+            {/* Legend */}
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-dark-100 dark:border-dark-800/40">
+                <span className="text-[10px] text-dark-400 dark:text-dark-500 font-medium">Hover tiles to see activity details</span>
+                <div className="flex items-center gap-1.5 text-[10px] text-dark-400 dark:text-dark-500 font-semibold">
                     <span>Less</span>
-                    <div className="w-[10px] h-[10px] rounded-[2px] bg-dark-150 dark:bg-dark-850/80 border border-dark-200/10 dark:border-dark-800/30" />
-                    <div className="w-[10px] h-[10px] rounded-[2px] bg-primary-100 dark:bg-primary-950/40" />
-                    <div className="w-[10px] h-[10px] rounded-[2px] bg-primary-300 dark:bg-primary-800/60" />
-                    <div className="w-[10px] h-[10px] rounded-[2px] bg-primary-500 dark:bg-primary-600" />
-                    <div className="w-[10px] h-[10px] rounded-[2px] bg-primary-700 dark:bg-primary-400" />
+                    {['bg-dark-150 dark:bg-dark-800/60', 'bg-emerald-200 dark:bg-emerald-950/70', 'bg-emerald-400 dark:bg-emerald-800', 'bg-emerald-500 dark:bg-emerald-600', 'bg-emerald-600 dark:bg-emerald-400'].map((cls, i) => (
+                        <div key={i} style={{ width: 11, height: 11, borderRadius: 2 }} className={cls} />
+                    ))}
                     <span>More</span>
                 </div>
             </div>
+
+            {/* Floating tooltip */}
+            {tooltip && (
+                <div
+                    className="fixed z-50 pointer-events-none px-2.5 py-1.5 rounded-lg bg-dark-900 dark:bg-dark-800 text-white text-[11px] font-medium shadow-xl border border-dark-700/50 whitespace-pre-line max-w-[220px]"
+                    style={{ left: tooltip.x + 12, top: tooltip.y - 36 }}
+                >
+                    {tooltip.text}
+                </div>
+            )}
         </div>
     );
 };
