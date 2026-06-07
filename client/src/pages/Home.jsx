@@ -420,7 +420,6 @@ const Home = () => {
                     >
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">DSA</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping group-hover:bg-[#39d353]" />
                         </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <TwoPointersSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} />
@@ -439,7 +438,6 @@ const Home = () => {
                     >
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">System Design</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 group-hover:animate-pulse" />
                         </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <SystemDesignSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
@@ -458,7 +456,6 @@ const Home = () => {
                     >
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">Generative AI</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 group-hover:scale-125 transition-transform" />
                         </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <GenAISVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
@@ -477,7 +474,6 @@ const Home = () => {
                     >
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">Cloud & DevOps</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                         </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <DeploymentSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />

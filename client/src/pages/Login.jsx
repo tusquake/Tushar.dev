@@ -208,7 +208,6 @@ const Login = () => {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [apiError, setApiError] = useState('');
-    const [showOAuthSteps, setShowOAuthSteps] = useState(false);
     const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
     const [activeSlide, setActiveSlide] = useState(0);
 
@@ -431,64 +430,6 @@ const Login = () => {
                                     GitHub
                                 </button>
                             </div>
-
-                            {/* Integration Guide Button */}
-                            <div className="text-center">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowOAuthSteps(!showOAuthSteps)}
-                                    className={`text-xs font-semibold underline hover:text-primary-650 cursor-pointer bg-transparent border-none ${
-                                        isDark ? 'text-primary-400 animate-pulse' : 'text-primary-600 animate-pulse'
-                                    }`}
-                                >
-                                    {showOAuthSteps ? 'Hide OAuth Integration Steps' : 'Show OAuth Integration Steps'}
-                                </button>
-                            </div>
-
-                            {/* Dynamic integration instructions drawer */}
-                            {showOAuthSteps && (
-                                <div className="p-4 bg-dark-50 dark:bg-dark-900 border border-dark-250 dark:border-dark-800 rounded-xl text-left text-xs max-h-60 overflow-y-auto space-y-3 shadow-inner font-sans">
-                                    <h4 className="font-bold text-dark-900 dark:text-white uppercase tracking-wider text-[10px]">OAuth Setup Steps</h4>
-                                    <div>
-                                        <p className="font-semibold text-primary-500 mb-0.5">1. Provider Credentials</p>
-                                        <p className="text-dark-500 dark:text-dark-400 leading-relaxed">
-                                            Register developer credentials in Google Developer Console and GitHub Settings to obtain a client ID and secret. Set callbacks to:
-                                        </p>
-                                        <ul className="list-disc pl-4 mt-1 text-dark-500 dark:text-dark-400 space-y-0.5 font-mono text-[9px]">
-                                            <li>http://localhost:5000/api/auth/google/callback</li>
-                                            <li>http://localhost:5000/api/auth/github/callback</li>
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-primary-500 mb-0.5">2. Backend Controller Strategy</p>
-                                        <p className="text-dark-500 dark:text-dark-400 leading-relaxed">
-                                            Install dependencies: <code className="bg-dark-150 dark:bg-dark-950 px-1 py-0.5 rounded font-mono text-[10px]">npm install passport-google-oauth20 passport-github2</code>. Configure strategy profiles:
-                                        </p>
-                                        <pre className="bg-dark-100 dark:bg-dark-950 p-2 rounded mt-1 font-mono text-[8.5px] text-dark-600 dark:text-dark-400 overflow-x-auto">
-{`passport.use(new GoogleStrategy({
-    clientID: GOOGLE_CLIENT_ID,
-    clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
-  }, (token, tokenSecret, profile, done) => {
-    // Find/Create User model entry
-    return done(null, user);
-  })
-);`}
-                                        </pre>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-primary-500 mb-0.5">3. Client Trigger Actions</p>
-                                        <p className="text-dark-500 dark:text-dark-400 leading-relaxed">
-                                            Direct navigation callbacks from frontend:
-                                        </p>
-                                        <ul className="list-disc pl-4 mt-1 text-dark-500 dark:text-dark-400 space-y-0.5 font-mono text-[9px]">
-                                            <li>Google: window.location.href = "http://localhost:5000/api/auth/google"</li>
-                                            <li>GitHub: window.location.href = "http://localhost:5000/api/auth/github"</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
 
                         <div className="relative flex py-2 items-center mb-4">
                             <div className="flex-grow border-t border-dark-150 dark:border-dark-850"></div>
