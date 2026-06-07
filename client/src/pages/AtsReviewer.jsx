@@ -486,9 +486,40 @@ SECTION RATINGS & FEEDBACK:
                         {/* 1. Score Card */}
                         <Card className="p-6 md:p-8">
                             <div className="flex flex-col md:flex-row items-center gap-6">
-                                <div className={`w-24 h-24 rounded-full border-4 flex flex-col items-center justify-center font-bold font-display ${getScoreColor(report.ats_score)}`}>
-                                    <span className="text-3xl">{report.ats_score}</span>
-                                    <span className="text-[10px] uppercase tracking-wider text-dark-500">Score</span>
+                                <div className="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle
+                                            cx="48"
+                                            cy="48"
+                                            r="38"
+                                            className="stroke-dark-200 dark:stroke-dark-800"
+                                            strokeWidth="6"
+                                            fill="transparent"
+                                        />
+                                        <circle
+                                            cx="48"
+                                            cy="48"
+                                            r="38"
+                                            className={`transition-all duration-1000 ease-out ${
+                                                report.ats_score >= 90 ? 'stroke-emerald-500' :
+                                                report.ats_score >= 70 ? 'stroke-blue-500' :
+                                                report.ats_score >= 50 ? 'stroke-amber-500' : 'stroke-red-500'
+                                            }`}
+                                            strokeWidth="6"
+                                            fill="transparent"
+                                            strokeDasharray={2 * Math.PI * 38}
+                                            strokeDashoffset={2 * Math.PI * 38 - (report.ats_score / 100) * (2 * Math.PI * 38)}
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                    <div className="absolute flex flex-col items-center justify-center">
+                                        <span className="text-3xl font-extrabold font-display text-dark-900 dark:text-white leading-none">
+                                            {report.ats_score}
+                                        </span>
+                                        <span className="text-[9px] uppercase tracking-wider text-dark-400 dark:text-dark-500 mt-1 font-bold">
+                                            Score
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="text-center md:text-left flex-grow">
                                     <div className="flex items-center justify-center md:justify-start gap-3">

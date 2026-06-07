@@ -13,7 +13,7 @@ export const getApiKeys = () => {
 
 // Call Gemini API
 const callGemini = async (prompt, key) => {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
     const response = await axios.post(url, {
         contents: [{
             parts: [{
