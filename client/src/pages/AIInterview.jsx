@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Card from '../components/common/Card';
 import { callLlm, parseJsonResponse } from '../utils/ai';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const AIInterview = () => {
   const { isAuthenticated } = useAuth();
