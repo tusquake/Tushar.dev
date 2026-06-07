@@ -63,7 +63,7 @@ const sampleResources = [
     {
         _id: 'sample-1',
         title: 'Backend Concepts',
-        description: 'Comprehensive guide and examples for backend development concepts.',
+        description: 'Comprehensive guide and examples for backend development, architectures, APIs, and databases.',
         category: 'backend',
         url: 'https://github.com/tusquake/Backend-Concepts',
         type: 'repository'
@@ -90,6 +90,54 @@ const sampleResources = [
         description: 'HLD concepts, system design patterns, and case studies.',
         category: 'hld',
         url: 'https://github.com/tusquake/High-Level-Design',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-5',
+        title: 'DevOps',
+        description: 'Docker containers, Kubernetes orchestration, CI/CD pipelines, and cloud deployment guides.',
+        category: 'devops',
+        url: 'https://github.com/tusquake/DevOps',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-6',
+        title: 'Generative AI',
+        description: 'LLM utilization, prompting architectures, vector databases, embeddings, and agentic workflows.',
+        category: 'hld',
+        url: 'https://github.com/tusquake/Generative-AI',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-7',
+        title: 'Spring AI',
+        description: 'Enterprise AI workflows integrating Spring Boot, Gemini, OpenAI, and vector stores.',
+        category: 'backend',
+        url: 'https://github.com/tusquake/Spring-AI',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-8',
+        title: 'Java Multithreading',
+        description: 'Concurrency models, thread pooling, synchronization constructs, and asynchronous execution in Java.',
+        category: 'backend',
+        url: 'https://github.com/tusquake/Multithreading_in_Java',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-9',
+        title: 'Java Collection Framework',
+        description: 'Deep dive into List, Set, Map implementation details, complex operations, and performance.',
+        category: 'backend',
+        url: 'https://github.com/tusquake/Collection_FrameWork_Java',
+        type: 'repository'
+    },
+    {
+        _id: 'sample-10',
+        title: 'Frontend Low Level Design',
+        description: 'Frontend LLD patterns, architectural concepts, components design, state machine models, and optimization.',
+        category: 'frontend',
+        url: 'https://github.com/tusquake/Low-Level-Design/tree/main/Frontend%20Low%20Level%20Design',
         type: 'repository'
     }
 ];
