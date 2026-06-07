@@ -290,7 +290,7 @@ const parseMarkdown = (markdown) => {
     if (!markdown) return '';
     try {
         let html = marked.parse(markdown);
-        
+
         // Post-process links to support relative repository links correctly
         html = html.replace(/<a\s+([^>]*?)href="([^"]+)"([^>]*?)>/gi, (match, before, href, after) => {
             if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#') || href.startsWith('mailto:')) {
@@ -299,7 +299,7 @@ const parseMarkdown = (markdown) => {
                 return `<a href="#" data-relative-path="${href}" class="text-secondary-500 hover:underline font-bold relative-repo-link" ${before}${after}>`;
             }
         });
-        
+
         return html;
     } catch (e) {
         console.error('Error parsing markdown content', e);
@@ -310,17 +310,17 @@ const parseMarkdown = (markdown) => {
 // JavaScript Recursive File Tree Builder
 const buildFileTree = (files) => {
     const root = { name: 'Root', type: 'folder', children: {}, path: '' };
-    
+
     files.forEach(file => {
         // Only include Markdown files (.md)
         if (file.type === 'blob' && file.path.toLowerCase().endsWith('.md')) {
             const parts = file.path.split('/');
             let current = root;
-            
+
             for (let i = 0; i < parts.length; i++) {
                 const part = parts[i];
                 const isLast = i === parts.length - 1;
-                
+
                 if (isLast) {
                     current.children[part] = {
                         name: part,
@@ -341,7 +341,7 @@ const buildFileTree = (files) => {
             }
         }
     });
-    
+
     return root;
 };
 
@@ -353,11 +353,10 @@ const FileTreeItem = ({ item, level, selectedPath, onFileClick, expandedFolders,
             <div
                 onClick={() => onFileClick(item.path)}
                 style={{ paddingLeft: `${level * 12 + 8}px` }}
-                className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
-                    isSelected
-                        ? 'bg-primary-500/10 text-primary-500 font-semibold'
-                        : 'text-dark-600 dark:text-dark-400 hover:bg-dark-100/40 dark:hover:bg-dark-900/40'
-                }`}
+                className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${isSelected
+                    ? 'bg-primary-500/10 text-primary-500 font-semibold'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-100/40 dark:hover:bg-dark-900/40'
+                    }`}
             >
                 <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -412,7 +411,7 @@ const Learning = () => {
     const [resources, setResources] = useState([]);
     const [learningTopics, setLearningTopics] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Tab switching
     const [activeSection, setActiveSection] = useState('resources'); // 'resources', 'wiki', 'dsa'
     const [activeCategory, setActiveCategory] = useState('all');
@@ -631,7 +630,7 @@ const Learning = () => {
         setWikiError('');
         const mainUrl = `https://raw.githubusercontent.com/tusquake/${repoId}/main/${filePath}`;
         const masterUrl = `https://raw.githubusercontent.com/tusquake/${repoId}/master/${filePath}`;
-        
+
         try {
             const res = await axios.get(mainUrl);
             setMarkdownContent(res.data);
@@ -827,11 +826,10 @@ const Learning = () => {
                     <div className="inline-flex p-1 bg-dark-100 dark:bg-dark-850/80 backdrop-blur-md rounded-2xl border border-dark-200/50 dark:border-dark-800">
                         <button
                             onClick={() => setActiveSection('resources')}
-                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
-                                activeSection === 'resources'
-                                    ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
-                                    : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
-                            }`}
+                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${activeSection === 'resources'
+                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
+                                : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
+                                }`}
                         >
                             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v2" />
@@ -840,11 +838,10 @@ const Learning = () => {
                         </button>
                         <button
                             onClick={() => setActiveSection('wiki')}
-                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
-                                activeSection === 'wiki'
-                                    ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
-                                    : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
-                            }`}
+                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${activeSection === 'wiki'
+                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
+                                : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
+                                }`}
                         >
                             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -853,11 +850,10 @@ const Learning = () => {
                         </button>
                         <button
                             onClick={() => setActiveSection('dsa')}
-                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
-                                activeSection === 'dsa'
-                                    ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
-                                    : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
-                            }`}
+                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${activeSection === 'dsa'
+                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
+                                : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
+                                }`}
                         >
                             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -876,11 +872,10 @@ const Learning = () => {
                                 <button
                                     key={cat.id}
                                     onClick={() => setActiveCategory(cat.id)}
-                                    className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${
-                                        activeCategory === cat.id
-                                            ? 'bg-primary-500 text-white'
-                                            : 'bg-dark-100 dark:bg-dark-800 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700'
-                                    }`}
+                                    className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${activeCategory === cat.id
+                                        ? 'bg-primary-500 text-white'
+                                        : 'bg-dark-100 dark:bg-dark-800 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700'
+                                        }`}
                                 >
                                     {cat.name}
                                 </button>
@@ -969,7 +964,7 @@ const Learning = () => {
                                     <span>Repository Files</span>
                                     {treeLoading && <span className="text-[10px] text-primary-500 animate-pulse">Scanning...</span>}
                                 </h3>
-                                
+
                                 <div className="border border-dark-200/50 dark:border-dark-800 rounded-xl p-2.5 overflow-y-auto bg-dark-50/20 dark:bg-dark-900/10 flex-grow min-h-0">
                                     {treeLoading ? (
                                         <div className="py-8 text-center text-xs text-dark-400 dark:text-dark-550">
@@ -1020,11 +1015,10 @@ const Learning = () => {
                                                 <div
                                                     key={i}
                                                     style={{ paddingLeft: `${(h.level - 1) * 8}px` }}
-                                                    className={`text-xs ${
-                                                        h.level === 1 
-                                                            ? 'font-bold text-dark-805 dark:text-dark-200' 
-                                                            : 'text-dark-500 dark:text-dark-405 font-medium'
-                                                    }`}
+                                                    className={`text-xs ${h.level === 1
+                                                        ? 'font-bold text-dark-805 dark:text-dark-200'
+                                                        : 'text-dark-500 dark:text-dark-405 font-medium'
+                                                        }`}
                                                 >
                                                     • {h.text}
                                                 </div>
@@ -1131,32 +1125,30 @@ const Learning = () => {
                                     {selectedSheet === 'ultimate' ? 'Ultimate DSA Interview Sheet' : 'Top 200 DSA Interview Sheet'}
                                 </h2>
                                 <p className="text-sm text-dark-500 dark:text-dark-400 mt-1">
-                                    {selectedSheet === 'ultimate' 
-                                        ? 'Pattern-based categorization of high-yield questions. No Graphs or Tries. Click titles to code.' 
+                                    {selectedSheet === 'ultimate'
+                                        ? 'Pattern-based categorization of high-yield questions. No Graphs or Tries. Click titles to code.'
                                         : 'Curated compilation of top 200 high-frequency interview questions across core concepts. Click titles to code.'}
                                 </p>
                             </div>
-                            
+
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-shrink-0">
                                 {/* Sheet Selector Toggle */}
                                 <div className="flex p-1 bg-dark-100 dark:bg-dark-850 rounded-xl border border-dark-200/50 dark:border-dark-850 shadow-inner">
                                     <button
                                         onClick={() => setSelectedSheet('ultimate')}
-                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
-                                            selectedSheet === 'ultimate'
-                                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-450 shadow-sm border border-dark-200/20 dark:border-dark-800'
-                                                : 'text-dark-500 dark:text-dark-400 hover:text-dark-800 dark:hover:text-dark-200'
-                                        }`}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${selectedSheet === 'ultimate'
+                                            ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-450 shadow-sm border border-dark-200/20 dark:border-dark-800'
+                                            : 'text-dark-500 dark:text-dark-400 hover:text-dark-800 dark:hover:text-dark-200'
+                                            }`}
                                     >
                                         Ultimate ({ALL_QUESTIONS.length})
                                     </button>
                                     <button
                                         onClick={() => setSelectedSheet('top200')}
-                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
-                                            selectedSheet === 'top200'
-                                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-450 shadow-sm border border-dark-200/20 dark:border-dark-800'
-                                                : 'text-dark-500 dark:text-dark-400 hover:text-dark-800 dark:hover:text-dark-200'
-                                        }`}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${selectedSheet === 'top200'
+                                            ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-450 shadow-sm border border-dark-200/20 dark:border-dark-800'
+                                            : 'text-dark-500 dark:text-dark-400 hover:text-dark-800 dark:hover:text-dark-200'
+                                            }`}
                                     >
                                         Top 200 ({INTERVIEW_200_QUESTIONS.length})
                                     </button>
@@ -1164,39 +1156,40 @@ const Learning = () => {
 
                                 {/* Sync Status Badge */}
                                 <div className="flex items-center">
-                                {syncStatus === 'synced' && (
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-650 dark:text-emerald-450 border border-emerald-200/30 dark:border-emerald-900/30">
-                                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                                        </svg>
-                                        Cloud Synced
-                                    </div>
-                                )}
-                                {syncStatus === 'syncing' && (
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary-50 dark:bg-primary-950/20 text-primary-650 dark:text-primary-405 border border-primary-200/30 dark:border-primary-900/30">
-                                        <svg className="animate-spin h-3.5 w-3.5 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Syncing changes...
-                                    </div>
-                                )}
-                                {syncStatus === 'local' && (
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-450 border border-amber-200/30 dark:border-amber-900/30" title="Sign in to save your progress to the database">
-                                        <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                        </svg>
-                                        Local Only (Log in to Sync)
-                                    </div>
-                                )}
-                                {syncStatus === 'error' && (
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/20 text-rose-650 dark:text-rose-450 border border-rose-200/30 dark:border-rose-900/30">
-                                        <svg className="w-3.5 h-3.5 text-rose-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                        Connection Error (Saved Locally)
-                                    </div>
-                                )}
+                                    {syncStatus === 'synced' && (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-650 dark:text-emerald-450 border border-emerald-200/30 dark:border-emerald-900/30">
+                                            <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                            </svg>
+                                            Cloud Synced
+                                        </div>
+                                    )}
+                                    {syncStatus === 'syncing' && (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary-50 dark:bg-primary-950/20 text-primary-650 dark:text-primary-405 border border-primary-200/30 dark:border-primary-900/30">
+                                            <svg className="animate-spin h-3.5 w-3.5 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Syncing changes...
+                                        </div>
+                                    )}
+                                    {syncStatus === 'local' && (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-450 border border-amber-200/30 dark:border-amber-900/30" title="Sign in to save your progress to the database">
+                                            <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                            </svg>
+                                            Local Only (Log in to Sync)
+                                        </div>
+                                    )}
+                                    {syncStatus === 'error' && (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/20 text-rose-650 dark:text-rose-450 border border-rose-200/30 dark:border-rose-900/30">
+                                            <svg className="w-3.5 h-3.5 text-rose-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Connection Error (Saved Locally)
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -1272,7 +1265,7 @@ const Learning = () => {
 
                         {/* Controls Panel */}
                         <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-dark-900/20 border border-dark-200/50 dark:border-dark-800/60 mb-6">
-                            
+
                             {/* Search Box */}
                             <div className="relative flex-1 min-w-[260px] max-w-sm">
                                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-dark-400 dark:text-dark-500">
@@ -1305,11 +1298,10 @@ const Learning = () => {
                                     <button
                                         key={diff}
                                         onClick={() => setDsaDiffFilter(diff)}
-                                        className={`px-4.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                                            dsaDiffFilter === diff
-                                                ? 'bg-white dark:bg-dark-905 text-primary-600 dark:text-primary-405 shadow-sm font-bold'
-                                                : 'text-dark-500 dark:text-dark-405 hover:text-dark-800 dark:hover:text-dark-200'
-                                        }`}
+                                        className={`px-4.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${dsaDiffFilter === diff
+                                            ? 'bg-white dark:bg-dark-905 text-primary-600 dark:text-primary-405 shadow-sm font-bold'
+                                            : 'text-dark-500 dark:text-dark-405 hover:text-dark-800 dark:hover:text-dark-200'
+                                            }`}
                                     >
                                         {diff}
                                     </button>
@@ -1347,11 +1339,10 @@ const Learning = () => {
 
                                 <button
                                     onClick={handleResetProgress}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
-                                        confirmReset
-                                            ? 'bg-rose-500 border-rose-500 text-white animate-pulse'
-                                            : 'bg-white dark:bg-dark-900 text-dark-600 dark:text-dark-400 border-dark-200 dark:border-dark-800 hover:bg-rose-50 dark:hover:bg-rose-955/20 hover:text-rose-500 hover:border-rose-300 dark:hover:border-rose-900/30'
-                                    }`}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${confirmReset
+                                        ? 'bg-rose-500 border-rose-500 text-white animate-pulse'
+                                        : 'bg-white dark:bg-dark-900 text-dark-600 dark:text-dark-400 border-dark-200 dark:border-dark-800 hover:bg-rose-50 dark:hover:bg-rose-955/20 hover:text-rose-500 hover:border-rose-300 dark:hover:border-rose-900/30'
+                                        }`}
                                 >
                                     {confirmReset ? (
                                         <>
@@ -1377,7 +1368,7 @@ const Learning = () => {
                             {currentTopics.map((topic) => {
                                 const matchingQs = topic.qs.filter(q => {
                                     const matchesDiff = dsaDiffFilter === 'All' || q.d === dsaDiffFilter;
-                                    const matchesSearch = !dsaSearch || 
+                                    const matchesSearch = !dsaSearch ||
                                         q.n.toLowerCase().includes(dsaSearch.toLowerCase()) ||
                                         topic.title.toLowerCase().includes(dsaSearch.toLowerCase());
                                     return matchesDiff && matchesSearch;
@@ -1391,11 +1382,11 @@ const Learning = () => {
                                 const isExpanded = !!expandedTopics[topic.id];
 
                                 return (
-                                    <div 
-                                        key={topic.id} 
+                                    <div
+                                        key={topic.id}
                                         className="rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/20 overflow-hidden shadow-sm transition-all duration-200"
                                     >
-                                        <div 
+                                        <div
                                             onClick={() => toggleTopicCollapse(topic.id)}
                                             className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-dark-50/50 dark:bg-dark-900/60 cursor-pointer user-select-none hover:bg-dark-100/40 dark:hover:bg-dark-850/60 transition-colors"
                                         >
@@ -1413,14 +1404,13 @@ const Learning = () => {
 
                                             <div className="flex items-center gap-4 min-w-[200px] justify-between sm:justify-end">
                                                 <div className="flex-1 max-w-[140px] bg-dark-200 dark:bg-dark-800 h-1.5 rounded-full overflow-hidden">
-                                                    <div 
-                                                        className={`h-full rounded-full transition-all duration-300 ${
-                                                            topicPct === 100 
-                                                                ? 'bg-emerald-500' 
-                                                                : topicPct > 0 
-                                                                ? 'bg-primary-500' 
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-300 ${topicPct === 100
+                                                            ? 'bg-emerald-500'
+                                                            : topicPct > 0
+                                                                ? 'bg-primary-500'
                                                                 : 'bg-dark-300 dark:bg-dark-700'
-                                                        }`}
+                                                            }`}
                                                         style={{ width: `${topicPct}%` }}
                                                     ></div>
                                                 </div>
@@ -1436,23 +1426,21 @@ const Learning = () => {
                                                     {matchingQs.map((q) => {
                                                         const isDone = completedQuestions.includes(q.gid);
                                                         const url = `https://leetcode.com/problems/${q.slug}/`;
-                                                        
+
                                                         return (
-                                                            <div 
-                                                                key={q.gid} 
-                                                                className={`flex items-center gap-3.5 p-3.5 rounded-xl border transition-all duration-200 ${
-                                                                    isDone 
-                                                                        ? 'bg-dark-50/50 dark:bg-dark-900/10 border-dark-100 dark:border-dark-800/40 opacity-70' 
-                                                                        : 'bg-white dark:bg-dark-900/40 border-dark-200/60 dark:border-dark-800/80 hover:border-primary-500/40 dark:hover:border-primary-505/30 hover:scale-[1.01] hover:shadow-sm'
-                                                                }`}
+                                                            <div
+                                                                key={q.gid}
+                                                                className={`flex items-center gap-3.5 p-3.5 rounded-xl border transition-all duration-200 ${isDone
+                                                                    ? 'bg-dark-50/50 dark:bg-dark-900/10 border-dark-100 dark:border-dark-800/40 opacity-70'
+                                                                    : 'bg-white dark:bg-dark-900/40 border-dark-200/60 dark:border-dark-800/80 hover:border-primary-500/40 dark:hover:border-primary-505/30 hover:scale-[1.01] hover:shadow-sm'
+                                                                    }`}
                                                             >
                                                                 <button
                                                                     onClick={() => toggleDsaQuestion(q.gid)}
-                                                                    className={`w-5 h-5 rounded-md border flex items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 ${
-                                                                        isDone
-                                                                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/20'
-                                                                            : 'border-dark-300 dark:border-dark-700 hover:border-primary-500 bg-transparent'
-                                                                    }`}
+                                                                    className={`w-5 h-5 rounded-md border flex items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 ${isDone
+                                                                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/20'
+                                                                        : 'border-dark-300 dark:border-dark-700 hover:border-primary-500 bg-transparent'
+                                                                        }`}
                                                                 >
                                                                     {isDone && (
                                                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1465,33 +1453,31 @@ const Learning = () => {
                                                                     #{q.gid}
                                                                 </span>
 
-                                                                <a 
-                                                                    href={url} 
-                                                                    target="_blank" 
-                                                                    rel="noopener noreferrer" 
-                                                                    className={`text-sm font-medium flex-1 cursor-pointer transition-all duration-150 ${
-                                                                        isDone 
-                                                                            ? 'line-through text-dark-400 dark:text-dark-500 hover:text-primary-500' 
-                                                                            : 'text-dark-800 dark:text-dark-200 hover:text-primary-500 dark:hover:text-primary-400 hover:underline'
-                                                                    }`}
+                                                                <a
+                                                                    href={url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className={`text-sm font-medium flex-1 cursor-pointer transition-all duration-150 ${isDone
+                                                                        ? 'line-through text-dark-400 dark:text-dark-500 hover:text-primary-500'
+                                                                        : 'text-dark-800 dark:text-dark-200 hover:text-primary-500 dark:hover:text-primary-400 hover:underline'
+                                                                        }`}
                                                                 >
                                                                     {q.n}
                                                                 </a>
 
-                                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase ${
-                                                                    q.d === 'Easy' 
-                                                                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30' 
-                                                                        : q.d === 'Medium'
+                                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase ${q.d === 'Easy'
+                                                                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30'
+                                                                    : q.d === 'Medium'
                                                                         ? 'bg-amber-50 dark:bg-amber-955/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30'
                                                                         : 'bg-rose-50 dark:bg-rose-955/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30'
-                                                                }`}>
+                                                                    }`}>
                                                                     {q.d}
                                                                 </span>
 
-                                                                <a 
-                                                                    href={url} 
-                                                                    target="_blank" 
-                                                                    rel="noopener noreferrer" 
+                                                                <a
+                                                                    href={url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
                                                                     className="text-dark-400 hover:text-primary-500 dark:text-dark-500 dark:hover:text-primary-400 transition-colors p-1"
                                                                     title="Open on LeetCode"
                                                                 >
