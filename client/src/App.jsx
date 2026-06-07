@@ -45,34 +45,26 @@ function App() {
           {/* Main layout routes */}
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="projects" element={<Projects />} />
-            <Route path="about" element={<AboutCreator />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="reset-password/:token" element={<ResetPassword />} />
             
             {/* Redirect legacy portfolio subpages to AboutCreator */}
             <Route path="experience" element={<Navigate to="/about" replace />} />
             <Route path="skills" element={<Navigate to="/about" replace />} />
             <Route path="certificates" element={<Navigate to="/about" replace />} />
 
-            <Route path="learning" element={<Learning />} />
-            <Route path="contact" element={<Contact />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="resume/builder" element={<ResumeBuilder />} />
-            <Route path="resume/reviewer" element={<AtsReviewer />} />
-            <Route path="resume/latex" element={<LatexResume />} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            <Route path="forgot-password" element={<ForgotPassword />} />
-            <Route path="reset-password/:token" element={<ResetPassword />} />
-
-            {/* Protected routes */}
-            <Route
-              path="dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+            {/* Protected pages */}
+            <Route path="projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="about" element={<ProtectedRoute><AboutCreator /></ProtectedRoute>} />
+            <Route path="learning" element={<ProtectedRoute><Learning /></ProtectedRoute>} />
+            <Route path="contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
+            <Route path="settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="resume/builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+            <Route path="resume/reviewer" element={<ProtectedRoute><AtsReviewer /></ProtectedRoute>} />
+            <Route path="resume/latex" element={<ProtectedRoute><LatexResume /></ProtectedRoute>} />
+            <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           </Route>
 
           {/* 404 - Not Found */}

@@ -456,17 +456,6 @@ const Learning = () => {
         }
     }, [selectedRepo, activeSection]);
 
-    // Lock outer viewport scrolling and hide footer when wiki tab is active
-    useEffect(() => {
-        if (activeSection === 'wiki') {
-            document.documentElement.classList.add('wiki-explorer-active');
-        } else {
-            document.documentElement.classList.remove('wiki-explorer-active');
-        }
-        return () => {
-            document.documentElement.classList.remove('wiki-explorer-active');
-        };
-    }, [activeSection]);
 
     const fetchData = async () => {
         try {
@@ -803,8 +792,8 @@ const Learning = () => {
     };
 
     return (
-        <div className={`min-h-screen bg-dark-50 dark:bg-dark-950/20 flex flex-col ${activeSection === 'wiki' ? 'h-screen overflow-hidden' : 'py-12 px-4'}`}>
-            <div className={`w-full flex-grow flex flex-col min-h-0 ${activeSection === 'wiki' ? 'overflow-hidden' : 'max-w-7xl mx-auto'}`}>
+        <div className="min-h-screen bg-dark-50 dark:bg-dark-950/20 flex flex-col py-12 px-4">
+            <div className="w-full flex-grow flex flex-col max-w-7xl mx-auto">
                 {/* Hero Section */}
                 {activeSection !== 'wiki' && (
                     <div className="text-center mb-10">
@@ -867,7 +856,7 @@ const Learning = () => {
 
                 {/* --- Tab 1: Resource Catalog --- */}
                 {activeSection === 'resources' && (
-                    <>
+                    <div className="animate-tab-switch">
                         {/* Category Filter */}
                         <div className="flex flex-wrap justify-center gap-3 mb-12">
                             {categories.map((cat) => (
@@ -932,14 +921,14 @@ const Learning = () => {
                                 </p>
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
 
                 {/* --- Tab 2: Syllabus Wiki Explorer --- */}
                 {activeSection === 'wiki' && (
-                    <div className="flex-grow flex flex-col lg:flex-row gap-6 min-h-0 overflow-hidden animate-fade-in pb-4">
+                    <div className="flex-grow flex flex-col lg:flex-row gap-6 animate-tab-switch pb-4">
                         {/* Left Column: Repository Selector & File Explorer */}
-                        <div className="w-full lg:w-80 flex flex-col gap-4 overflow-y-auto h-full flex-shrink-0">
+                        <div className="w-full lg:w-80 flex flex-col gap-4 flex-shrink-0">
                             {/* Repo Dropdown Selector */}
                             <Card className="p-4">
                                 <label className="block text-xs font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider mb-2">
@@ -962,7 +951,7 @@ const Learning = () => {
                             </Card>
 
                             {/* File Explorer Tree */}
-                            <Card className="p-4 flex flex-col min-h-0 flex-grow">
+                            <Card className="p-4 flex flex-col h-[40vh] min-h-[300px]">
                                 <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3 flex items-center justify-between flex-shrink-0">
                                     <span>Repository Files</span>
                                     {treeLoading && <span className="text-[10px] text-primary-500 animate-pulse">Scanning...</span>}
@@ -1008,11 +997,11 @@ const Learning = () => {
 
                             {/* Document Outline (headings from currently loaded file) */}
                             {markdownContent && !wikiLoading && (
-                                <Card className="p-4 hidden lg:block flex-shrink-0">
+                                <Card className="p-4 hidden lg:flex flex-col h-[25vh] min-h-[180px]">
                                     <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3 flex-shrink-0">
                                         Document Outline
                                     </h3>
-                                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
+                                    <div className="space-y-1.5 overflow-y-auto pr-1 flex-grow">
                                         {getOutline(markdownContent).length > 0 ? (
                                             getOutline(markdownContent).map((h, i) => (
                                                 <div
@@ -1036,8 +1025,8 @@ const Learning = () => {
                         </div>
 
                         {/* Right Column: Markdown Reader Panel */}
-                        <div className="flex-grow overflow-hidden h-full flex flex-col min-w-0">
-                            <Card className="p-6 md:p-8 h-full flex flex-col shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden min-h-0">
+                        <div className="flex-grow flex flex-col min-w-0">
+                            <Card className="p-6 md:p-8 lg:h-[75vh] min-h-[600px] flex flex-col shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden">
                                 {/* Header / Path bar */}
                                 <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-dark-200 dark:border-dark-800 mb-4 text-sm flex-shrink-0">
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -1118,7 +1107,7 @@ const Learning = () => {
 
                 {/* --- Tab 3: DSA Practice Sheet --- */}
                 {activeSection === 'dsa' && (
-                    <div className="animate-fade-in">
+                    <div className="animate-tab-switch">
                         {/* DSA Header and Sync Banner */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-dark-900/40 border border-dark-200/60 dark:border-dark-800/80 mb-8 backdrop-blur-sm">
                             <div>

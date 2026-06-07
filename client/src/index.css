@@ -335,29 +335,6 @@ body {
   animation-delay: 500ms;
 }
 
-/* Syllabus Wiki Explorer page lock and scroll controls */
-html.wiki-explorer-active,
-html.wiki-explorer-active body,
-html.wiki-explorer-active .layout-wrapper {
-  height: 100vh;
-  min-height: 100vh;
-  overflow: hidden !important;
-}
-
-html.wiki-explorer-active footer {
-  display: none !important;
-}
-
-html.wiki-explorer-active main {
-  height: calc(100vh - 4rem) !important;
-  overflow: hidden !important;
-}
-
-@media (min-width: 768px) {
-  html.wiki-explorer-active main {
-    height: calc(100vh - 5rem) !important;
-  }
-}
 
 /* Rich & Premium Markdown Renderer Styling */
 .markdown-body {
@@ -548,4 +525,138 @@ html.dark .markdown-body td {
 }
 html.dark .markdown-body tr:hover {
   background-color: rgba(22, 27, 34, 0.3);
+}
+
+/* --- High-end Animations & Transitions --- */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 5.5s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+@keyframes pointerL {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(30px);
+  }
+}
+
+@keyframes pointerR {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-60px);
+  }
+}
+
+.animate-pointer-l {
+  animation: pointerL 4s ease-in-out infinite;
+}
+
+.animate-pointer-r {
+  animation: pointerR 4s ease-in-out infinite;
+}
+
+@keyframes slideWindow {
+  0%, 100% {
+    transform: translateX(0) scaleX(1);
+  }
+  50% {
+    transform: translateX(30px) scaleX(1.34);
+  }
+}
+
+@keyframes slideWindowLabels {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(30px);
+  }
+}
+
+.animate-slide-window {
+  animation: slideWindow 6s ease-in-out infinite;
+}
+
+.animate-slide-window-labels {
+  animation: slideWindowLabels 6s ease-in-out infinite;
+}
+
+@keyframes bfsHighlight {
+  0%, 100% {
+    stroke-width: 1.5px;
+    filter: drop-shadow(0 0 0px var(--theme-accent));
+  }
+  10%, 30% {
+    stroke-width: 2.5px;
+    filter: drop-shadow(0 0 3px var(--theme-accent));
+  }
+}
+
+.animate-bfs-1 {
+  animation: bfsHighlight 5s infinite;
+  animation-delay: 0s;
+}
+.animate-bfs-2 {
+  animation: bfsHighlight 5s infinite;
+  animation-delay: 1s;
+}
+.animate-bfs-3 {
+  animation: bfsHighlight 5s infinite;
+  animation-delay: 2s;
+}
+.animate-bfs-4 {
+  animation: bfsHighlight 5s infinite;
+  animation-delay: 3s;
+}
+.animate-bfs-5 {
+  animation: bfsHighlight 5s infinite;
+  animation-delay: 4s;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tabSwitch {
+  from {
+    opacity: 0;
+    transform: scale(0.99) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-tab-switch {
+  animation: tabSwitch 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

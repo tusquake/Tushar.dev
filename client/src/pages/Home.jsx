@@ -13,11 +13,15 @@ const TwoPointersSVG = ({ accent, text, muted }) => (
                 </g>
             ))}
         </g>
-        <path d="M22 18V32M22 32L19 29M22 32L25 29" stroke={accent} strokeWidth="1.5" strokeLinecap="round" />
-        <text x="22" y="12" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace" fontWeight="bold">L</text>
+        <g className="animate-pointer-l">
+            <path d="M22 18V32M22 32L19 29M22 32L25 29" stroke={accent} strokeWidth="1.5" strokeLinecap="round" />
+            <text x="22" y="12" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace" fontWeight="bold">L</text>
+        </g>
         
-        <path d="M172 95V81M172 81L169 84M172 81L175 84" stroke={accent} strokeWidth="1.5" strokeLinecap="round" />
-        <text x="172" y="106" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace" fontWeight="bold">R</text>
+        <g className="animate-pointer-r">
+            <path d="M172 95V81M172 81L169 84M172 81L175 84" stroke={accent} strokeWidth="1.5" strokeLinecap="round" />
+            <text x="172" y="106" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace" fontWeight="bold">R</text>
+        </g>
     </svg>
 );
 
@@ -33,31 +37,33 @@ const SlidingWindowSVG = ({ accent, text, muted }) => (
                     </g>
                 );
             })}
-            <rect x="27" y="-4" width="86" height="32" rx="4" fill="none" stroke={accent} strokeWidth="1.5" strokeDasharray="3 3" />
+            <rect x="27" y="-4" width="86" height="32" rx="4" fill="none" stroke={accent} strokeWidth="1.5" strokeDasharray="3 3" className="animate-slide-window origin-left" />
         </g>
-        <path d="M42 22V32" stroke={accent} strokeWidth="1" />
-        <text x="42" y="15" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace">i</text>
-        
-        <path d="M102 22V32" stroke={accent} strokeWidth="1" />
-        <text x="102" y="15" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace">j</text>
+        <g className="animate-slide-window-labels origin-left">
+            <path d="M42 22V32" stroke={accent} strokeWidth="1" />
+            <text x="42" y="15" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace">i</text>
+            
+            <path d="M102 22V32" stroke={accent} strokeWidth="1" />
+            <text x="102" y="15" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace">j</text>
+        </g>
     </svg>
 );
 
 const BFSTreeSVG = ({ accent, text, muted, secondary }) => (
     <svg width="100%" height="100%" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="20" r="10" fill="none" stroke={accent} strokeWidth="1.5" />
+        <circle cx="100" cy="20" r="10" fill="none" stroke={accent} strokeWidth="1.5" className="animate-bfs-1" />
         <text x="100" y="23" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">1</text>
         
-        <circle cx="70" cy="55" r="10" fill="none" stroke={accent} strokeWidth="1.5" />
+        <circle cx="70" cy="55" r="10" fill="none" stroke={accent} strokeWidth="1.5" className="animate-bfs-2" />
         <text x="70" y="58" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">2</text>
         
-        <circle cx="130" cy="55" r="10" fill="none" stroke={accent} strokeWidth="1.5" />
+        <circle cx="130" cy="55" r="10" fill="none" stroke={accent} strokeWidth="1.5" className="animate-bfs-3" />
         <text x="130" y="58" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">3</text>
         
-        <circle cx="45" cy="90" r="10" fill="none" stroke={muted} strokeWidth="1.5" />
+        <circle cx="45" cy="90" r="10" fill="none" stroke={muted} strokeWidth="1.5" className="animate-bfs-4" />
         <text x="45" y="93" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">4</text>
         
-        <circle cx="95" cy="90" r="10" fill="none" stroke={muted} strokeWidth="1.5" />
+        <circle cx="95" cy="90" r="10" fill="none" stroke={muted} strokeWidth="1.5" className="animate-bfs-5" />
         <text x="95" y="93" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">5</text>
         
         <line x1="93" y1="28" x2="77" y2="47" stroke={muted} strokeWidth="1.2" />
@@ -203,7 +209,7 @@ const Home = () => {
             {/* Hero Section */}
             <section className="flex-1 py-12 md:py-20 px-6 md:px-12 max-w-7xl mx-auto w-full grid md:grid-cols-12 gap-12 items-center">
                 {/* Left Side: Headline & Copy */}
-                <div className="md:col-span-7 flex flex-col items-start text-left">
+                <div className="md:col-span-7 flex flex-col items-start text-left animate-slide-up">
                     <div className="mb-4">
                         <span className={currentTheme.heroTagStyle}>
                             {currentTheme.heroTag}
@@ -252,7 +258,7 @@ const Home = () => {
                 <div className="md:col-span-5 grid grid-cols-2 gap-4">
                     {/* Two Pointers Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200"
+                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -268,7 +274,7 @@ const Home = () => {
 
                     {/* Sliding Window Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200"
+                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float-delayed"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -284,7 +290,7 @@ const Home = () => {
 
                     {/* BFS Tree Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200"
+                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -300,7 +306,7 @@ const Home = () => {
 
                     {/* Prefix Sum Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200"
+                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float-delayed"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -321,21 +327,33 @@ const Home = () => {
                 <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
                     {[
                         {
-                            title: 'DSA Patterns',
-                            desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly.'
+                            title: 'DSA Pattern Hub',
+                            desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly. Includes progress tracker.'
                         },
                         {
-                            title: 'System Design',
-                            desc: 'Scale your architectures from 10 users to 10M+ with structured high-level and low-level design guides.'
+                            title: 'System Design Wiki',
+                            desc: 'Scale your architectures with structured HLD and LLD materials, microservices, databases, and real-world system designs.'
                         },
                         {
-                            title: 'Mock Interviews',
-                            desc: 'Track your roadmap and practice with evaluation rubrics structured for tier-1 tech company standard.'
+                            title: 'LaTeX Resume Editor',
+                            desc: 'Write and compile professional resumes using LaTeX directly in the browser, matching top-tier templates.'
+                        },
+                        {
+                            title: 'ATS Resume Reviewer',
+                            desc: 'Get your resume parsed and scored by our ATS algorithm to optimize formatting, keywords, and layout impact.'
+                        },
+                        {
+                            title: 'Interactive Code Builder',
+                            desc: 'Build, compile, and run your code within custom workspaces designed for low-level design problems.'
+                        },
+                        {
+                            title: 'Developer Customization',
+                            desc: 'Toggle between terminal dark themes and elegant soft violet themes tailored to your aesthetic preference.'
                         }
                     ].map((feature, idx) => (
                         <div 
                             key={idx}
-                            className="p-6 md:p-8 flex flex-col justify-between transition-all duration-200"
+                            className="p-6 md:p-8 flex flex-col justify-between transition-all duration-200 hover:scale-102 hover:shadow-md"
                             style={currentTheme.featureCardStyle}
                         >
                             <div>
