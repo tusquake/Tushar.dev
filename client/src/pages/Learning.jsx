@@ -1,10 +1,70 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { learningResourcesAPI, learningAPI, dsaProgressAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
 import { TOPICS, ALL_QUESTIONS } from '../data/dsaQuestions';
+
+const GITHUB_REPOS = [
+    {
+        id: 'Backend-Concepts',
+        name: 'Backend Concepts',
+        description: 'Comprehensive guide and examples for backend development, architectures, APIs, and databases.',
+        category: 'Backend',
+        icon: 'terminal'
+    },
+    {
+        id: 'Low-Level-Design',
+        name: 'Low-Level Design',
+        description: 'Standard LLD problems, object-oriented principles, design patterns, and class schemas.',
+        category: 'LLD',
+        icon: 'design'
+    },
+    {
+        id: 'High-Level-Design',
+        name: 'High-Level Design',
+        description: 'System design methodologies, load balancing, caching, databases, scaling, and architectures.',
+        category: 'System Design',
+        icon: 'gr'
+    },
+    {
+        id: 'DevOps',
+        name: 'DevOps',
+        description: 'Docker containers, Kubernetes orchestration, CI/CD pipelines, and cloud deployment guides.',
+        category: 'DevOps',
+        icon: 'bit'
+    },
+    {
+        id: 'Generative-AI',
+        name: 'Generative AI',
+        description: 'LLM utilization, prompting architectures, vector databases, embeddings, and agentic workflows.',
+        category: 'AI / ML',
+        icon: 'pre'
+    },
+    {
+        id: 'Spring-AI',
+        name: 'Spring AI',
+        description: 'Enterprise AI workflows integrating Spring Boot, Gemini, OpenAI, and vector stores.',
+        category: 'Java AI',
+        icon: 'bst'
+    },
+    {
+        id: 'Multithreading_in_Java',
+        name: 'Java Multithreading',
+        description: 'Concurrency models, thread pooling, synchronization constructs, and asynchronous execution in Java.',
+        category: 'Java Core',
+        icon: 'tp'
+    },
+    {
+        id: 'Collection_FrameWork_Java',
+        name: 'Java Collection Framework',
+        description: 'Deep dive into List, Set, Map implementation details, complex operations, and performance.',
+        category: 'Java Core',
+        icon: 'll'
+    }
+];
 
 // Sample resources to ensure visibility of key repositories
 const sampleResources = [
@@ -158,15 +218,117 @@ const getTopicIcon = (topicId) => {
     return icons[topicId] || null;
 };
 
+// Relative Path Resolution Helper
+const resolvePath = (base, relative) => {
+    if (relative.startsWith('http://') || relative.startsWith('https://')) return relative;
+    let rel = relative.replace(/^\.\//, '');
+    const baseParts = base.split('/').filter(Boolean);
+    if (baseParts.length > 0) {
+        baseParts.pop(); // remove current file name
+    }
+    const relParts = rel.split('/');
+    for (const part of relParts) {
+        if (part === '..') {
+            baseParts.pop();
+        } else if (part && part !== '.') {
+            baseParts.push(part);
+        }
+    }
+    return baseParts.join('/');
+};
+
+// Local custom parser: Markdown -> HTML
+const parseMarkdown = (markdown) => {
+    if (!markdown) return '';
+    let html = markdown;
+
+    // Escape raw HTML tags for safety
+    html = html
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Save and temporarily mask Code Blocks
+    const codeBlocks = [];
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
+        codeBlocks.push({ lang: lang || 'text', code: code.trim() });
+        return placeholder;
+    });
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-dark-100 dark:bg-dark-800 text-rose-500 font-mono text-xs font-semibold">$1</code>');
+
+    // Headers
+    html = html.replace(/^# (.*?)$/gm, '<h1 class="text-2xl font-bold font-display text-dark-900 dark:text-white mt-6 mb-4 pb-2 border-b border-dark-200 dark:border-dark-800">$1</h1>');
+    html = html.replace(/^## (.*?)$/gm, '<h2 class="text-xl font-bold font-display text-dark-900 dark:text-white mt-5 mb-3 pb-1 border-b border-dark-200/50 dark:border-dark-800/60">$1</h2>');
+    html = html.replace(/^### (.*?)$/gm, '<h3 class="text-lg font-bold text-dark-850 dark:text-dark-100 mt-4 mb-2">$1</h3>');
+    html = html.replace(/^#### (.*?)$/gm, '<h4 class="text-base font-bold text-dark-800 dark:text-dark-200 mt-3 mb-2">$1</h4>');
+
+    // Unordered lists
+    html = html.replace(/^\s*[-*]\s+(.*?)$/gm, '<li class="ml-4 list-disc text-sm text-dark-700 dark:text-dark-300 mb-1">$1</li>');
+
+    // Ordered lists
+    html = html.replace(/^\s*\d+\.\s+(.*?)$/gm, '<li class="ml-4 list-decimal text-sm text-dark-700 dark:text-dark-300 mb-1">$1</li>');
+
+    // Bold and Italic
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+    // Blockquotes
+    html = html.replace(/^\s*&gt;\s+(.*?)$/gm, '<blockquote class="border-l-4 border-primary-500 pl-4 py-1 my-3 bg-dark-50 dark:bg-dark-900/40 rounded-r-xl text-dark-600 dark:text-dark-400 italic text-sm">$1</blockquote>');
+
+    // Links: check if relative or absolute
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, href) => {
+        if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#')) {
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:text-primary-600 hover:underline font-semibold">${label}</a>`;
+        } else {
+            return `<a href="#" data-relative-path="${href}" class="text-secondary-500 hover:underline font-bold relative-repo-link">${label}</a>`;
+        }
+    });
+
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr class="my-6 border-t border-dark-200 dark:border-dark-800" />');
+
+    // Restore Code Blocks
+    codeBlocks.forEach((block, idx) => {
+        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${idx}__`;
+        const renderedCode = `<div class="relative my-4 rounded-xl overflow-hidden border border-dark-300 dark:border-dark-800/80 bg-dark-900 font-mono text-xs">
+            <div class="flex justify-between items-center px-4 py-2 bg-dark-950 text-dark-400 border-b border-dark-850/60">
+                <span class="text-[9px] uppercase font-bold text-dark-500">${block.lang}</span>
+                <span class="text-[8px] text-dark-600">readme_code_block</span>
+            </div>
+            <pre class="p-4 overflow-x-auto text-dark-200 leading-relaxed"><code class="language-${block.lang}">${block.code}</code></pre>
+        </div>`;
+        html = html.replace(placeholder, renderedCode);
+    });
+
+    // Newlines & Breaks
+    html = html.replace(/\n\n/g, '<div class="h-3"></div>');
+    html = html.replace(/\n/g, '<br />');
+
+    return html;
+};
+
 const Learning = () => {
-    const { isAuthenticated, isAdmin } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [resources, setResources] = useState([]);
     const [learningTopics, setLearningTopics] = useState([]);
     const [loading, setLoading] = useState(true);
     
     // Tab switching
-    const [activeSection, setActiveSection] = useState('resources'); // 'resources' or 'dsa'
+    const [activeSection, setActiveSection] = useState('resources'); // 'resources', 'wiki', 'dsa'
     const [activeCategory, setActiveCategory] = useState('all');
+
+    // Wiki States
+    const [selectedRepo, setSelectedRepo] = useState(GITHUB_REPOS[0]);
+    const [currentFilePath, setCurrentFilePath] = useState('README.md');
+    const [markdownContent, setMarkdownContent] = useState('');
+    const [wikiLoading, setWikiLoading] = useState(false);
+    const [wikiError, setWikiError] = useState('');
+    const [historyStack, setHistoryStack] = useState([]);
 
     // DSA Practice Sheet States
     const [dsaSearch, setDsaSearch] = useState('');
@@ -186,13 +348,18 @@ const Learning = () => {
         fetchData();
     }, [isAuthenticated]);
 
+    // Handle initial fetch of active repo contents
+    useEffect(() => {
+        if (activeSection === 'wiki') {
+            fetchRepoFile(selectedRepo.id, currentFilePath);
+        }
+    }, [selectedRepo, activeSection]);
+
     const fetchData = async () => {
         try {
-            // Fetch public resources
             const resourcesRes = await learningResourcesAPI.getAll();
             const apiResources = resourcesRes.data.data || [];
 
-            // Combine API resources with sample resources (avoiding duplicates by URL)
             const combinedResources = [...apiResources];
             sampleResources.forEach(sample => {
                 if (!combinedResources.some(r => r.url === sample.url)) {
@@ -202,14 +369,12 @@ const Learning = () => {
 
             setResources(combinedResources);
 
-            // If authenticated, also fetch learning topics
             if (isAuthenticated) {
                 const topicsRes = await learningAPI.getAll();
                 setLearningTopics(topicsRes.data.data || []);
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
-            // Fallback to sample resources if API fails or returns error
             setResources(sampleResources);
         } finally {
             setLoading(false);
@@ -234,18 +399,14 @@ const Learning = () => {
                     setSyncStatus('syncing');
                     const res = await dsaProgressAPI.getProgress();
                     const dbData = res.data.completedQuestions || [];
-                    
-                    // Merge local and DB to avoid losing data
                     const merged = Array.from(new Set([...localData, ...dbData]));
                     setCompletedQuestions(merged);
-
-                    // If local had unsynced changes, save them to DB
                     if (localData.some(id => !dbData.includes(id))) {
                         await dsaProgressAPI.updateProgress(merged);
                     }
                     setSyncStatus('synced');
                 } catch (err) {
-                    console.error('Error fetching DSA progress from database:', err);
+                    console.error('Error fetching DSA progress:', err);
                     setCompletedQuestions(localData);
                     setSyncStatus('error');
                 }
@@ -262,11 +423,8 @@ const Learning = () => {
     // Save/Sync DSA progress when it changes
     useEffect(() => {
         if (isInitialLoad) return;
-
-        // Save to localStorage immediately for fast UI
         localStorage.setItem('dsa_completed_questions', JSON.stringify(completedQuestions));
 
-        // Sync to DB (debounced)
         if (isAuthenticated) {
             setSyncStatus('syncing');
             const timer = setTimeout(async () => {
@@ -274,15 +432,97 @@ const Learning = () => {
                     await dsaProgressAPI.updateProgress(completedQuestions);
                     setSyncStatus('synced');
                 } catch (err) {
-                    console.error('Failed to sync progress to database:', err);
+                    console.error('Failed to sync progress:', err);
                     setSyncStatus('error');
                 }
-            }, 800); // 800ms debounce
+            }, 800);
             return () => clearTimeout(timer);
         } else {
             setSyncStatus('local');
         }
     }, [completedQuestions, isAuthenticated, isInitialLoad]);
+
+    // Fetch Markdown file
+    const fetchRepoFile = async (repoId, filePath) => {
+        setWikiLoading(true);
+        setWikiError('');
+        const mainUrl = `https://raw.githubusercontent.com/tusquake/${repoId}/main/${filePath}`;
+        const masterUrl = `https://raw.githubusercontent.com/tusquake/${repoId}/master/${filePath}`;
+        
+        try {
+            const res = await axios.get(mainUrl);
+            setMarkdownContent(res.data);
+        } catch (err) {
+            console.log(`Failed to fetch from main, retrying master branch: ${filePath}`);
+            try {
+                const res = await axios.get(masterUrl);
+                setMarkdownContent(res.data);
+            } catch (fallbackErr) {
+                console.error(fallbackErr);
+                setWikiError(`Could not render "${filePath}". Verify file or path spelling exists inside repository.`);
+            }
+        } finally {
+            setWikiLoading(false);
+        }
+    };
+
+    // Nav helpers
+    const handleRepoChange = (repo) => {
+        setSelectedRepo(repo);
+        setHistoryStack([]);
+        setCurrentFilePath('README.md');
+    };
+
+    const handleRelativeNav = (relPath) => {
+        const resolved = resolvePath(currentFilePath, relPath);
+        setHistoryStack(prev => [...prev, currentFilePath]);
+        setCurrentFilePath(resolved);
+        fetchRepoFile(selectedRepo.id, resolved);
+    };
+
+    const handleGoBack = () => {
+        if (historyStack.length > 0) {
+            const prevStack = [...historyStack];
+            const prev = prevStack.pop();
+            setHistoryStack(prevStack);
+            setCurrentFilePath(prev);
+            fetchRepoFile(selectedRepo.id, prev);
+        }
+    };
+
+    const handleResetToReadme = () => {
+        setHistoryStack([]);
+        setCurrentFilePath('README.md');
+        fetchRepoFile(selectedRepo.id, 'README.md');
+    };
+
+    // Intercept clicks on markdown generated relative links
+    const handleMarkdownClick = (e) => {
+        const targetLink = e.target.closest('[data-relative-path]');
+        if (targetLink) {
+            e.preventDefault();
+            const relPath = targetLink.getAttribute('data-relative-path');
+            handleRelativeNav(relPath);
+        }
+    };
+
+    // Construct quick outline table of contents from headers
+    const getOutline = (markdown) => {
+        if (!markdown) return [];
+        const lines = markdown.split('\n');
+        const outline = [];
+        lines.forEach((line) => {
+            const match = line.trim().match(/^(#{1,3})\s+(.*?)$/);
+            if (match) {
+                const text = match[2].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').trim();
+                outline.push({
+                    level: match[1].length,
+                    text
+                });
+            }
+        });
+        return outline;
+    };
 
     const categories = [
         { id: 'all', name: 'All Resources' },
@@ -394,9 +634,22 @@ const Learning = () => {
                             }`}
                         >
                             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v2" />
+                            </svg>
+                            Resource Catalog
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('wiki')}
+                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                                activeSection === 'wiki'
+                                    ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
+                                    : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
+                            }`}
+                        >
+                            <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
-                            Learning Resources
+                            Interactive Syllabus Wiki
                         </button>
                         <button
                             onClick={() => setActiveSection('dsa')}
@@ -414,7 +667,7 @@ const Learning = () => {
                     </div>
                 </div>
 
-                {/* --- RENDER Tab 1: Resources --- */}
+                {/* --- Tab 1: Resource Catalog --- */}
                 {activeSection === 'resources' && (
                     <>
                         {/* Category Filter */}
@@ -481,90 +734,156 @@ const Learning = () => {
                                 </p>
                             </div>
                         )}
-
-                        {/* Quick Links Section */}
-                        <div className="bg-gradient-to-r from-primary-500 to-purple-500 rounded-3xl p-8 md:p-12 text-center text-white mb-16">
-                            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                                Want to Learn Together?
-                            </h2>
-                            <p className="text-white/80 mb-8 max-w-xl mx-auto">
-                                Connect with me on GitHub to explore my open-source projects,
-                                DSA solutions, and learning repositories.
-                            </p>
-                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                <a
-                                    href="https://github.com/tusquake"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-6 py-3 bg-white text-primary-600 font-semibold rounded-xl hover:bg-white/90 transition-colors flex items-center shadow-lg"
-                                >
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                                    </svg>
-                                    View GitHub
-                                </a>
-                                <a
-                                    href="https://leetcode.com/u/Tushar_Seth/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-6 py-3 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors flex items-center shadow-lg"
-                                >
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.205.038l-.02-.019-4.276-4.193c-.652-.64-.972-1.469-.948-2.263a2.68 2.68 0 0 1 .066-.523 2.545 2.545 0 0 1 .619-1.164L9.13 8.114c1.058-1.134 3.204-1.27 4.43-.278l3.501 2.831c.593.48 1.461.387 1.94-.207a1.384 1.384 0 0 0-.207-1.943l-3.5-2.831c-.8-.647-1.766-1.045-2.774-1.202l2.015-2.158A1.384 1.384 0 0 0 13.483 0zm-2.866 12.815a1.38 1.38 0 0 0-1.38 1.382 1.38 1.38 0 0 0 1.38 1.382H20.79a1.38 1.38 0 0 0 1.38-1.382 1.38 1.38 0 0 0-1.38-1.382z" />
-                                    </svg>
-                                    LeetCode Profile
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* User Section - Learning Tracker */}
-                        {isAuthenticated && (
-                            <div className="mt-16 border-t border-dark-200 dark:border-dark-800 pt-16">
-                                <div className="flex items-center justify-between mb-8">
-                                    <h2 className="text-2xl font-bold text-dark-900 dark:text-white font-display">
-                                        My Learning Tracker
-                                    </h2>
-                                    <Link to="/dashboard" className="btn-primary text-sm font-semibold">
-                                        Manage in Dashboard
-                                    </Link>
-                                </div>
-
-                                {learningTopics.length > 0 ? (
-                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {learningTopics.slice(0, 6).map((topic) => (
-                                            <Card key={topic._id} className="p-4 bg-white/40 dark:bg-dark-900/40 border border-dark-200/50 dark:border-dark-800">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h4 className="font-semibold text-dark-900 dark:text-white">
-                                                        {topic.title}
-                                                    </h4>
-                                                    <span className={`badge text-xs uppercase ${topic.status === 'completed' ? 'badge-success' :
-                                                        topic.status === 'in-progress' ? 'badge-warning' :
-                                                            'badge-gray'
-                                                        }`}>
-                                                        {topic.status.replace('-', ' ')}
-                                                    </span>
-                                                </div>
-                                                {topic.description && (
-                                                    <p className="text-sm text-dark-500 dark:text-dark-400">
-                                                        {topic.description}
-                                                    </p>
-                                                )}
-                                            </Card>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <Card className="p-8 text-center bg-white/40 dark:bg-dark-900/40">
-                                        <p className="text-dark-500 dark:text-dark-400">
-                                            No learning topics yet. Add them from the Dashboard.
-                                        </p>
-                                    </Card>
-                                )}
-                            </div>
-                        )}
                     </>
                 )}
 
-                {/* --- RENDER Tab 2: DSA Sheet --- */}
+                {/* --- Tab 2: Syllabus Wiki --- */}
+                {activeSection === 'wiki' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in">
+                        {/* Sidebar: Repo Deck & Table of Contents Outline */}
+                        <div className="lg:col-span-4 space-y-6">
+                            <Card className="p-4">
+                                <h3 className="text-sm font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-4">
+                                    Learning Repositories
+                                </h3>
+                                <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                                    {GITHUB_REPOS.map((repo) => (
+                                        <div
+                                            key={repo.id}
+                                            onClick={() => handleRepoChange(repo)}
+                                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer ${
+                                                selectedRepo.id === repo.id
+                                                    ? 'border-primary-500 bg-primary-500/5'
+                                                    : 'border-dark-200/50 dark:border-dark-800 hover:border-dark-350 dark:hover:border-dark-700 bg-white/40 dark:bg-dark-900/10'
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-start gap-2">
+                                                <h4 className="font-bold text-sm text-dark-900 dark:text-white group-hover:text-primary-500">
+                                                    {repo.name}
+                                                </h4>
+                                                <span className="badge text-[9px] uppercase py-0.5 tracking-wider">
+                                                    {repo.category}
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-dark-500 dark:text-dark-400 mt-1 line-clamp-2">
+                                                {repo.description}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+
+                            {/* Section Outline (dynamic headings from current doc) */}
+                            {markdownContent && !wikiLoading && (
+                                <Card className="p-4 hidden lg:block">
+                                    <h3 className="text-sm font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3">
+                                        Document Outline
+                                    </h3>
+                                    <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                                        {getOutline(markdownContent).length > 0 ? (
+                                            getOutline(markdownContent).map((h, i) => (
+                                                <div
+                                                    key={i}
+                                                    style={{ paddingLeft: `${(h.level - 1) * 8}px` }}
+                                                    className={`text-xs ${
+                                                        h.level === 1 
+                                                            ? 'font-bold text-dark-800 dark:text-dark-200' 
+                                                            : 'text-dark-500 dark:text-dark-400 font-medium'
+                                                    }`}
+                                                >
+                                                    • {h.text}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-dark-400 dark:text-dark-500">No outline headings found.</span>
+                                        )}
+                                    </div>
+                                </Card>
+                            )}
+                        </div>
+
+                        {/* Right: Markdown Documentation Viewer */}
+                        <div className="lg:col-span-8">
+                            <Card className="p-6 md:p-8 min-h-[640px] flex flex-col">
+                                {/* Header / Path bar */}
+                                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-dark-200 dark:border-dark-800 mb-6 text-sm">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-bold text-primary-500">{selectedRepo.name}</span>
+                                        <span className="text-dark-350 dark:text-dark-600">/</span>
+                                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-dark-100 dark:bg-dark-800/80 text-dark-600 dark:text-dark-300">
+                                            {currentFilePath}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        {historyStack.length > 0 && (
+                                            <button
+                                                onClick={handleGoBack}
+                                                className="px-3 py-1 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-xs font-semibold rounded-lg cursor-pointer text-dark-650 dark:text-dark-350"
+                                            >
+                                                ← Back
+                                            </button>
+                                        )}
+                                        {currentFilePath !== 'README.md' && (
+                                            <button
+                                                onClick={handleResetToReadme}
+                                                className="px-3 py-1 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-xs font-semibold rounded-lg cursor-pointer text-dark-650 dark:text-dark-350"
+                                            >
+                                                Home README
+                                            </button>
+                                        )}
+                                        <a
+                                            href={`https://github.com/tusquake/${selectedRepo.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-3 py-1 bg-dark-900 hover:bg-dark-950 text-white dark:bg-dark-800 dark:hover:bg-dark-700 text-xs font-semibold rounded-lg flex items-center gap-1.5"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                                            </svg>
+                                            GitHub Repo
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {/* Main Reader Panel */}
+                                <div className="flex-grow flex flex-col justify-start">
+                                    {wikiLoading ? (
+                                        <div className="flex-grow flex flex-col justify-center items-center py-20">
+                                            <svg className="animate-spin h-8 w-8 text-primary-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span className="text-xs text-dark-500 font-semibold uppercase tracking-wider">Syncing raw markdown content...</span>
+                                        </div>
+                                    ) : wikiError ? (
+                                        <div className="flex-grow flex flex-col justify-center items-center text-center py-12">
+                                            <svg className="w-12 h-12 text-rose-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <h4 className="font-bold text-dark-900 dark:text-white mb-2">Failed to load content</h4>
+                                            <p className="text-xs text-dark-500 dark:text-dark-400 max-w-md mb-4">{wikiError}</p>
+                                            <button
+                                                onClick={() => fetchRepoFile(selectedRepo.id, currentFilePath)}
+                                                className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white dark:text-dark-950 font-bold rounded-xl text-xs cursor-pointer transition-all"
+                                            >
+                                                Retry Fetch
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={handleMarkdownClick}
+                                            className="markdown-body text-dark-800 dark:text-dark-200 leading-relaxed text-sm select-text"
+                                            dangerouslySetInnerHTML={{ __html: parseMarkdown(markdownContent) }}
+                                        />
+                                    )}
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- Tab 3: DSA Practice Sheet --- */}
                 {activeSection === 'dsa' && (
                     <div className="animate-fade-in">
                         {/* DSA Header and Sync Banner */}
@@ -642,43 +961,43 @@ const Learning = () => {
                             </div>
 
                             {/* Easy Stats */}
-                            <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/40 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/45 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase">Easy</span>
-                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase font-display">Easy</span>
+                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 font-display"></span>
                                 </div>
                                 <div className="text-2xl font-extrabold text-dark-900 dark:text-white font-display">
                                     {easyDone}/{easyQs.length}
                                 </div>
-                                <span className="text-xs font-medium text-emerald-500 mt-2 block">
+                                <span className="text-xs font-semibold text-emerald-500 mt-2 block">
                                     {easyQs.length ? Math.round((easyDone / easyQs.length) * 100) : 0}% Complete
                                 </span>
                             </div>
 
                             {/* Medium Stats */}
-                            <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/40 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/45 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase">Medium</span>
+                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase font-display">Medium</span>
                                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                                 </div>
                                 <div className="text-2xl font-extrabold text-dark-900 dark:text-white font-display">
                                     {medDone}/{medQs.length}
                                 </div>
-                                <span className="text-xs font-medium text-amber-500 mt-2 block">
+                                <span className="text-xs font-semibold text-amber-500 mt-2 block">
                                     {medQs.length ? Math.round((medDone / medQs.length) * 100) : 0}% Complete
                                 </span>
                             </div>
 
                             {/* Hard Stats */}
-                            <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/40 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/45 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase">Hard</span>
+                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase font-display">Hard</span>
                                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
                                 </div>
                                 <div className="text-2xl font-extrabold text-dark-900 dark:text-white font-display">
                                     {hardDone}/{hardQs.length}
                                 </div>
-                                <span className="text-xs font-medium text-rose-500 mt-2 block">
+                                <span className="text-xs font-semibold text-rose-500 mt-2 block">
                                     {hardQs.length ? Math.round((hardDone / hardQs.length) * 100) : 0}% Complete
                                 </span>
                             </div>
@@ -753,7 +1072,7 @@ const Learning = () => {
                                         title="Collapse all"
                                     >
                                         <svg className="w-3.5 h-3.5 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                         </svg>
                                         Collapse
                                     </button>
@@ -789,7 +1108,6 @@ const Learning = () => {
                         {/* Question Topics Accordion Grid */}
                         <div className="space-y-4">
                             {TOPICS.map((topic) => {
-                                // Filter questions inside this topic
                                 const matchingQs = topic.qs.filter(q => {
                                     const matchesDiff = dsaDiffFilter === 'All' || q.d === dsaDiffFilter;
                                     const matchesSearch = !dsaSearch || 
@@ -798,7 +1116,6 @@ const Learning = () => {
                                     return matchesDiff && matchesSearch;
                                 });
 
-                                // Skip if no matching questions for this category
                                 if (matchingQs.length === 0) return null;
 
                                 const topicTotal = matchingQs.length;
@@ -811,7 +1128,6 @@ const Learning = () => {
                                         key={topic.id} 
                                         className="rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/20 overflow-hidden shadow-sm transition-all duration-200"
                                     >
-                                        {/* Accordion Head */}
                                         <div 
                                             onClick={() => toggleTopicCollapse(topic.id)}
                                             className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-dark-50/50 dark:bg-dark-900/60 cursor-pointer user-select-none hover:bg-dark-100/40 dark:hover:bg-dark-850/60 transition-colors"
@@ -828,7 +1144,6 @@ const Learning = () => {
                                                 </span>
                                             </div>
 
-                                            {/* Topic Progress Bar & Collapse Chevron */}
                                             <div className="flex items-center gap-4 min-w-[200px] justify-between sm:justify-end">
                                                 <div className="flex-1 max-w-[140px] bg-dark-200 dark:bg-dark-800 h-1.5 rounded-full overflow-hidden">
                                                     <div 
@@ -848,7 +1163,6 @@ const Learning = () => {
                                             </div>
                                         </div>
 
-                                        {/* Accordion Body */}
                                         {isExpanded && (
                                             <div className="p-4 border-t border-dark-100 dark:border-dark-800 bg-dark-50/10 dark:bg-dark-950/5">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -865,7 +1179,6 @@ const Learning = () => {
                                                                         : 'bg-white dark:bg-dark-900/40 border-dark-200/60 dark:border-dark-800/80 hover:border-primary-500/40 dark:hover:border-primary-505/30 hover:scale-[1.01] hover:shadow-sm'
                                                                 }`}
                                                             >
-                                                                {/* Custom Checkbox */}
                                                                 <button
                                                                     onClick={() => toggleDsaQuestion(q.gid)}
                                                                     className={`w-5 h-5 rounded-md border flex items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 ${
@@ -881,12 +1194,10 @@ const Learning = () => {
                                                                     )}
                                                                 </button>
 
-                                                                {/* Question Index */}
                                                                 <span className="text-xs font-mono text-dark-400 dark:text-dark-500 w-6 flex-shrink-0">
                                                                     #{q.gid}
                                                                 </span>
 
-                                                                {/* Question Name */}
                                                                 <a 
                                                                     href={url} 
                                                                     target="_blank" 
@@ -900,7 +1211,6 @@ const Learning = () => {
                                                                     {q.n}
                                                                 </a>
 
-                                                                {/* Difficulty Badge */}
                                                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase ${
                                                                     q.d === 'Easy' 
                                                                         ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30' 
@@ -911,7 +1221,6 @@ const Learning = () => {
                                                                     {q.d}
                                                                 </span>
 
-                                                                {/* External Link */}
                                                                 <a 
                                                                     href={url} 
                                                                     target="_blank" 
