@@ -17,7 +17,12 @@ const Home = () => {
                 <div className="relative max-w-7xl mx-auto text-center py-20 md:py-32">
                     <div className="animate-fade-in">
                         <span className="inline-block px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full text-sm font-medium mb-6">
-                            🚀 Master Your Tech Interview & Skill Tracker
+                            <span className="inline-flex items-center gap-1.5">
+                                <svg className="w-4.5 h-4.5 text-primary-550 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Master Your Tech Interview & Skill Tracker
+                            </span>
                         </span>
                     </div>
 
@@ -180,8 +185,11 @@ const Home = () => {
                                         className="w-full h-full object-cover rounded-3xl group-hover:scale-105 transition-transform duration-500"
                                     />
                                 </div>
-                                <div className="absolute -top-3 -right-3 bg-white dark:bg-dark-800 rounded-xl shadow-lg p-2.5 border border-dark-200/20 animate-float">
-                                    💼 <span className="text-xs font-bold text-dark-700 dark:text-dark-200">Engineer</span>
+                                <div className="absolute -top-3 -right-3 bg-white dark:bg-dark-800 rounded-xl shadow-lg p-2.5 border border-dark-200/20 animate-float flex items-center gap-1.5">
+                                    <svg className="w-3.5 h-3.5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="text-xs font-bold text-dark-700 dark:text-dark-200">Engineer</span>
                                 </div>
                             </div>
                         </div>

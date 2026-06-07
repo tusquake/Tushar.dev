@@ -42,6 +42,122 @@ const sampleResources = [
     }
 ];
 
+const getTopicIcon = (topicId) => {
+    const icons = {
+        arr: (
+            <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+        ),
+        tp: (
+            <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+        ),
+        sw: (
+            <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        ),
+        bs: (
+            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        ),
+        ll: (
+            <svg className="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+        ),
+        stk: (
+            <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v2" />
+            </svg>
+        ),
+        q: (
+            <svg className="w-5 h-5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+        ),
+        bt: (
+            <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+            </svg>
+        ),
+        bst: (
+            <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        ),
+        heap: (
+            <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+        ),
+        bt2: (
+            <svg className="w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+        ),
+        str: (
+            <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        ),
+        mat: (
+            <svg className="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 10h16M4 15h16M10 4v16M15 4v16" />
+            </svg>
+        ),
+        bit: (
+            <svg className="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 113.536 0V21h-2v-3.3a5 5 0 00-3.536 0z" />
+            </svg>
+        ),
+        iv: (
+            <svg className="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        ),
+        gr: (
+            <svg className="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        ),
+        math: (
+            <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+        ),
+        sort: (
+            <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+            </svg>
+        ),
+        bfs: (
+            <svg className="w-5 h-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6.578M12 7a5 5 0 11-5 5" />
+            </svg>
+        ),
+        rec: (
+            <svg className="w-5 h-5 text-orange-650" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6.578M12 7a5 5 0 11-5 5" />
+            </svg>
+        ),
+        design: (
+            <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+        ),
+        pre: (
+            <svg className="w-5 h-5 text-fuchsia-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        )
+    };
+    return icons[topicId] || null;
+};
+
 const Learning = () => {
     const { isAuthenticated, isAdmin } = useAuth();
     const [resources, setResources] = useState([]);
@@ -455,7 +571,10 @@ const Learning = () => {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-dark-900/40 border border-dark-200/60 dark:border-dark-800/80 mb-8 backdrop-blur-sm">
                             <div>
                                 <h2 className="text-2xl font-bold font-display text-dark-900 dark:text-white flex items-center gap-2">
-                                    🚀 Ultimate DSA Interview Sheet
+                                    <svg className="w-6 h-6 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                    Ultimate DSA Interview Sheet
                                 </h2>
                                 <p className="text-sm text-dark-500 dark:text-dark-400 mt-1">
                                     Pattern-based categorization of high-yield questions. No Graphs or Tries. Click titles to code.
@@ -466,8 +585,10 @@ const Learning = () => {
                             <div className="flex items-center self-start md:self-auto">
                                 {syncStatus === 'synced' && (
                                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-450 border border-emerald-200/30 dark:border-emerald-900/30">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        ☁️ Cloud Synced
+                                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                        </svg>
+                                        Cloud Synced
                                     </div>
                                 )}
                                 {syncStatus === 'syncing' && (
@@ -481,14 +602,18 @@ const Learning = () => {
                                 )}
                                 {syncStatus === 'local' && (
                                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-450 border border-amber-200/30 dark:border-amber-900/30" title="Sign in to save your progress to the database">
-                                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                        💾 Local Only (Log in to Sync)
+                                        <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                        </svg>
+                                        Local Only (Log in to Sync)
                                     </div>
                                 )}
                                 {syncStatus === 'error' && (
                                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 border border-rose-200/30 dark:border-rose-900/30">
-                                        <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                                        ⚠️ Connection Error (Saved Locally)
+                                        <svg className="w-3.5 h-3.5 text-rose-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        Connection Error (Saved Locally)
                                     </div>
                                 )}
                             </div>
@@ -617,26 +742,46 @@ const Learning = () => {
                                         className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-400 hover:border-primary-500/50 transition-colors cursor-pointer flex items-center gap-1"
                                         title="Expand all"
                                     >
-                                        📂 Expand
+                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9l-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        Expand
                                     </button>
                                     <button
                                         onClick={() => setExpandedTopics({})}
-                                        className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-400 hover:border-primary-500/50 transition-colors cursor-pointer flex items-center gap-1"
+                                        className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-400 hover:border-primary-500/50 transition-colors cursor-pointer flex items-center gap-1.5"
                                         title="Collapse all"
                                     >
-                                        📁 Collapse
+                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                        </svg>
+                                        Collapse
                                     </button>
                                 </div>
 
                                 <button
                                     onClick={handleResetProgress}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 cursor-pointer border ${
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
                                         confirmReset
                                             ? 'bg-rose-500 border-rose-500 text-white animate-pulse'
                                             : 'bg-white dark:bg-dark-900 text-dark-600 dark:text-dark-400 border-dark-200 dark:border-dark-800 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-500 hover:border-rose-300 dark:hover:border-rose-900/30'
                                     }`}
                                 >
-                                    {confirmReset ? '⚠️ Confirm Reset?' : '🔄 Reset Progress'}
+                                    {confirmReset ? (
+                                        <>
+                                            <svg className="w-3.5 h-3.5 text-white animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Confirm Reset?
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-3.5 h-3.5 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6.578M12 7a5 5 0 11-5 5" />
+                                            </svg>
+                                            Reset Progress
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -672,8 +817,8 @@ const Learning = () => {
                                             className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-dark-50/50 dark:bg-dark-900/60 cursor-pointer user-select-none hover:bg-dark-100/40 dark:hover:bg-dark-850/60 transition-colors"
                                         >
                                             <div className="flex items-center gap-3 flex-1">
-                                                <span className="text-xl w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-dark-805 shadow-sm">
-                                                    {topic.icon}
+                                                <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-dark-800 shadow-sm border border-dark-200/50 dark:border-dark-700/50">
+                                                    {getTopicIcon(topic.id)}
                                                 </span>
                                                 <span className="font-bold text-base text-dark-900 dark:text-white font-display">
                                                     {topic.title}

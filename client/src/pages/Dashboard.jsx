@@ -242,7 +242,10 @@ const Dashboard = () => {
                     </div>
                     {!isAdmin && (
                         <Link to="/learning" className="btn-primary self-start md:self-auto flex items-center gap-2">
-                            🚀 Go to Learning Portal
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            Go to Learning Portal
                         </Link>
                     )}
                 </div>
@@ -411,7 +414,10 @@ const Dashboard = () => {
                                             {contact.message}
                                         </div>
                                         <p className="text-[10px] text-dark-400 mt-3 flex items-center gap-1">
-                                            🕒 {new Date(contact.createdAt).toLocaleString()}
+                                            <svg className="w-3 h-3 text-dark-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {new Date(contact.createdAt).toLocaleString()}
                                         </p>
                                     </div>
                                     <button
@@ -487,9 +493,9 @@ const Dashboard = () => {
                                                 onChange={(e) => handleUpdateStatus(topic._id, e.target.value)}
                                                 className="w-full text-xs font-semibold py-1.5 px-2 bg-dark-100 dark:bg-dark-850 border border-dark-200 dark:border-dark-800 rounded-lg text-dark-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
                                             >
-                                                <option value="not-started">🔴 Not Started</option>
-                                                <option value="in-progress">🟡 In Progress</option>
-                                                <option value="completed">🟢 Completed</option>
+                                                <option value="not-started">Not Started</option>
+                                                <option value="in-progress">In Progress</option>
+                                                <option value="completed">Completed</option>
                                             </select>
                                         </div>
                                         <div className="flex gap-1.5 self-end">
@@ -856,9 +862,9 @@ const Dashboard = () => {
                                                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                                 className="w-full text-sm py-2 px-3 bg-dark-50 dark:bg-dark-850 border border-dark-200 dark:border-dark-850 rounded-xl text-dark-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all cursor-pointer"
                                             >
-                                                <option value="not-started">🔴 Not Started</option>
-                                                <option value="in-progress">🟡 In Progress</option>
-                                                <option value="completed">🟢 Completed</option>
+                                                <option value="not-started">Not Started</option>
+                                                <option value="in-progress">In Progress</option>
+                                                <option value="completed">Completed</option>
                                             </select>
                                         </div>
                                         <Input
