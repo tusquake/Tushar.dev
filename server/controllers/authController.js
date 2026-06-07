@@ -280,6 +280,14 @@ const forgotPassword = async (req, res) => {
         const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
         const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
+        // Log reset URL in development mode for easier local testing
+        if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+            console.log('\n====================================');
+            console.log('🔑 PASSWORD RESET LINK (DEVELOPMENT):');
+            console.log(resetUrl);
+            console.log('====================================\n');
+        }
+
         // Send email
         const mailResult = await sendResetPasswordEmail({
             email: user.email,
@@ -288,6 +296,15 @@ const forgotPassword = async (req, res) => {
         });
 
         if (!mailResult.success) {
+            // In development mode, allow testing without a functional SMTP configuration
+            if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+                console.log('⚠️ [DEV MODE] Email dispatch failed, but token remains active for local testing.');
+                return res.json({
+                    success: true,
+                    message: 'If the email is registered, a password reset link has been sent (Dev Mode: Check console)'
+                });
+            }
+
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;
             await user.save();
