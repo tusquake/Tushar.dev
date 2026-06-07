@@ -4,6 +4,7 @@ import { authAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import Logo from '../components/common/Logo';
 
 const ResetPassword = () => {
     const { token } = useParams();
@@ -72,9 +73,12 @@ const ResetPassword = () => {
 
             <Card className="w-full max-w-md p-8 relative">
                 <div className="text-center mb-8">
-                    <Link to="/" className="inline-flex items-center space-x-2 text-2xl font-display font-bold mb-4">
-                        <span className="text-dark-900 dark:text-white">CodeForge</span>
-                        <span className="gradient-text">.dev</span>
+                    <Link to="/" className="inline-flex items-center gap-2 text-2xl font-display font-bold mb-4">
+                        <Logo className="w-8 h-8" />
+                        <span>
+                            <span className="text-dark-900 dark:text-white">CodeForge</span>
+                            <span className="gradient-text">.dev</span>
+                        </span>
                     </Link>
                     <h1 className="text-2xl font-semibold text-dark-900 dark:text-white">
                         Reset Password

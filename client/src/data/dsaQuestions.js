@@ -606,3 +606,295 @@ TOPICS.forEach(topic => {
     ALL_QUESTIONS.push(q);
   });
 });
+
+export const INTERVIEW_200_RAW = [
+  {id:1,n:"Two Sum",t:"Arrays & Hashing",d:"Easy",slug:"two-sum"},
+  {id:2,n:"Contains Duplicate",t:"Arrays & Hashing",d:"Easy",slug:"contains-duplicate"},
+  {id:3,n:"Valid Anagram",t:"Arrays & Hashing",d:"Easy",slug:"valid-anagram"},
+  {id:4,n:"Group Anagrams",t:"Arrays & Hashing",d:"Medium",slug:"group-anagrams"},
+  {id:5,n:"Top K Frequent Elements",t:"Arrays & Hashing",d:"Medium",slug:"top-k-frequent-elements"},
+  {id:6,n:"Product of Array Except Self",t:"Arrays & Hashing",d:"Medium",slug:"product-of-array-except-self"},
+  {id:7,n:"Encode and Decode Strings",t:"Arrays & Hashing",d:"Medium",slug:"encode-and-decode-strings"},
+  {id:8,n:"Longest Consecutive Sequence",t:"Arrays & Hashing",d:"Medium",slug:"longest-consecutive-sequence"},
+  {id:9,n:"Sort Colors",t:"Arrays & Hashing",d:"Medium",slug:"sort-colors"},
+  {id:10,n:"Intersection of Two Arrays II",t:"Arrays & Hashing",d:"Easy",slug:"intersection-of-two-arrays-ii"},
+  {id:11,n:"Missing Number",t:"Arrays & Hashing",d:"Easy",slug:"missing-number"},
+  {id:12,n:"Find All Duplicates in an Array",t:"Arrays & Hashing",d:"Medium",slug:"find-all-duplicates-in-an-array"},
+  {id:13,n:"Pascal's Triangle",t:"Arrays & Hashing",d:"Easy",slug:"pascals-triangle"},
+  {id:14,n:"Rotate Array",t:"Arrays & Hashing",d:"Medium",slug:"rotate-array"},
+  {id:15,n:"Majority Element",t:"Arrays & Hashing",d:"Easy",slug:"majority-element"},
+
+  {id:16,n:"Best Time to Buy and Sell Stock",t:"Two Pointers",d:"Easy",slug:"best-time-to-buy-and-sell-stock"},
+  {id:17,n:"Valid Palindrome",t:"Two Pointers",d:"Easy",slug:"valid-palindrome"},
+  {id:18,n:"Two Sum II – Input Array Is Sorted",t:"Two Pointers",d:"Medium",slug:"two-sum-ii-input-array-is-sorted"},
+  {id:19,n:"3Sum",t:"Two Pointers",d:"Medium",slug:"3sum"},
+  {id:20,n:"Container With Most Water",t:"Two Pointers",d:"Medium",slug:"container-with-most-water"},
+  {id:21,n:"Trapping Rain Water",t:"Two Pointers",d:"Medium",slug:"trapping-rain-water"},
+  {id:22,n:"4Sum",t:"Two Pointers",d:"Medium",slug:"4sum"},
+  {id:23,n:"Remove Duplicates from Sorted Array",t:"Two Pointers",d:"Easy",slug:"remove-duplicates-from-sorted-array"},
+  {id:24,n:"Move Zeroes",t:"Two Pointers",d:"Easy",slug:"move-zeroes"},
+  {id:25,n:"Squares of a Sorted Array",t:"Two Pointers",d:"Easy",slug:"squares-of-a-sorted-array"},
+  {id:26,n:"Merge Sorted Array",t:"Two Pointers",d:"Easy",slug:"merge-sorted-array"},
+  {id:27,n:"Sort Array By Parity",t:"Two Pointers",d:"Easy",slug:"sort-array-by-parity"},
+
+  {id:28,n:"Minimum Window Substring",t:"Sliding Window",d:"Medium",slug:"minimum-window-substring"},
+  {id:29,n:"Longest Substring Without Repeating Characters",t:"Sliding Window",d:"Medium",slug:"longest-substring-without-repeating-characters"},
+  {id:30,n:"Longest Repeating Character Replacement",t:"Sliding Window",d:"Medium",slug:"longest-repeating-character-replacement"},
+  {id:31,n:"Permutation in String",t:"Sliding Window",d:"Medium",slug:"permutation-in-string"},
+  {id:32,n:"Find All Anagrams in a String",t:"Sliding Window",d:"Medium",slug:"find-all-anagrams-in-a-string"},
+  {id:33,n:"Maximum Average Subarray I",t:"Sliding Window",d:"Easy",slug:"maximum-average-subarray-i"},
+  {id:34,n:"Maximum Sum of Distinct Subarrays With Length K",t:"Sliding Window",d:"Medium",slug:"maximum-sum-of-distinct-subarrays-with-length-k"},
+  {id:35,n:"Fruit Into Baskets",t:"Sliding Window",d:"Medium",slug:"fruit-into-baskets"},
+  {id:36,n:"Minimum Size Subarray Sum",t:"Sliding Window",d:"Medium",slug:"minimum-size-subarray-sum"},
+  {id:37,n:"Longest Subarray of 1s After Deleting One Element",t:"Sliding Window",d:"Medium",slug:"longest-subarray-of-1s-after-deleting-one-element"},
+
+  {id:38,n:"Binary Search",t:"Binary Search",d:"Easy",slug:"binary-search"},
+  {id:39,n:"Search a 2D Matrix",t:"Binary Search",d:"Medium",slug:"search-a-2d-matrix"},
+  {id:40,n:"Koko Eating Bananas",t:"Binary Search",d:"Medium",slug:"koko-eating-bananas"},
+  {id:41,n:"Find Minimum in Rotated Sorted Array",t:"Binary Search",d:"Medium",slug:"find-minimum-in-rotated-sorted-array"},
+  {id:42,n:"Search in Rotated Sorted Array",t:"Binary Search",d:"Medium",slug:"search-in-rotated-sorted-array"},
+  {id:43,n:"Time Based Key-Value Store",t:"Binary Search",d:"Medium",slug:"time-based-key-value-store"},
+  {id:44,n:"Find Peak Element",t:"Binary Search",d:"Medium",slug:"find-peak-element"},
+  {id:45,n:"First Bad Version",t:"Binary Search",d:"Easy",slug:"first-bad-version"},
+  {id:46,n:"Guess Number Higher or Lower",t:"Binary Search",d:"Easy",slug:"guess-number-higher-or-lower"},
+  {id:47,n:"Count Negative Numbers in a Sorted Matrix",t:"Binary Search",d:"Easy",slug:"count-negative-numbers-in-a-sorted-matrix"},
+  {id:48,n:"Search Insert Position",t:"Binary Search",d:"Easy",slug:"search-insert-position"},
+  {id:49,n:"Sqrt(x)",t:"Binary Search",d:"Easy",slug:"sqrtx"},
+
+  {id:50,n:"Reverse Linked List",t:"Linked List",d:"Easy",slug:"reverse-linked-list"},
+  {id:51,n:"Merge Two Sorted Lists",t:"Linked List",d:"Easy",slug:"merge-two-sorted-lists"},
+  {id:52,n:"Reorder List",t:"Linked List",d:"Medium",slug:"reorder-list"},
+  {id:53,n:"Remove Nth Node From End of List",t:"Linked List",d:"Medium",slug:"remove-nth-node-from-end-of-list"},
+  {id:54,n:"Copy List with Random Pointer",t:"Linked List",d:"Medium",slug:"copy-list-with-random-pointer"},
+  {id:55,n:"Add Two Numbers",t:"Linked List",d:"Medium",slug:"add-two-numbers"},
+  {id:56,n:"Linked List Cycle",t:"Linked List",d:"Easy",slug:"linked-list-cycle"},
+  {id:57,n:"Find the Duplicate Number",t:"Linked List",d:"Medium",slug:"find-the-duplicate-number"},
+  {id:58,n:"LRU Cache",t:"Linked List",d:"Medium",slug:"lru-cache"},
+  {id:59,n:"Middle of the Linked List",t:"Linked List",d:"Easy",slug:"middle-of-the-linked-list"},
+  {id:60,n:"Palindrome Linked List",t:"Linked List",d:"Easy",slug:"palindrome-linked-list"},
+  {id:61,n:"Intersection of Two Linked Lists",t:"Linked List",d:"Easy",slug:"intersection-of-two-linked-lists"},
+  {id:62,n:"Odd Even Linked List",t:"Linked List",d:"Medium",slug:"odd-even-linked-list"},
+  {id:63,n:"Swap Nodes in Pairs",t:"Linked List",d:"Medium",slug:"swap-nodes-in-pairs"},
+  {id:64,n:"Remove Linked List Elements",t:"Linked List",d:"Easy",slug:"remove-linked-list-elements"},
+  {id:65,n:"Sort List",t:"Linked List",d:"Medium",slug:"sort-list"},
+
+  {id:66,n:"Valid Parentheses",t:"Stack & Queue",d:"Easy",slug:"valid-parentheses"},
+  {id:67,n:"Min Stack",t:"Stack & Queue",d:"Medium",slug:"min-stack"},
+  {id:68,n:"Evaluate Reverse Polish Notation",t:"Stack & Queue",d:"Medium",slug:"evaluate-reverse-polish-notation"},
+  {id:69,n:"Generate Parentheses",t:"Stack & Queue",d:"Medium",slug:"generate-parentheses"},
+  {id:70,n:"Daily Temperatures",t:"Stack & Queue",d:"Medium",slug:"daily-temperatures"},
+  {id:71,n:"Car Fleet",t:"Stack & Queue",d:"Medium",slug:"car-fleet"},
+  {id:72,n:"Largest Rectangle in Histogram",t:"Stack & Queue",d:"Medium",slug:"largest-rectangle-in-histogram"},
+  {id:73,n:"Implement Queue using Stacks",t:"Stack & Queue",d:"Easy",slug:"implement-queue-using-stacks"},
+  {id:74,n:"Implement Stack using Queues",t:"Stack & Queue",d:"Easy",slug:"implement-stack-using-queues"},
+  {id:75,n:"Next Greater Element I",t:"Stack & Queue",d:"Easy",slug:"next-greater-element-i"},
+  {id:76,n:"Asteroid Collision",t:"Stack & Queue",d:"Medium",slug:"asteroid-collision"},
+  {id:77,n:"Decode String",t:"Stack & Queue",d:"Medium",slug:"decode-string"},
+  {id:78,n:"Remove All Adjacent Duplicates in String",t:"Stack & Queue",d:"Easy",slug:"remove-all-adjacent-duplicates-in-string"},
+
+  {id:79,n:"Invert Binary Tree",t:"Binary Trees",d:"Easy",slug:"invert-binary-tree"},
+  {id:80,n:"Maximum Depth of Binary Tree",t:"Binary Trees",d:"Easy",slug:"maximum-depth-of-binary-tree"},
+  {id:81,n:"Diameter of Binary Tree",t:"Binary Trees",d:"Easy",slug:"diameter-of-binary-tree"},
+  {id:82,n:"Balanced Binary Tree",t:"Binary Trees",d:"Easy",slug:"balanced-binary-tree"},
+  {id:83,n:"Same Tree",t:"Binary Trees",d:"Easy",slug:"same-tree"},
+  {id:84,n:"Subtree of Another Tree",t:"Binary Trees",d:"Easy",slug:"subtree-of-another-tree"},
+  {id:85,n:"Lowest Common Ancestor of a BST",t:"Binary Trees",d:"Medium",slug:"lowest-common-ancestor-of-a-binary-search-tree"},
+  {id:86,n:"Binary Tree Level Order Traversal",t:"Binary Trees",d:"Medium",slug:"binary-tree-level-order-traversal"},
+  {id:87,n:"Binary Tree Right Side View",t:"Binary Trees",d:"Medium",slug:"binary-tree-right-side-view"},
+  {id:88,n:"Count Good Nodes in Binary Tree",t:"Binary Trees",d:"Medium",slug:"count-good-nodes-in-binary-tree"},
+  {id:89,n:"Validate Binary Search Tree",t:"Binary Trees",d:"Medium",slug:"validate-binary-search-tree"},
+  {id:90,n:"Kth Smallest Element in a BST",t:"Binary Trees",d:"Medium",slug:"kth-smallest-element-in-a-bst"},
+  {id:91,n:"Construct Binary Tree from Preorder and Inorder",t:"Binary Trees",d:"Medium",slug:"construct-binary-tree-from-preorder-and-inorder-traversal"},
+  {id:92,n:"Binary Tree Zigzag Level Order",t:"Binary Trees",d:"Medium",slug:"binary-tree-zigzag-level-order-traversal"},
+  {id:93,n:"Path Sum",t:"Binary Trees",d:"Easy",slug:"path-sum"},
+  {id:94,n:"Binary Tree Paths",t:"Binary Trees",d:"Easy",slug:"binary-tree-paths"},
+  {id:95,n:"Symmetric Tree",t:"Binary Trees",d:"Easy",slug:"symmetric-tree"},
+  {id:96,n:"Minimum Depth of Binary Tree",t:"Binary Trees",d:"Easy",slug:"minimum-depth-of-binary-tree"},
+  {id:97,n:"Populating Next Right Pointers",t:"Binary Trees",d:"Medium",slug:"populating-next-right-pointers-in-each-node"},
+
+  {id:98,n:"Kth Largest Element in an Array",t:"Heap / Priority Queue",d:"Medium",slug:"kth-largest-element-in-an-array"},
+  {id:99,n:"Last Stone Weight",t:"Heap / Priority Queue",d:"Easy",slug:"last-stone-weight"},
+  {id:100,n:"K Closest Points to Origin",t:"Heap / Priority Queue",d:"Medium",slug:"k-closest-points-to-origin"},
+  {id:101,n:"Task Scheduler",t:"Heap / Priority Queue",d:"Medium",slug:"task-scheduler"},
+  {id:102,n:"Design Twitter",t:"Heap / Priority Queue",d:"Medium",slug:"design-twitter"},
+  {id:103,n:"Find Median from Data Stream",t:"Heap / Priority Queue",d:"Medium",slug:"find-median-from-data-stream"},
+  {id:104,n:"Top K Frequent Words",t:"Heap / Priority Queue",d:"Medium",slug:"top-k-frequent-words"},
+  {id:105,n:"Ugly Number II",t:"Heap / Priority Queue",d:"Medium",slug:"ugly-number-ii"},
+  {id:106,n:"IPO",t:"Heap / Priority Queue",d:"Medium",slug:"ipo"},
+
+  {id:107,n:"Subsets",t:"Backtracking",d:"Medium",slug:"subsets"},
+  {id:108,n:"Combination Sum",t:"Backtracking",d:"Medium",slug:"combination-sum"},
+  {id:109,n:"Combination Sum II",t:"Backtracking",d:"Medium",slug:"combination-sum-ii"},
+  {id:110,n:"Permutations",t:"Backtracking",d:"Medium",slug:"permutations"},
+  {id:111,n:"Subsets II",t:"Backtracking",d:"Medium",slug:"subsets-ii"},
+  {id:112,n:"Word Search",t:"Backtracking",d:"Medium",slug:"word-search"},
+  {id:113,n:"Palindrome Partitioning",t:"Backtracking",d:"Medium",slug:"palindrome-partitioning"},
+  {id:114,n:"Letter Combinations of a Phone Number",t:"Backtracking",d:"Medium",slug:"letter-combinations-of-phone-number"},
+  {id:115,n:"Combinations",t:"Backtracking",d:"Medium",slug:"combinations"},
+  {id:116,n:"N-Queens",t:"Backtracking",d:"Medium",slug:"n-queens"},
+
+  {id:117,n:"Reverse String",t:"Strings",d:"Easy",slug:"reverse-string"},
+  {id:118,n:"Reverse Integer",t:"Strings",d:"Medium",slug:"reverse-integer"},
+  {id:119,n:"First Unique Character in a String",t:"Strings",d:"Easy",slug:"first-unique-character-in-a-string"},
+  {id:120,n:"Valid Palindrome II",t:"Strings",d:"Easy",slug:"valid-palindrome-ii"},
+  {id:121,n:"Implement strStr()",t:"Strings",d:"Easy",slug:"find-the-index-of-the-first-occurrence-in-a-string"},
+  {id:122,n:"Count and Say",t:"Strings",d:"Medium",slug:"count-and-say"},
+  {id:123,n:"Longest Common Prefix",t:"Strings",d:"Easy",slug:"longest-common-prefix"},
+  {id:124,n:"String to Integer (atoi)",t:"Strings",d:"Medium",slug:"string-to-integer-atoi"},
+  {id:125,n:"Zigzag Conversion",t:"Strings",d:"Medium",slug:"zigzag-conversion"},
+  {id:126,n:"Length of Last Word",t:"Strings",d:"Easy",slug:"length-of-last-word"},
+  {id:127,n:"Add Binary",t:"Strings",d:"Easy",slug:"add-binary"},
+  {id:128,n:"Roman to Integer",t:"Strings",d:"Easy",slug:"roman-to-integer"},
+  {id:129,n:"Integer to Roman",t:"Strings",d:"Medium",slug:"integer-to-roman"},
+  {id:130,n:"Multiply Strings",t:"Strings",d:"Medium",slug:"multiply-strings"},
+  {id:131,n:"Largest Number",t:"Strings",d:"Medium",slug:"largest-number"},
+
+  {id:132,n:"Rotate Image",t:"Matrix",d:"Medium",slug:"rotate-image"},
+  {id:133,n:"Spiral Matrix",t:"Matrix",d:"Medium",slug:"spiral-matrix"},
+  {id:134,n:"Set Matrix Zeroes",t:"Matrix",d:"Medium",slug:"set-matrix-zeroes"},
+  {id:135,n:"Game of Life",t:"Matrix",d:"Medium",slug:"game-of-life"},
+  {id:136,n:"Valid Sudoku",t:"Matrix",d:"Medium",slug:"valid-sudoku"},
+  {id:137,n:"Search a 2D Matrix II",t:"Matrix",d:"Medium",slug:"search-a-2d-matrix-ii"},
+  {id:138,n:"Transpose Matrix",t:"Matrix",d:"Easy",slug:"transpose-matrix"},
+  {id:139,n:"Flipping an Image",t:"Matrix",d:"Easy",slug:"flipping-an-image"},
+
+  {id:140,n:"Find the Difference",t:"Bit Manipulation",d:"Easy",slug:"find-the-difference"},
+  {id:141,n:"Single Number",t:"Bit Manipulation",d:"Easy",slug:"single-number"},
+  {id:142,n:"Number of 1 Bits",t:"Bit Manipulation",d:"Easy",slug:"number-of-1-bits"},
+  {id:143,n:"Counting Bits",t:"Bit Manipulation",d:"Easy",slug:"counting-bits"},
+  {id:144,n:"Reverse Bits",t:"Bit Manipulation",d:"Easy",slug:"reverse-bits"},
+  {id:145,n:"Missing Number",t:"Bit Manipulation",d:"Easy",slug:"missing-number"},
+  {id:146,n:"Sum of Two Integers",t:"Bit Manipulation",d:"Medium",slug:"sum-of-two-integers"},
+  {id:147,n:"Reverse Integer",t:"Bit Manipulation",d:"Medium",slug:"reverse-integer"},
+  {id:148,n:"Power of Two",t:"Bit Manipulation",d:"Easy",slug:"power-of-two"},
+  {id:149,n:"Power of Three",t:"Bit Manipulation",d:"Easy",slug:"power-of-three"},
+  {id:150,n:"XOR Queries of a Subarray",t:"Bit Manipulation",d:"Medium",slug:"xor-queries-of-a-subarray"},
+
+  {id:151,n:"Merge Intervals",t:"Intervals",d:"Medium",slug:"merge-intervals"},
+  {id:152,n:"Insert Interval",t:"Intervals",d:"Medium",slug:"insert-interval"},
+  {id:153,n:"Non-overlapping Intervals",t:"Intervals",d:"Medium",slug:"non-overlapping-intervals"},
+  {id:154,n:"Meeting Rooms",t:"Intervals",d:"Easy",slug:"meeting-rooms"},
+  {id:155,n:"Meeting Rooms II",t:"Intervals",d:"Medium",slug:"meeting-rooms-ii"},
+  {id:156,n:"Minimum Number of Arrows to Burst Balloons",t:"Intervals",d:"Medium",slug:"minimum-number-of-arrows-to-burst-balloons"},
+  {id:157,n:"Count Number of Nice Subarrays",t:"Intervals",d:"Medium",slug:"count-number-of-nice-subarrays"},
+
+  {id:158,n:"Happy Number",t:"Math",d:"Easy",slug:"happy-number"},
+  {id:159,n:"Plus One",t:"Math",d:"Easy",slug:"plus-one"},
+  {id:160,n:"Excel Sheet Column Number",t:"Math",d:"Easy",slug:"excel-sheet-column-number"},
+  {id:161,n:"Palindrome Number",t:"Math",d:"Easy",slug:"palindrome-number"},
+  {id:162,n:"Factorial Trailing Zeroes",t:"Math",d:"Medium",slug:"factorial-trailing-zeroes"},
+  {id:163,n:"Max Points on a Line",t:"Math",d:"Medium",slug:"max-points-on-a-line"},
+  {id:164,n:"Divide Two Integers",t:"Math",d:"Medium",slug:"divide-two-integers"},
+  {id:165,n:"Pow(x, n)",t:"Math",d:"Medium",slug:"powx-n"},
+  {id:166,n:"Range Sum Query – Immutable",t:"Math",d:"Easy",slug:"range-sum-query-immutable"},
+  {id:167,n:"Subarray Sum Equals K",t:"Math",d:"Medium",slug:"subarray-sum-equals-k"},
+  {id:168,n:"Find Pivot Index",t:"Math",d:"Easy",slug:"find-pivot-index"},
+  {id:169,n:"Implement Trie (Prefix Tree)",t:"Math",d:"Medium",slug:"implement-trie-prefix-tree"},
+
+  {id:170,n:"Sort an Array",t:"Sorting & Searching",d:"Medium",slug:"sort-an-array"},
+  {id:171,n:"Relative Sort Array",t:"Sorting & Searching",d:"Easy",slug:"relative-sort-array"},
+  {id:172,n:"Sort Characters By Frequency",t:"Sorting & Searching",d:"Medium",slug:"sort-characters-by-frequency"},
+  {id:173,n:"Find First and Last Position in Sorted Array",t:"Sorting & Searching",d:"Medium",slug:"find-first-and-last-position-of-element-in-sorted-array"},
+  {id:174,n:"H-Index",t:"Sorting & Searching",d:"Medium",slug:"h-index"},
+  {id:175,n:"Wiggle Sort II",t:"Sorting & Searching",d:"Medium",slug:"wiggle-sort-ii"},
+  {id:176,n:"Find K-th Smallest Pair Distance",t:"Sorting & Searching",d:"Medium",slug:"find-k-th-smallest-pair-distance"},
+  {id:177,n:"Find the Celebrity",t:"Sorting & Searching",d:"Medium",slug:"find-the-celebrity"},
+
+  {id:178,n:"Design HashMap",t:"Design",d:"Easy",slug:"design-hashmap"},
+  {id:179,n:"Design HashSet",t:"Design",d:"Easy",slug:"design-hashset"},
+  {id:180,n:"Design Circular Queue",t:"Design",d:"Medium",slug:"design-circular-queue"},
+  {id:181,n:"Design Browser History",t:"Design",d:"Medium",slug:"design-browser-history"},
+  {id:182,n:"Snapshot Array",t:"Design",d:"Medium",slug:"snapshot-array"},
+  {id:183,n:"Design Underground System",t:"Design",d:"Medium",slug:"design-underground-system"},
+  {id:184,n:"Design Parking System",t:"Design",d:"Easy",slug:"design-parking-system"},
+
+  {id:185,n:"Number of Islands",t:"BFS / Recursion",d:"Medium",slug:"number-of-islands"},
+  {id:186,n:"Flood Fill",t:"BFS / Recursion",d:"Easy",slug:"flood-fill"},
+  {id:187,n:"Max Area of Island",t:"BFS / Recursion",d:"Medium",slug:"max-area-of-island"},
+  {id:188,n:"Surrounded Regions",t:"BFS / Recursion",d:"Medium",slug:"surrounded-regions"},
+  {id:189,n:"01 Matrix",t:"BFS / Recursion",d:"Medium",slug:"01-matrix"},
+  {id:190,n:"Rotting Oranges",t:"BFS / Recursion",d:"Medium",slug:"rotting-oranges"},
+  {id:191,n:"Word Ladder",t:"BFS / Recursion",d:"Medium",slug:"word-ladder"},
+
+  {id:192,n:"Jump Game",t:"Greedy",d:"Medium",slug:"jump-game"},
+  {id:193,n:"Jump Game II",t:"Greedy",d:"Medium",slug:"jump-game-ii"},
+  {id:194,n:"Gas Station",t:"Greedy",d:"Medium",slug:"gas-station"},
+  {id:195,n:"Hand of Straights",t:"Greedy",d:"Medium",slug:"hand-of-straights"},
+  {id:196,n:"Partition Labels",t:"Greedy",d:"Medium",slug:"partition-labels"},
+  {id:197,n:"Boats to Save People",t:"Greedy",d:"Medium",slug:"boats-to-save-people"},
+  {id:198,n:"Candy",t:"Greedy",d:"Medium",slug:"candy"},
+  {id:199,n:"Assign Cookies",t:"Greedy",d:"Easy",slug:"assign-cookies"},
+  {id:200,n:"Lemonade Change",t:"Greedy",d:"Easy",slug:"lemonade-change"},
+];
+
+const nameToIdMap = {
+  "Arrays & Hashing": "arr",
+  "Two Pointers": "tp",
+  "Sliding Window": "sw",
+  "Binary Search": "bs",
+  "Linked List": "ll",
+  "Stack & Queue": "stk",
+  "Binary Trees": "bt",
+  "Heap / Priority Queue": "heap",
+  "Backtracking": "bt2",
+  "Strings": "str",
+  "Matrix": "mat",
+  "Bit Manipulation": "bit",
+  "Intervals": "iv",
+  "Math": "math",
+  "Sorting & Searching": "sort",
+  "Design": "design",
+  "BFS / Recursion": "bfs",
+  "Greedy": "gr"
+};
+
+const slugToGidMap = {};
+ALL_QUESTIONS.forEach(q => {
+  slugToGidMap[q.slug] = q.gid;
+});
+
+// Group the 200 questions into topics
+const topicInstances = {};
+TOPICS.forEach(topic => {
+  topicInstances[topic.id] = {
+    id: topic.id,
+    title: topic.title,
+    icon: topic.icon,
+    qs: []
+  };
+});
+
+INTERVIEW_200_RAW.forEach(q => {
+  const topicId = nameToIdMap[q.t] || 'arr';
+  const matchedGid = slugToGidMap[q.slug];
+  const qInstance = {
+    n: q.n,
+    d: q.d,
+    slug: q.slug,
+    gid: matchedGid || (1000 + q.id),
+    topic: topicId
+  };
+  
+  if (!topicInstances[topicId]) {
+    topicInstances[topicId] = {
+      id: topicId,
+      title: q.t,
+      icon: "💻",
+      qs: []
+    };
+  }
+  topicInstances[topicId].qs.push(qInstance);
+});
+
+export const INTERVIEW_200_TOPICS = Object.values(topicInstances).filter(t => t.qs.length > 0);
+export const INTERVIEW_200_QUESTIONS = INTERVIEW_200_RAW.map(q => {
+  const topicId = nameToIdMap[q.t] || 'arr';
+  const matchedGid = slugToGidMap[q.slug];
+  return {
+    n: q.n,
+    d: q.d,
+    slug: q.slug,
+    gid: matchedGid || (1000 + q.id),
+    topic: topicId
+  };
+});

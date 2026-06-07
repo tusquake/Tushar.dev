@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import Logo from '../common/Logo';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -74,13 +75,16 @@ const Navbar = () => {
                     {/* Logo */}
                     <Link
                         to="/"
-                        className="flex items-center text-2xl font-bold tracking-tight transition-all duration-200"
+                        className="flex items-center gap-2.5 text-2xl font-bold tracking-tight transition-all duration-200"
                         style={{
                             fontFamily: darkMode ? 'monospace' : 'Inter, sans-serif'
                         }}
                     >
-                        <span className={darkMode ? 'text-white' : 'text-[#1e1b4b]'}>CodeForge</span>
-                        <span className="gradient-text">.dev</span>
+                        <Logo className="w-8 h-8 md:w-9 md:h-9" />
+                        <span className="flex items-center">
+                            <span className={darkMode ? 'text-white' : 'text-[#1e1b4b]'}>CodeForge</span>
+                            <span className="gradient-text">.dev</span>
+                        </span>
                     </Link>
 
                     {/* Desktop Navigation */}

@@ -13,7 +13,7 @@ marked.setOptions({
     gfm: true,
     breaks: true
 });
-import { TOPICS, ALL_QUESTIONS } from '../data/dsaQuestions';
+import { TOPICS, ALL_QUESTIONS, INTERVIEW_200_TOPICS, INTERVIEW_200_QUESTIONS } from '../data/dsaQuestions';
 
 const GITHUB_REPOS = [
     {
@@ -432,6 +432,7 @@ const Learning = () => {
     const [treeError, setTreeError] = useState('');
 
     // DSA Practice Sheet States
+    const [selectedSheet, setSelectedSheet] = useState('ultimate'); // 'ultimate' or 'top200'
     const [dsaSearch, setDsaSearch] = useState('');
     const [dsaDiffFilter, setDsaDiffFilter] = useState('All');
     const [expandedTopics, setExpandedTopics] = useState({
@@ -758,17 +759,20 @@ const Learning = () => {
     };
 
     // DSA Practice stats calculations
-    const totalQuestions = ALL_QUESTIONS.length;
-    const doneCount = completedQuestions.length;
+    const currentQuestions = selectedSheet === 'ultimate' ? ALL_QUESTIONS : INTERVIEW_200_QUESTIONS;
+    const currentTopics = selectedSheet === 'ultimate' ? TOPICS : INTERVIEW_200_TOPICS;
+
+    const totalQuestions = currentQuestions.length;
+    const doneCount = currentQuestions.filter(q => completedQuestions.includes(q.gid)).length;
     const percentDone = totalQuestions ? Math.round((doneCount / totalQuestions) * 100) : 0;
 
-    const easyQs = ALL_QUESTIONS.filter(q => q.d === 'Easy');
+    const easyQs = currentQuestions.filter(q => q.d === 'Easy');
     const easyDone = easyQs.filter(q => completedQuestions.includes(q.gid)).length;
 
-    const medQs = ALL_QUESTIONS.filter(q => q.d === 'Medium');
+    const medQs = currentQuestions.filter(q => q.d === 'Medium');
     const medDone = medQs.filter(q => completedQuestions.includes(q.gid)).length;
 
-    const hardQs = ALL_QUESTIONS.filter(q => q.d === 'Hard');
+    const hardQs = currentQuestions.filter(q => q.d === 'Hard');
     const hardDone = hardQs.filter(q => completedQuestions.includes(q.gid)).length;
 
     const toggleDsaQuestion = (gid) => {
@@ -1118,21 +1122,48 @@ const Learning = () => {
                 {activeSection === 'dsa' && (
                     <div className="animate-tab-switch">
                         {/* DSA Header and Sync Banner */}
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-dark-900/40 border border-dark-200/60 dark:border-dark-800/80 mb-8 backdrop-blur-sm">
-                            <div>
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 rounded-2xl bg-white dark:bg-dark-900/40 border border-dark-200/60 dark:border-dark-800/80 mb-8 backdrop-blur-sm">
+                            <div className="flex-1">
                                 <h2 className="text-2xl font-bold font-display text-dark-900 dark:text-white flex items-center gap-2">
                                     <svg className="w-6 h-6 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                     </svg>
-                                    Ultimate DSA Interview Sheet
+                                    {selectedSheet === 'ultimate' ? 'Ultimate DSA Interview Sheet' : 'Top 200 DSA Interview Sheet'}
                                 </h2>
                                 <p className="text-sm text-dark-500 dark:text-dark-400 mt-1">
-                                    Pattern-based categorization of high-yield questions. No Graphs or Tries. Click titles to code.
+                                    {selectedSheet === 'ultimate' 
+                                        ? 'Pattern-based categorization of high-yield questions. No Graphs or Tries. Click titles to code.' 
+                                        : 'Curated compilation of top 200 high-frequency interview questions across core concepts. Click titles to code.'}
                                 </p>
                             </div>
                             
-                            {/* Sync Status Badge */}
-                            <div className="flex items-center self-start md:self-auto">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-shrink-0">
+                                {/* Sheet Selector Toggle */}
+                                <div className="flex p-1 bg-dark-100 dark:bg-dark-850 rounded-xl border border-dark-200/50 dark:border-dark-850 shadow-inner">
+                                    <button
+                                        onClick={() => setSelectedSheet('ultimate')}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                            selectedSheet === 'ultimate'
+                                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-450 shadow-sm border border-dark-200/20 dark:border-dark-800'
+                                                : 'text-dark-500 dark:text-dark-400 hover:text-dark-800 dark:hover:text-dark-200'
+                                        }`}
+                                    >
+                                        Ultimate ({ALL_QUESTIONS.length})
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedSheet('top200')}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                            selectedSheet === 'top200'
+                                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-450 shadow-sm border border-dark-200/20 dark:border-dark-800'
+                                                : 'text-dark-500 dark:text-dark-400 hover:text-dark-800 dark:hover:text-dark-200'
+                                        }`}
+                                    >
+                                        Top 200 ({INTERVIEW_200_QUESTIONS.length})
+                                    </button>
+                                </div>
+
+                                {/* Sync Status Badge */}
+                                <div className="flex items-center">
                                 {syncStatus === 'synced' && (
                                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-650 dark:text-emerald-450 border border-emerald-200/30 dark:border-emerald-900/30">
                                         <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1291,7 +1322,7 @@ const Learning = () => {
                                     <button
                                         onClick={() => {
                                             const allExp = {};
-                                            TOPICS.forEach(t => { allExp[t.id] = true; });
+                                            currentTopics.forEach(t => { allExp[t.id] = true; });
                                             setExpandedTopics(allExp);
                                         }}
                                         className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-405 hover:border-primary-505/50 transition-colors cursor-pointer flex items-center gap-1"
@@ -1343,7 +1374,7 @@ const Learning = () => {
 
                         {/* Question Topics Accordion Grid */}
                         <div className="space-y-4">
-                            {TOPICS.map((topic) => {
+                            {currentTopics.map((topic) => {
                                 const matchingQs = topic.qs.filter(q => {
                                     const matchesDiff = dsaDiffFilter === 'All' || q.d === dsaDiffFilter;
                                     const matchesSearch = !dsaSearch || 

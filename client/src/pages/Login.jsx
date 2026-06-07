@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import Logo from '../components/common/Logo';
 
 // Vector diagrams
 const TwoPointersSVG = ({ accent, text, muted }) => (
@@ -377,9 +378,12 @@ const Login = () => {
                 <div className="col-span-1 md:col-span-7 lg:col-span-7 flex flex-col justify-center p-6 sm:p-10 md:p-12">
                     <div className="w-full max-w-md mx-auto">
                         <div className="text-center mb-8">
-                            <Link to="/" className="inline-flex items-center space-x-2 text-2xl font-display font-bold mb-3">
-                                <span className="text-dark-900 dark:text-white">CodeForge</span>
-                                <span className="gradient-text">.dev</span>
+                            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-display font-bold mb-3">
+                                <Logo className="w-8 h-8" />
+                                <span>
+                                    <span className="text-dark-900 dark:text-white">CodeForge</span>
+                                    <span className="gradient-text">.dev</span>
+                                </span>
                             </Link>
                             <h1 className="text-2xl font-bold text-dark-900 dark:text-white">
                                 Welcome Back
