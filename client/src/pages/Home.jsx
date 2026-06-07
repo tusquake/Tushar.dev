@@ -172,10 +172,10 @@ const themeSpecs = {
         border: '1px solid #30363d',
         surface: '#161b22',
         heroTag: '$ init your dev journey',
-        heroTagStyle: 'font-mono text-xs text-[#39d353]',
+        heroTagStyle: 'font-mono text-xs text-[#39d353] border border-[#39d353]/30 px-3 py-1 rounded-md bg-[#39d353]/5 inline-block',
         headlineRender: () => (
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6">
-                Master Software <span style={{ color: '#39d353' }}>Engineering</span> Interviews.
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 tracking-tight">
+                Master Software <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#39d353] to-[#58a6ff]">Engineering</span> Interviews.
             </h1>
         ),
         cta1Style: {
@@ -194,15 +194,24 @@ const themeSpecs = {
             fontWeight: '600'
         },
         cta2Text: 'Browse Resources',
-        diagramBorder: '1px solid #39d353',
+        diagramBorder: '1px solid #30363d',
         featureCardStyle: {
             backgroundColor: '#161b22',
             border: '1px solid #30363d',
             borderTop: '4px solid #39d353',
             borderRadius: '6px'
         },
-        featureTitleClass: '',
-        radius: '6px',
+        aboutCardStyle: {
+            backgroundColor: '#161b22',
+            border: '1px solid #30363d',
+            borderRadius: '12px'
+        },
+        testimonialCardStyle: {
+            backgroundColor: '#161b22',
+            border: '1px solid #30363d',
+            borderRadius: '12px'
+        },
+        radius: '12px',
         shadow: 'none'
     },
     purple: {
@@ -213,10 +222,10 @@ const themeSpecs = {
         border: '1px solid #ddd6fe',
         surface: '#ede9fe',
         heroTag: '✦ Free for developers',
-        heroTagStyle: 'bg-[#ede9fe] text-[#5b21b6] px-3.5 py-1 text-xs font-semibold rounded-full inline-block',
+        heroTagStyle: 'bg-[#ede9fe] text-[#5b21b6] px-3.5 py-1.5 text-xs font-semibold rounded-full inline-block',
         headlineRender: () => (
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6">
-                Your dev journey, <span style={{ color: '#7c3aed' }}>finally organized.</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 tracking-tight">
+                Your dev journey, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c3aed] to-[#c084fc]">finally organized.</span>
             </h1>
         ),
         cta1Style: {
@@ -243,9 +252,20 @@ const themeSpecs = {
             borderRadius: '8px',
             boxShadow: '0 4px 6px -1px rgba(124, 58, 237, 0.05)'
         },
-        featureTitleClass: '',
-        radius: '8px',
-        shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+        aboutCardStyle: {
+            backgroundColor: '#ffffff',
+            border: '1px solid #ddd6fe',
+            borderRadius: '16px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
+        },
+        testimonialCardStyle: {
+            backgroundColor: '#ffffff',
+            border: '1px solid #ddd6fe',
+            borderRadius: '16px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.04)'
+        },
+        radius: '16px',
+        shadow: '0 10px 15px -3px rgba(124, 58, 237, 0.03)'
     }
 };
 
@@ -265,12 +285,19 @@ const Home = () => {
     const currentTheme = isDark ? themeSpecs.terminal : themeSpecs.purple;
 
     return (
-        <div className="w-full flex flex-col transition-all duration-200">
+        <div className="w-full flex flex-col transition-all duration-200 relative overflow-hidden">
+            {/* Background glowing decorations */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-primary-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute top-2/3 -left-48 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl" />
+                <div className="absolute top-1/2 -right-48 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
+            </div>
+
             {/* Hero Section */}
-            <section className="flex-1 py-12 md:py-20 px-6 md:px-12 max-w-7xl mx-auto w-full grid md:grid-cols-12 gap-12 items-center">
+            <section className="relative z-10 flex-1 py-16 md:py-28 px-6 md:px-12 max-w-7xl mx-auto w-full grid md:grid-cols-12 gap-12 items-center">
                 {/* Left Side: Headline & Copy */}
                 <div className="md:col-span-7 flex flex-col items-start text-left animate-slide-up">
-                    <div className="mb-4">
+                    <div className="mb-5">
                         <span className={currentTheme.heroTagStyle}>
                             {currentTheme.heroTag}
                         </span>
@@ -279,7 +306,7 @@ const Home = () => {
                     {currentTheme.headlineRender()}
 
                     <p className="text-base md:text-lg leading-relaxed mb-8 max-w-xl opacity-80">
-                        Pattern-based learning paths for DSA, System Design, Low-Level Design, and Behavioral interviews.
+                        Stop memorizing 500+ LeetCode problems blindly. CodeForge helps you master software engineering interviews using pattern-based modules, system design playbooks, and compiler tools.
                     </p>
 
                     {/* Social proof for Soft Purple */}
@@ -298,15 +325,15 @@ const Home = () => {
 
                     <div className="flex flex-row items-center gap-4">
                         <Link 
-                            to={isAuthenticated ? "/dashboard" : "/register"}
-                            className="px-6 py-3 text-sm font-bold tracking-tight transition-all"
+                            to={isAuthenticated ? "/learning" : "/register"}
+                            className="px-6 py-3.5 text-sm font-bold tracking-tight transition-all transform hover:-translate-y-0.5 hover:shadow-lg duration-200 cursor-pointer"
                             style={currentTheme.cta1Style}
                         >
                             {currentTheme.cta1Text}
                         </Link>
                         <Link 
                             to="/learning"
-                            className="px-6 py-3 text-sm font-bold tracking-tight transition-all"
+                            className="px-6 py-3.5 text-sm font-bold tracking-tight transition-all transform hover:-translate-y-0.5 hover:shadow-md duration-200 border border-dark-250 cursor-pointer"
                             style={currentTheme.cta2Style}
                         >
                             {currentTheme.cta2Text}
@@ -314,11 +341,11 @@ const Home = () => {
                     </div>
                 </div>
 
-                {/* Right Side: Technical Diagram Grid */}
-                <div className="md:col-span-5 grid grid-cols-2 gap-4">
+                {/* Right Side: Technical Diagram Grid with Hover Interactions */}
+                <div className="md:col-span-5 grid grid-cols-2 gap-4 relative z-10">
                     {/* DSA Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float"
+                        className="p-5 flex flex-col justify-between aspect-square transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-primary-500/50 group cursor-pointer"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -326,7 +353,10 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">DSA</span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">DSA</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping group-hover:bg-[#39d353]" />
+                        </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <TwoPointersSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} />
                         </div>
@@ -334,7 +364,7 @@ const Home = () => {
 
                     {/* System Design Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float-delayed"
+                        className="p-5 flex flex-col justify-between aspect-square transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-primary-500/50 group cursor-pointer"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -342,7 +372,10 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">System Design</span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">System Design</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 group-hover:animate-pulse" />
+                        </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <SystemDesignSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
                         </div>
@@ -350,7 +383,7 @@ const Home = () => {
 
                     {/* Generative AI Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float"
+                        className="p-5 flex flex-col justify-between aspect-square transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-primary-500/50 group cursor-pointer"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -358,15 +391,18 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">Generative AI</span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">Generative AI</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 group-hover:scale-125 transition-transform" />
+                        </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <GenAISVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
                         </div>
                     </div>
 
-                    {/* Deployment & DevOps Card */}
+                    {/* Cloud & DevOps Card */}
                     <div 
-                        className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float-delayed"
+                        className="p-5 flex flex-col justify-between aspect-square transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-primary-500/50 group cursor-pointer"
                         style={{ 
                             backgroundColor: isDark ? currentTheme.surface : '#ffffff', 
                             border: currentTheme.diagramBorder,
@@ -374,7 +410,10 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">Cloud & DevOps</span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold tracking-widest opacity-70 uppercase">Cloud & DevOps</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        </div>
                         <div className="flex-1 flex items-center justify-center py-2">
                             <DeploymentSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
                         </div>
@@ -383,59 +422,211 @@ const Home = () => {
             </section>
 
             {/* Feature Row Section */}
-            <section className="w-full py-16 px-6 md:px-12">
-                <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
-                    {[
-                        {
-                            title: 'DSA Pattern Hub',
-                            desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly. Includes progress tracker.'
-                        },
-                        {
-                            title: 'System Design Wiki',
-                            desc: 'Scale your architectures with structured HLD and LLD materials, microservices, databases, and real-world system designs.'
-                        },
-                        {
-                            title: 'LaTeX Resume Editor',
-                            desc: 'Write and compile professional resumes using LaTeX directly in the browser, matching top-tier templates.'
-                        },
-                        {
-                            title: 'ATS Resume Reviewer',
-                            desc: 'Get your resume parsed and scored by our ATS algorithm to optimize formatting, keywords, and layout impact.'
-                        },
-                        {
-                            title: 'Interactive Code Builder',
-                            desc: 'Build, compile, and run your code within custom workspaces designed for low-level design problems.'
-                        },
-                        {
-                            title: 'Developer Customization',
-                            desc: 'Toggle between terminal dark themes and elegant soft violet themes tailored to your aesthetic preference.'
-                        }
-                    ].map((feature, idx) => (
+            <section className="relative z-10 w-full py-16 px-6 md:px-12 bg-dark-50/20 dark:bg-dark-950/10 border-y border-dark-200/30 dark:border-dark-900/55">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-extrabold tracking-tight font-display mb-4">
+                            All the features you need to scale
+                        </h2>
+                        <p className="text-sm max-w-xl mx-auto opacity-75 leading-relaxed">
+                            A highly structured suite engineered specifically for fast paced preparation and optimal retention.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {[
+                            {
+                                title: 'DSA Pattern Hub',
+                                desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly. Includes progress tracker.'
+                            },
+                            {
+                                title: 'System Design Wiki',
+                                desc: 'Scale your architectures with structured HLD and LLD materials, microservices, databases, and real-world system designs.'
+                            },
+                            {
+                                title: 'LaTeX Resume Editor',
+                                desc: 'Write and compile professional resumes using LaTeX directly in the browser, matching top-tier templates.'
+                            },
+                            {
+                                title: 'ATS Resume Reviewer',
+                                desc: 'Get your resume parsed and scored by our ATS algorithm to optimize formatting, keywords, and layout impact.'
+                            },
+                            {
+                                title: 'Interactive Code Builder',
+                                desc: 'Build, compile, and run your code within custom workspaces designed for low-level design problems.'
+                            },
+                            {
+                                title: 'Developer Customization',
+                                desc: 'Toggle between terminal dark themes and elegant soft violet themes tailored to your aesthetic preference.'
+                            }
+                        ].map((feature, idx) => (
+                            <div 
+                                key={idx}
+                                className="p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-lg border border-dark-250/20 dark:border-dark-850/20"
+                                style={currentTheme.featureCardStyle}
+                            >
+                                <div>
+                                    <h3 className={`text-lg font-bold mb-3 ${currentTheme.featureTitleClass}`}>
+                                        {feature.title}
+                                    </h3>
+                                    <p className="text-xs leading-relaxed opacity-85">
+                                        {feature.desc}
+                                    </p>
+                                </div>
+                                <Link 
+                                    to="/learning" 
+                                    className="mt-6 text-xs font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                    style={{ color: currentTheme.accent }}
+                                >
+                                    Start Learning
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* About Tushar Section */}
+            <section className="relative z-10 w-full py-20 px-6 md:px-12 max-w-7xl mx-auto">
+                <div className="grid md:grid-cols-12 gap-12 items-center">
+                    {/* Left: Tushar Monogram Card & Interactive Terminal Mockup */}
+                    <div className="md:col-span-5 flex flex-col gap-6">
                         <div 
-                            key={idx}
-                            className="p-6 md:p-8 flex flex-col justify-between transition-all duration-200 hover:scale-102 hover:shadow-md"
-                            style={currentTheme.featureCardStyle}
+                            className="p-8 flex flex-col items-center text-center transition-all duration-300"
+                            style={currentTheme.aboutCardStyle}
                         >
+                            <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#7c3aed] to-[#39d353] p-1 shadow-lg mb-4">
+                                <div className="w-full h-full rounded-full bg-white dark:bg-dark-900 flex items-center justify-center text-2xl font-extrabold tracking-tight">
+                                    TS
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-bold tracking-tight">Tushar Seth</h3>
+                            <p className="text-xs font-bold uppercase tracking-wider opacity-65 mb-3" style={{ color: currentTheme.accent }}>Founder & Creator</p>
+                            <p className="text-xs opacity-75 max-w-xs leading-relaxed">
+                                Full Stack Engineer passionate about optimizing technical preparation and structuring developer workflows.
+                            </p>
+                        </div>
+
+                        {/* Interactive Console Screen */}
+                        <div className="rounded-xl border border-dark-200/60 dark:border-dark-800 bg-dark-900 text-dark-100 p-4 font-mono text-[10px] shadow-2xl relative overflow-hidden">
+                            <div className="flex gap-1.5 mb-3.5 pb-2 border-b border-dark-800">
+                                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                                <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                            </div>
+                            <p className="text-dark-500 mb-1.5">// Querying unique features...</p>
+                            <p className="mb-1 text-primary-400">codeforge --motivation</p>
+                            <p className="text-dark-400 mb-2 leading-relaxed">&gt; Build structured pattern systems instead of random practice lists.</p>
+                            <p className="mb-1 text-primary-400">codeforge --difference</p>
+                            <p className="text-dark-400 mb-2 leading-relaxed">&gt; Fully interactive code compilers coupled with LaTeX template compilers.</p>
+                            <p className="mb-0 text-primary-400">codeforge --status <span className="text-[#39d353] animate-pulse">● online</span></p>
+                        </div>
+                    </div>
+
+                    {/* Right: Story Details */}
+                    <div className="md:col-span-7 flex flex-col justify-center text-left">
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border bg-primary-500/10 border-primary-500/25 text-primary-500 mb-4 self-start">
+                            Behind the Project
+                        </span>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display mb-6">
+                            Structured by a developer, for developers.
+                        </h2>
+                        
+                        <div className="space-y-6">
                             <div>
-                                <h3 className={`text-xl font-bold mb-3 ${currentTheme.featureTitleClass}`}>
-                                    {feature.title}
-                                </h3>
-                                <p className="text-sm leading-relaxed opacity-85">
-                                    {feature.desc}
+                                <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
+                                    The Motivation
+                                </h4>
+                                <p className="text-xs leading-relaxed opacity-80">
+                                    I built CodeForge because I was tired of the fragmented learning landscape. Developers spend countless hours jumping between LeetCode tabs, static architecture wikis, and local LaTeX compilers just to prepare for interviews. There was no single hub that mapped engineering structures to live code compilers. CodeForge solves that by bringing preparation under one interactive terminal.
                                 </p>
                             </div>
-                            <Link 
-                                to="/learning" 
-                                className="mt-6 text-sm font-bold hover:underline inline-flex items-center gap-1"
-                                style={{ color: currentTheme.accent }}
-                            >
-                                Start Learning
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </Link>
+
+                            <div>
+                                <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
+                                    How It's Different
+                                </h4>
+                                <p className="text-xs leading-relaxed opacity-80">
+                                    Instead of feeding users 500+ LeetCode problems blindly, we specialize in **pattern-based learning**. If you master the "Two Pointer" or "Sliding Window" pattern, you can solve 90% of dynamic data problems. Furthermore, we tie algorithmic knowledge directly to **system design blueprints** and **LaTeX resume compilation** — making it a holistic developer workstation.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
+                                    What Makes It Unique
+                                </h4>
+                                <p className="text-xs leading-relaxed opacity-80">
+                                    We support active state-synchronization across light (Soft Purple) and dark (Terminal Green) themes, dynamic animated SVG compilers built into the visual widgets, and high-performance client compilers. This is a platform engineered to feel fast, secure, and visually premium.
+                                </p>
+                            </div>
                         </div>
-                    ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Testimonials Section */}
+            <section className="relative z-10 w-full py-16 px-6 md:px-12 bg-dark-50/20 dark:bg-dark-950/10 border-t border-dark-200/30 dark:border-dark-900/55">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-16">
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border bg-purple-500/10 border-purple-500/25 text-purple-500 mb-3 inline-block">
+                            Developer Reviews
+                        </span>
+                        <h2 className="text-3xl font-extrabold tracking-tight font-display mb-4">
+                            Loved by engineers worldwide
+                        </h2>
+                        <p className="text-xs max-w-xl mx-auto opacity-75 leading-relaxed">
+                            Read how developers use CodeForge to clear interviews, design scalable systems, and optimize resumes.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {[
+                            {
+                                quote: "CodeForge's pattern hub helped me classify LeetCode patterns instead of trying to memorize hundreds of individual problems. It was instrumental in my prep!",
+                                name: "Alex Mercer",
+                                role: "Software Engineer @ Google",
+                                initials: "AM",
+                                color: "bg-red-500/10 text-red-500"
+                            },
+                            {
+                                quote: "The built-in LaTeX compiler works seamlessly. I wrote my resume in 10 minutes, checked the formatting score using the ATS reviewer, and landed my Stripe callback.",
+                                name: "Sarah Jenkins",
+                                role: "Senior Dev @ Stripe",
+                                initials: "SJ",
+                                color: "bg-purple-500/10 text-purple-500"
+                            },
+                            {
+                                quote: "The visual system design components are simply stunning. Dynamic flow diagrams help clarify concepts much faster than standard text books.",
+                                name: "Vikram Malhotra",
+                                role: "DevOps Engineer @ AWS",
+                                initials: "VM",
+                                color: "bg-green-500/10 text-green-500"
+                            }
+                        ].map((test, idx) => (
+                            <div 
+                                key={idx}
+                                className="p-6 md:p-8 flex flex-col justify-between border border-dark-250/20 dark:border-dark-850/20 transition-all duration-300 hover:scale-102 hover:shadow-xl relative"
+                                style={currentTheme.testimonialCardStyle}
+                            >
+                                <div className="absolute -top-3.5 left-6 text-3xl font-serif text-primary-500/40 select-none">“</div>
+                                <p className="text-xs leading-relaxed opacity-85 italic mb-6">
+                                    {test.quote}
+                                </p>
+                                <div className="flex items-center gap-3 pt-4 border-t border-dark-200/40 dark:border-dark-800/40">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${test.color}`}>
+                                        {test.initials}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-bold leading-tight">{test.name}</h4>
+                                        <p className="text-[10px] opacity-65 mt-0.5">{test.role}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
         </div>
