@@ -104,7 +104,7 @@ const sampleResources = [
         _id: 'sample-6',
         title: 'Generative AI',
         description: 'LLM utilization, prompting architectures, vector databases, embeddings, and agentic workflows.',
-        category: 'hld',
+        category: 'ai-ml',
         url: 'https://github.com/tusquake/Generative-AI',
         type: 'repository'
     },
@@ -112,7 +112,7 @@ const sampleResources = [
         _id: 'sample-7',
         title: 'Spring AI',
         description: 'Enterprise AI workflows integrating Spring Boot, Gemini, OpenAI, and vector stores.',
-        category: 'backend',
+        category: 'ai-ml',
         url: 'https://github.com/tusquake/Spring-AI',
         type: 'repository'
     },
@@ -763,6 +763,7 @@ const Learning = () => {
         { id: 'backend', name: 'Backend' },
         { id: 'frontend', name: 'Frontend' },
         { id: 'devops', name: 'DevOps' },
+        { id: 'ai-ml', name: 'AI/ML' },
     ];
 
     const filteredResources = activeCategory === 'all'
