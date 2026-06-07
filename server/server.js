@@ -27,6 +27,11 @@ connectDB();
 // Security middleware
 app.use(helmet());
 
+// Initialize Passport for OAuth logins
+const passport = require('passport');
+require('./config/passport');
+app.use(passport.initialize());
+
 // CORS configuration
 const allowedOrigins = [
     'https://tushar-dev-1.onrender.com',

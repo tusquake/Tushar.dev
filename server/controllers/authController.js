@@ -13,6 +13,13 @@ const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
+        if (!password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password is required'
+            });
+        }
+
         // Check if user exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {

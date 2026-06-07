@@ -226,6 +226,27 @@ const Register = () => {
     }, []);
 
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const userStr = params.get('user');
+        const error = params.get('error');
+
+        if (error) {
+            setApiError('Social registration failed. Please try again.');
+        } else if (token && userStr) {
+            try {
+                const parsedUser = JSON.parse(decodeURIComponent(userStr));
+                localStorage.setItem('accessToken', token);
+                localStorage.setItem('user', JSON.stringify(parsedUser));
+                window.location.href = '/learning';
+            } catch (e) {
+                console.error('OAuth Callback Parsing Error:', e);
+                setApiError('Authentication callback failed. Please try again.');
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         const timer = setInterval(() => {
             setActiveSlide(prev => (prev + 1) % slides.length);
         }, 4000);
@@ -394,7 +415,11 @@ const Register = () => {
                             <div className="flex gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => alert("To configure and trigger Google OAuth login, follow the integration setup instructions below.")}
+                                    onClick={() => {
+                                        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                                        const rootServer = apiBase.replace(/\/api$/, '');
+                                        window.location.href = `${rootServer}/api/auth/google`;
+                                    }}
                                     className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-dark-200 dark:border-dark-800 rounded-xl hover:bg-dark-50 dark:hover:bg-dark-900 text-sm font-semibold transition-all cursor-pointer bg-white dark:bg-dark-950 text-dark-800 dark:text-dark-200"
                                 >
                                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -407,7 +432,11 @@ const Register = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => alert("To configure and trigger GitHub OAuth login, follow the integration setup instructions below.")}
+                                    onClick={() => {
+                                        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                                        const rootServer = apiBase.replace(/\/api$/, '');
+                                        window.location.href = `${rootServer}/api/auth/github`;
+                                    }}
                                     className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-dark-200 dark:border-dark-800 rounded-xl hover:bg-dark-50 dark:hover:bg-dark-900 text-sm font-semibold transition-all cursor-pointer bg-white dark:bg-dark-950 text-dark-800 dark:text-dark-200"
                                 >
                                     <svg className="w-5 h-5 text-dark-900 dark:text-white" fill="currentColor" viewBox="0 0 24 24">
