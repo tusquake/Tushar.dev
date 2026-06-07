@@ -18,7 +18,7 @@ const AtsReviewer = () => {
 
     useEffect(() => {
         // Restore previous report if saved
-        const savedReport = localStorage.getItem('devlearn_ats_report');
+        const savedReport = localStorage.getItem('codeforge_ats_report');
         if (savedReport) {
             try {
                 setReport(JSON.parse(savedReport));
@@ -101,7 +101,7 @@ const AtsReviewer = () => {
 
     // Load resume from builder
     const loadBuiltResume = () => {
-        const savedData = localStorage.getItem('devlearn_resume');
+        const savedData = localStorage.getItem('codeforge_resume');
         if (!savedData) {
             setError('No resume found in Resume Builder. Go build one first!');
             return;
@@ -246,7 +246,7 @@ ${jobDescription}`;
             }
 
             setReport(parsedReport);
-            localStorage.setItem('devlearn_ats_report', JSON.stringify(parsedReport));
+            localStorage.setItem('codeforge_ats_report', JSON.stringify(parsedReport));
             showToast('Resume analysis complete!');
         } catch (err) {
             console.error(err);
@@ -274,7 +274,7 @@ ${jobDescription}`;
 
     const downloadReport = () => {
         if (!report) return;
-        const reportContent = `DEVLEARN.HUB ATS RESUME REVIEW REPORT
+        const reportContent = `CODEFORGE.DEV ATS RESUME REVIEW REPORT
 =====================================
 Overall ATS Score: ${report.ats_score}/100 (Grade: ${report.grade})
 Verdict: ${report.summary}
@@ -643,7 +643,7 @@ SECTION RATINGS & FEEDBACK:
                         {/* 6. Action Buttons */}
                         <div className="pt-6 border-t border-dark-200/50 dark:border-dark-800 flex flex-wrap gap-4 justify-between items-center">
                             <button
-                                onClick={() => { setReport(null); localStorage.removeItem('devlearn_ats_report'); }}
+                                onClick={() => { setReport(null); localStorage.removeItem('codeforge_ats_report'); }}
                                 className="px-4 py-2 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-600 dark:text-dark-300 text-sm font-semibold rounded-xl transition-all cursor-pointer"
                             >
                                 Re-analyze Another Resume

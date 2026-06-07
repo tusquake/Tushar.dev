@@ -56,8 +56,8 @@ const Footer = () => {
                     {/* Brand */}
                     <div className="md:col-span-2">
                         <Link to="/" className="inline-flex items-center space-x-2 text-2xl font-display font-bold">
-                            <span className="gradient-text">DevLearn</span>
-                            <span className="text-dark-700 dark:text-white">.hub</span>
+                            <span className="gradient-text">CodeForge</span>
+                            <span className="text-dark-700 dark:text-white">.dev</span>
                         </Link>
                         <p className="mt-4 text-dark-500 dark:text-dark-400 max-w-md">
                             An interactive developer platform to track DSA preparation, organize study roadmaps, write notes, and level up software engineering skills.
@@ -124,7 +124,7 @@ const Footer = () => {
                 {/* Bottom bar */}
                 <div className="mt-12 pt-8 border-t border-dark-200 dark:border-dark-800 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <p className="text-center text-dark-500 dark:text-dark-400 text-sm">
-                        © {currentYear} DevLearn.hub. Developed by Tushar Seth.
+                        © {currentYear} CodeForge.dev. Developed by Tushar Seth.
                     </p>
                 </div>
             </div>

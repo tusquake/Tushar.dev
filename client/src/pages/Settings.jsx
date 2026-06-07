@@ -8,9 +8,9 @@ const Settings = () => {
     const [toast, setToast] = useState('');
 
     useEffect(() => {
-        const savedGemini = localStorage.getItem('devlearn_gemini_api_key') || '';
-        const savedGroq = localStorage.getItem('devlearn_groq_api_key') || '';
-        const savedSaveLocal = localStorage.getItem('devlearn_save_local') !== 'false';
+        const savedGemini = localStorage.getItem('codeforge_gemini_api_key') || '';
+        const savedGroq = localStorage.getItem('codeforge_groq_api_key') || '';
+        const savedSaveLocal = localStorage.getItem('codeforge_save_local') !== 'false';
         
         setGeminiKey(savedGemini);
         setGroqKey(savedGroq);
@@ -18,9 +18,9 @@ const Settings = () => {
     }, []);
 
     const handleSave = () => {
-        localStorage.setItem('devlearn_gemini_api_key', geminiKey.trim());
-        localStorage.setItem('devlearn_groq_api_key', groqKey.trim());
-        localStorage.setItem('devlearn_save_local', saveLocal ? 'true' : 'false');
+        localStorage.setItem('codeforge_gemini_api_key', geminiKey.trim());
+        localStorage.setItem('codeforge_groq_api_key', groqKey.trim());
+        localStorage.setItem('codeforge_save_local', saveLocal ? 'true' : 'false');
         
         showToast('Settings saved successfully!');
     };
@@ -32,8 +32,8 @@ const Settings = () => {
 
     const handleClearData = () => {
         if (window.confirm('Are you sure you want to clear all saved resume data and analysis reports? This cannot be undone.')) {
-            localStorage.removeItem('devlearn_resume');
-            localStorage.removeItem('devlearn_ats_report');
+            localStorage.removeItem('codeforge_resume');
+            localStorage.removeItem('codeforge_ats_report');
             showToast('All saved resume and ATS data cleared!');
         }
     };

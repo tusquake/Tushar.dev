@@ -56,8 +56,8 @@ const ResumeBuilder = () => {
 
     // Load saved data
     useEffect(() => {
-        const savedData = localStorage.getItem('devlearn_resume');
-        const saveLocal = localStorage.getItem('devlearn_save_local') !== 'false';
+        const savedData = localStorage.getItem('codeforge_resume');
+        const saveLocal = localStorage.getItem('codeforge_save_local') !== 'false';
         
         if (savedData && saveLocal) {
             try {
@@ -79,9 +79,9 @@ const ResumeBuilder = () => {
     const updateResumeData = (updater) => {
         setResumeData(prev => {
             const next = typeof updater === 'function' ? updater(prev) : updater;
-            const saveLocal = localStorage.getItem('devlearn_save_local') !== 'false';
+            const saveLocal = localStorage.getItem('codeforge_save_local') !== 'false';
             if (saveLocal) {
-                localStorage.setItem('devlearn_resume', JSON.stringify(next));
+                localStorage.setItem('codeforge_resume', JSON.stringify(next));
             }
             return next;
         });
@@ -697,7 +697,7 @@ const ResumeBuilder = () => {
 
                                             <div>
                                                 <label className="label">Project Title</label>
-                                                <input type="text" className="input text-sm" value={proj.title} onChange={(e) => handleProjectChange(projIdx, 'title', e.target.value)} placeholder="DevLearn.hub Landing Page" />
+                                                <input type="text" className="input text-sm" value={proj.title} onChange={(e) => handleProjectChange(projIdx, 'title', e.target.value)} placeholder="CodeForge.dev Landing Page" />
                                             </div>
 
                                             <div>
@@ -712,7 +712,7 @@ const ResumeBuilder = () => {
 
                                             <div>
                                                 <label className="label">GitHub Link (Optional)</label>
-                                                <input type="text" className="input text-sm" value={proj.githubLink} onChange={(e) => handleProjectChange(projIdx, 'githubLink', e.target.value)} placeholder="github.com/tushar/devlearn" />
+                                                <input type="text" className="input text-sm" value={proj.githubLink} onChange={(e) => handleProjectChange(projIdx, 'githubLink', e.target.value)} placeholder="github.com/tushar/codeforge" />
                                             </div>
                                         </div>
                                     ))}

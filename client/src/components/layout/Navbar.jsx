@@ -76,8 +76,8 @@ const Navbar = () => {
                             fontFamily: darkMode ? 'monospace' : 'Inter, sans-serif'
                         }}
                     >
-                        <span className={darkMode ? 'text-white' : 'text-[#1e1b4b]'}>DevLearn</span>
-                        <span className="gradient-text">.hub</span>
+                        <span className={darkMode ? 'text-white' : 'text-[#1e1b4b]'}>CodeForge</span>
+                        <span className="gradient-text">.dev</span>
                     </Link>
 
                     {/* Desktop Navigation */}

@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Get keys helper
 export const getApiKeys = () => {
-    const localGemini = localStorage.getItem('devlearn_gemini_api_key');
-    const localGroq = localStorage.getItem('devlearn_groq_api_key');
+    const localGemini = localStorage.getItem('codeforge_gemini_api_key');
+    const localGroq = localStorage.getItem('codeforge_groq_api_key');
     
     return {
         geminiKey: localGemini || import.meta.env.VITE_GEMINI_API_KEY || '',
