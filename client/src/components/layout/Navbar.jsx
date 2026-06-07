@@ -48,7 +48,6 @@ const Navbar = () => {
 
     // Navigation links
     const navLinks = [
-        { name: 'Home', path: '/' },
         { name: 'Learning Hub', path: '/learning' },
         { name: 'Projects', path: '/projects' },
         { name: 'About Creator', path: '/about' },
@@ -57,7 +56,7 @@ const Navbar = () => {
 
     const visibleNavLinks = isAuthenticated
         ? navLinks
-        : [{ name: 'Home', path: '/' }];
+        : [];
 
     const handleLogout = async () => {
         await logout();
@@ -157,42 +156,21 @@ const Navbar = () => {
                             </Link>
                         )}
 
-                        {/* Theme Swatch Toggle */}
-                        <div className="flex items-center gap-2 mr-2" title="Switch Theme">
+                        {/* Cool Theme Switch Toggle */}
+                        <div className="flex items-center mr-3" title="Switch Theme">
                             <button
-                                onClick={() => {
-                                    if (!darkMode) {
-                                        setDarkMode(true);
-                                        document.documentElement.classList.add('dark');
-                                        localStorage.setItem('theme', 'dark');
-                                    }
-                                }}
-                                className="w-5 h-5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
-                                style={{
-                                    backgroundColor: '#39d353',
-                                    border: darkMode ? '2px solid #ffffff' : 'none',
-                                    outline: darkMode ? '2px solid #39d353' : 'none',
-                                    outlineOffset: darkMode ? '2px' : 'none'
-                                }}
-                                aria-label="Terminal Green Theme"
-                            />
-                            <button
-                                onClick={() => {
-                                    if (darkMode) {
-                                        setDarkMode(false);
-                                        document.documentElement.classList.remove('dark');
-                                        localStorage.setItem('theme', 'light');
-                                    }
-                                }}
-                                className="w-5 h-5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
-                                style={{
-                                    backgroundColor: '#7c3aed',
-                                    border: !darkMode ? '2px solid #1e1b4b' : 'none',
-                                    outline: !darkMode ? '2px solid #7c3aed' : 'none',
-                                    outlineOffset: !darkMode ? '2px' : 'none'
-                                }}
-                                aria-label="Soft Purple Theme"
-                            />
+                                onClick={toggleDarkMode}
+                                className="w-12 h-6 rounded-full bg-dark-200 dark:bg-dark-800 p-0.5 transition-colors duration-300 relative border border-dark-350 dark:border-dark-700 cursor-pointer focus:outline-none flex items-center"
+                                aria-label="Toggle Theme"
+                            >
+                                <div
+                                    className={`w-5 h-5 rounded-full shadow-md transition-transform duration-300 transform ${
+                                        darkMode 
+                                            ? 'translate-x-6 bg-[#39d353] shadow-[#39d353]/30' 
+                                            : 'translate-x-0 bg-[#7c3aed] shadow-[#7c3aed]/30'
+                                    }`}
+                                />
+                            </button>
                         </div>
 
                         {/* Auth buttons */}
@@ -228,42 +206,21 @@ const Navbar = () => {
 
                     {/* Mobile menu button */}
                     <div className="md:hidden flex items-center space-x-3">
-                        {/* Mobile Theme Swatch Toggle */}
-                        <div className="flex items-center gap-1.5 mr-1">
+                        {/* Cool Mobile Theme Switch Toggle */}
+                        <div className="flex items-center mr-1" title="Switch Theme">
                             <button
-                                onClick={() => {
-                                    if (!darkMode) {
-                                        setDarkMode(true);
-                                        document.documentElement.classList.add('dark');
-                                        localStorage.setItem('theme', 'dark');
-                                    }
-                                }}
-                                className="w-4.5 h-4.5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
-                                style={{
-                                    backgroundColor: '#39d353',
-                                    border: darkMode ? '1.5px solid #ffffff' : 'none',
-                                    outline: darkMode ? '1.5px solid #39d353' : 'none',
-                                    outlineOffset: darkMode ? '1.5px' : 'none'
-                                }}
-                                aria-label="Terminal Green Theme"
-                            />
-                            <button
-                                onClick={() => {
-                                    if (darkMode) {
-                                        setDarkMode(false);
-                                        document.documentElement.classList.remove('dark');
-                                        localStorage.setItem('theme', 'light');
-                                    }
-                                }}
-                                className="w-4.5 h-4.5 rounded-full cursor-pointer transition-all duration-200 focus:outline-none"
-                                style={{
-                                    backgroundColor: '#7c3aed',
-                                    border: !darkMode ? '1.5px solid #1e1b4b' : 'none',
-                                    outline: !darkMode ? '1.5px solid #7c3aed' : 'none',
-                                    outlineOffset: !darkMode ? '1.5px' : 'none'
-                                }}
-                                aria-label="Soft Purple Theme"
-                            />
+                                onClick={toggleDarkMode}
+                                className="w-12 h-6 rounded-full bg-dark-200 dark:bg-dark-800 p-0.5 transition-colors duration-300 relative border border-dark-350 dark:border-dark-700 cursor-pointer focus:outline-none flex items-center"
+                                aria-label="Toggle Theme"
+                            >
+                                <div
+                                    className={`w-5 h-5 rounded-full shadow-md transition-transform duration-300 transform ${
+                                        darkMode 
+                                            ? 'translate-x-6 bg-[#39d353] shadow-[#39d353]/30' 
+                                            : 'translate-x-0 bg-[#7c3aed] shadow-[#7c3aed]/30'
+                                    }`}
+                                />
+                            </button>
                         </div>
                         <button
                             onClick={() => setIsOpen(!isOpen)}

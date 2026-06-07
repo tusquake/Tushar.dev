@@ -25,81 +25,141 @@ const TwoPointersSVG = ({ accent, text, muted }) => (
     </svg>
 );
 
-const SlidingWindowSVG = ({ accent, text, muted }) => (
+const SystemDesignSVG = ({ accent, text, muted, secondary }) => (
     <svg width="100%" height="100%" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(10, 40)">
-            {[1, 3, 5, 2, 8, 4].map((val, idx) => {
-                const isInside = idx >= 1 && idx <= 3;
-                return (
-                    <g key={idx} transform={`translate(${idx * 30}, 0)`}>
-                        <rect width="24" height="24" rx="4" fill="none" stroke={isInside ? accent : muted} strokeWidth="1.5" />
-                        <text x="12" y="15" fill={isInside ? accent : text} fontSize="9" textAnchor="middle" fontFamily="monospace" fontWeight="bold">{val}</text>
-                    </g>
-                );
-            })}
-            <rect x="27" y="-4" width="86" height="32" rx="4" fill="none" stroke={accent} strokeWidth="1.5" strokeDasharray="3 3" className="animate-slide-window origin-left" />
-        </g>
-        <g className="animate-slide-window-labels origin-left">
-            <path d="M42 22V32" stroke={accent} strokeWidth="1" />
-            <text x="42" y="15" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace">i</text>
-            
-            <path d="M102 22V32" stroke={accent} strokeWidth="1" />
-            <text x="102" y="15" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace">j</text>
-        </g>
+        {/* Client block */}
+        <rect x="10" y="45" width="28" height="28" rx="6" fill="none" stroke={text} strokeWidth="1.5" />
+        <text x="24" y="62" fill={text} fontSize="7" textAnchor="middle" fontWeight="bold">Client</text>
+        
+        {/* Load Balancer */}
+        <rect x="70" y="41" width="32" height="38" rx="6" fill="none" stroke={accent} strokeWidth="1.5" />
+        <text x="86" y="58" fill={accent} fontSize="7" textAnchor="middle" fontWeight="bold">LB</text>
+        <path d="M74 62h24M86 46v26" stroke={accent} strokeWidth="1" strokeDasharray="2 1" />
+
+        {/* Server 1 & Server 2 */}
+        <rect x="140" y="20" width="36" height="24" rx="4" fill="none" stroke={muted} strokeWidth="1.5" />
+        <text x="158" y="34" fill={text} fontSize="7" textAnchor="middle">App-01</text>
+
+        <rect x="140" y="76" width="36" height="24" rx="4" fill="none" stroke={muted} strokeWidth="1.5" />
+        <text x="158" y="90" fill={text} fontSize="7" textAnchor="middle">App-02</text>
+
+        {/* Connections */}
+        <path d="M38 59h32" stroke={text} strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M102 50l38-18" stroke={muted} strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M102 68l38 18" stroke={muted} strokeWidth="1.2" strokeLinecap="round" />
+
+        {/* Animatic Flowing Request Dot */}
+        <circle r="2.5" fill={secondary}>
+            <animateMotion 
+                path="M 38,59 L 70,59 L 102,50 L 140,32" 
+                dur="2.5s" 
+                repeatCount="indefinite" 
+            />
+        </circle>
+        <circle r="2.5" fill={secondary}>
+            <animateMotion 
+                path="M 38,59 L 70,59 L 102,68 L 140,86" 
+                dur="2.5s" 
+                begin="1.25s"
+                repeatCount="indefinite" 
+            />
+        </circle>
     </svg>
 );
 
-const BFSTreeSVG = ({ accent, text, muted, secondary }) => (
+const GenAISVG = ({ accent, text, muted, secondary }) => (
     <svg width="100%" height="100%" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="20" r="10" fill="none" stroke={accent} strokeWidth="1.5" className="animate-bfs-1" />
-        <text x="100" y="23" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">1</text>
+        {/* User Prompt */}
+        <rect x="15" y="45" width="34" height="28" rx="6" fill="none" stroke={text} strokeWidth="1.5" />
+        <text x="32" y="61" fill={text} fontSize="7" textAnchor="middle" fontWeight="bold">Prompt</text>
         
-        <circle cx="70" cy="55" r="10" fill="none" stroke={accent} strokeWidth="1.5" className="animate-bfs-2" />
-        <text x="70" y="58" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">2</text>
-        
-        <circle cx="130" cy="55" r="10" fill="none" stroke={accent} strokeWidth="1.5" className="animate-bfs-3" />
-        <text x="130" y="58" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">3</text>
-        
-        <circle cx="45" cy="90" r="10" fill="none" stroke={muted} strokeWidth="1.5" className="animate-bfs-4" />
-        <text x="45" y="93" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">4</text>
-        
-        <circle cx="95" cy="90" r="10" fill="none" stroke={muted} strokeWidth="1.5" className="animate-bfs-5" />
-        <text x="95" y="93" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">5</text>
-        
-        <line x1="93" y1="28" x2="77" y2="47" stroke={muted} strokeWidth="1.2" />
-        <line x1="107" y1="28" x2="123" y2="47" stroke={muted} strokeWidth="1.2" />
-        <line x1="64" y1="63" x2="51" y2="82" stroke={muted} strokeWidth="1.2" />
-        <line x1="76" y1="63" x2="89" y2="82" stroke={muted} strokeWidth="1.2" />
-        
-        <path d="M40 38H155" stroke={secondary} strokeWidth="1.2" strokeDasharray="3 2" />
-        <path d="M155 38L151 35M155 38L151 41" stroke={secondary} strokeWidth="1.2" />
-        <text x="175" y="41" fill={secondary} fontSize="8" textAnchor="middle" fontFamily="monospace">Queue</text>
+        {/* Embedding & Vector Search */}
+        <rect x="85" y="15" width="40" height="28" rx="6" fill="none" stroke={accent} strokeWidth="1.5" />
+        <text x="105" y="32" fill={accent} fontSize="7" textAnchor="middle" fontWeight="bold">Vector DB</text>
+
+        {/* LLM Engine */}
+        <rect x="145" y="45" width="40" height="28" rx="6" fill="none" stroke={accent} strokeWidth="1.5" className="animate-pulse" />
+        <text x="165" y="61" fill={accent} fontSize="8" textAnchor="middle" fontWeight="bold">LLM</text>
+
+        {/* Vector DB connection lines */}
+        <path d="M49 54 L 85 29" stroke={muted} strokeWidth="1" strokeDasharray="2 2" />
+        <path d="M125 29 L 145 54" stroke={muted} strokeWidth="1" strokeDasharray="2 2" />
+        <path d="M145 62 L 49 62" stroke={secondary} strokeWidth="1.2" strokeLinecap="round" />
+
+        {/* Animated Tokens / Vector Embeddings */}
+        <circle r="2.5" fill={secondary}>
+            <animateMotion 
+                path="M 49,54 L 85,29" 
+                dur="2s" 
+                repeatCount="indefinite" 
+            />
+        </circle>
+        <circle r="2.5" fill={accent}>
+            <animateMotion 
+                path="M 125,29 L 145,54" 
+                dur="2s" 
+                begin="0.7s"
+                repeatCount="indefinite" 
+            />
+        </circle>
+        <circle r="2" fill={text}>
+            <animateMotion 
+                path="M 145,62 L 49,62" 
+                dur="2s" 
+                begin="1.4s"
+                repeatCount="indefinite" 
+            />
+        </circle>
     </svg>
 );
 
-const PrefixSumSVG = ({ accent, text, muted }) => (
+const DeploymentSVG = ({ accent, text, muted, secondary }) => (
     <svg width="100%" height="100%" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text x="10" y="25" fill={muted} fontSize="8" fontFamily="monospace">A =</text>
-        <g transform="translate(35, 10)">
-            {[3, 1, 4, 2].map((val, idx) => (
-                <g key={idx} transform={`translate(${idx * 30}, 0)`}>
-                    <rect width="20" height="20" rx="3" fill="none" stroke={muted} strokeWidth="1.5" />
-                    <text x="10" y="13" fill={text} fontSize="8" textAnchor="middle" fontFamily="monospace">{val}</text>
-                </g>
-            ))}
-        </g>
+        {/* Git commit/branch */}
+        <circle cx="25" cy="60" r="6" fill="none" stroke={text} strokeWidth="1.5" />
+        <line x1="25" y1="20" x2="25" y2="100" stroke={muted} strokeWidth="1.2" />
+        <circle cx="25" cy="30" r="4" fill={text} />
+        <circle cx="25" cy="90" r="4" fill={text} />
         
-        <path d="M45 36V62M75 36V62M105 36V62M135 36V62" stroke={accent} strokeWidth="1" strokeDasharray="2 2" />
-        
-        <text x="10" y="85" fill={accent} fontSize="8" fontFamily="monospace">P =</text>
-        <g transform="translate(35, 70)">
-            {[3, 4, 8, 10].map((val, idx) => (
-                <g key={idx} transform={`translate(${idx * 30}, 0)`}>
-                    <rect width="20" height="20" rx="3" fill="none" stroke={accent} strokeWidth="1.5" />
-                    <text x="10" y="13" fill={accent} fontSize="8" textAnchor="middle" fontFamily="monospace">{val}</text>
-                </g>
-            ))}
-        </g>
+        {/* CI/CD Pipeline Container */}
+        <rect x="75" y="40" width="34" height="40" rx="6" fill="none" stroke={accent} strokeWidth="1.5" />
+        <text x="92" y="63" fill={accent} fontSize="7" textAnchor="middle" fontWeight="bold">CI/CD</text>
+
+        {/* Kubernetes Cluster / Cloud Node */}
+        <polygon points="160,25 180,35 180,55 160,65 140,55 140,35" fill="none" stroke={muted} strokeWidth="1.2" />
+        <polygon points="160,55 180,65 180,85 160,95 140,85 140,65" fill="none" stroke={accent} strokeWidth="1.2" />
+        <text x="160" y="48" fill={text} fontSize="6" textAnchor="middle">Pod-A</text>
+        <text x="160" y="78" fill={accent} fontSize="6" textAnchor="middle">Pod-B</text>
+
+        {/* Pipeline path connections */}
+        <path d="M31 60h44" stroke={muted} strokeWidth="1" />
+        <path d="M109 52 L 140,43" stroke={muted} strokeWidth="1" />
+        <path d="M109 68 L 140,73" stroke={muted} strokeWidth="1" />
+
+        {/* Flow of deployment containers */}
+        <rect width="6" height="6" rx="1.5" fill={secondary}>
+            <animateMotion 
+                path="M 31,60 L 75,60" 
+                dur="1.8s" 
+                repeatCount="indefinite" 
+            />
+        </rect>
+        <rect width="6" height="6" rx="1.5" fill={accent}>
+            <animateMotion 
+                path="M 109,60 L 140,43" 
+                dur="1.8s" 
+                begin="0.6s"
+                repeatCount="indefinite" 
+            />
+        </rect>
+        <rect width="6" height="6" rx="1.5" fill={accent}>
+            <animateMotion 
+                path="M 109,60 L 140,73" 
+                dur="1.8s" 
+                begin="1.2s"
+                repeatCount="indefinite" 
+            />
+        </rect>
     </svg>
 );
 
@@ -272,7 +332,7 @@ const Home = () => {
                         </div>
                     </div>
 
-                    {/* Sliding Window Card */}
+                    {/* System Design Card */}
                     <div 
                         className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float-delayed"
                         style={{ 
@@ -282,13 +342,13 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">Sliding Window</span>
+                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">System Design</span>
                         <div className="flex-1 flex items-center justify-center py-2">
-                            <SlidingWindowSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} />
+                            <SystemDesignSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
                         </div>
                     </div>
 
-                    {/* BFS Tree Card */}
+                    {/* Generative AI Card */}
                     <div 
                         className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float"
                         style={{ 
@@ -298,13 +358,13 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">BFS Tree</span>
+                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">Generative AI</span>
                         <div className="flex-1 flex items-center justify-center py-2">
-                            <BFSTreeSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
+                            <GenAISVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
                         </div>
                     </div>
 
-                    {/* Prefix Sum Card */}
+                    {/* Deployment & DevOps Card */}
                     <div 
                         className="p-4 flex flex-col justify-between aspect-square transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md animate-float-delayed"
                         style={{ 
@@ -314,9 +374,9 @@ const Home = () => {
                             boxShadow: currentTheme.shadow
                         }}
                     >
-                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">Prefix Sum</span>
+                        <span className="text-[11px] font-bold tracking-wider opacity-70 uppercase">Cloud & DevOps</span>
                         <div className="flex-1 flex items-center justify-center py-2">
-                            <PrefixSumSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} />
+                            <DeploymentSVG accent={currentTheme.accent} text={isDark ? currentTheme.text : '#1e1b4b'} muted={currentTheme.muted} secondary={currentTheme.secondary} />
                         </div>
                     </div>
                 </div>
