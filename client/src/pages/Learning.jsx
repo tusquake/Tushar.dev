@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -12,57 +12,49 @@ const GITHUB_REPOS = [
         id: 'Backend-Concepts',
         name: 'Backend Concepts',
         description: 'Comprehensive guide and examples for backend development, architectures, APIs, and databases.',
-        category: 'Backend',
-        icon: 'terminal'
+        category: 'Backend'
     },
     {
         id: 'Low-Level-Design',
         name: 'Low-Level Design',
         description: 'Standard LLD problems, object-oriented principles, design patterns, and class schemas.',
-        category: 'LLD',
-        icon: 'design'
+        category: 'LLD'
     },
     {
         id: 'High-Level-Design',
         name: 'High-Level Design',
         description: 'System design methodologies, load balancing, caching, databases, scaling, and architectures.',
-        category: 'System Design',
-        icon: 'gr'
+        category: 'System Design'
     },
     {
         id: 'DevOps',
         name: 'DevOps',
         description: 'Docker containers, Kubernetes orchestration, CI/CD pipelines, and cloud deployment guides.',
-        category: 'DevOps',
-        icon: 'bit'
+        category: 'DevOps'
     },
     {
         id: 'Generative-AI',
         name: 'Generative AI',
         description: 'LLM utilization, prompting architectures, vector databases, embeddings, and agentic workflows.',
-        category: 'AI / ML',
-        icon: 'pre'
+        category: 'AI / ML'
     },
     {
         id: 'Spring-AI',
         name: 'Spring AI',
         description: 'Enterprise AI workflows integrating Spring Boot, Gemini, OpenAI, and vector stores.',
-        category: 'Java AI',
-        icon: 'bst'
+        category: 'Java AI'
     },
     {
         id: 'Multithreading_in_Java',
         name: 'Java Multithreading',
         description: 'Concurrency models, thread pooling, synchronization constructs, and asynchronous execution in Java.',
-        category: 'Java Core',
-        icon: 'tp'
+        category: 'Java Core'
     },
     {
         id: 'Collection_FrameWork_Java',
         name: 'Java Collection Framework',
         description: 'Deep dive into List, Set, Map implementation details, complex operations, and performance.',
-        category: 'Java Core',
-        icon: 'll'
+        category: 'Java Core'
     }
 ];
 
@@ -312,6 +304,106 @@ const parseMarkdown = (markdown) => {
     return html;
 };
 
+// JavaScript Recursive File Tree Builder
+const buildFileTree = (files) => {
+    const root = { name: 'Root', type: 'folder', children: {}, path: '' };
+    
+    files.forEach(file => {
+        // Only include Markdown files (.md)
+        if (file.type === 'blob' && file.path.toLowerCase().endsWith('.md')) {
+            const parts = file.path.split('/');
+            let current = root;
+            
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                const isLast = i === parts.length - 1;
+                
+                if (isLast) {
+                    current.children[part] = {
+                        name: part,
+                        type: 'file',
+                        path: file.path
+                    };
+                } else {
+                    if (!current.children[part]) {
+                        current.children[part] = {
+                            name: part,
+                            type: 'folder',
+                            children: {},
+                            path: parts.slice(0, i + 1).join('/')
+                        };
+                    }
+                    current = current.children[part];
+                }
+            }
+        }
+    });
+    
+    return root;
+};
+
+// Recursive file tree component
+const FileTreeItem = ({ item, level, selectedPath, onFileClick, expandedFolders, toggleFolder }) => {
+    if (item.type === 'file') {
+        const isSelected = selectedPath === item.path;
+        return (
+            <div
+                onClick={() => onFileClick(item.path)}
+                style={{ paddingLeft: `${level * 12 + 8}px` }}
+                className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                    isSelected
+                        ? 'bg-primary-500/10 text-primary-500 font-semibold'
+                        : 'text-dark-600 dark:text-dark-400 hover:bg-dark-100/40 dark:hover:bg-dark-900/40'
+                }`}
+            >
+                <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="truncate">{item.name}</span>
+            </div>
+        );
+    }
+
+    const isExpanded = !!expandedFolders[item.path];
+    const childrenKeys = Object.keys(item.children);
+    if (childrenKeys.length === 0) return null;
+
+    return (
+        <div className="space-y-0.5">
+            <div
+                onClick={() => toggleFolder(item.path)}
+                style={{ paddingLeft: `${level * 12 + 8}px` }}
+                className="flex items-center justify-between py-1.5 pr-2 rounded-lg text-xs font-bold text-dark-800 dark:text-dark-300 cursor-pointer hover:bg-dark-100/30 dark:hover:bg-dark-900/30 select-none"
+            >
+                <div className="flex items-center gap-2 truncate">
+                    <svg className="w-3.5 h-3.5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span className="truncate capitalize">{item.name.replace(/[-_]/g, ' ')}</span>
+                </div>
+                <span className={`text-[9px] text-dark-400 dark:text-dark-505 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                    ▶
+                </span>
+            </div>
+            {isExpanded && (
+                <div className="space-y-0.5">
+                    {childrenKeys.map(key => (
+                        <FileTreeItem
+                            key={key}
+                            item={item.children[key]}
+                            level={level + 1}
+                            selectedPath={selectedPath}
+                            onFileClick={onFileClick}
+                            expandedFolders={expandedFolders}
+                            toggleFolder={toggleFolder}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const Learning = () => {
     const { isAuthenticated } = useAuth();
     const [resources, setResources] = useState([]);
@@ -329,6 +421,12 @@ const Learning = () => {
     const [wikiLoading, setWikiLoading] = useState(false);
     const [wikiError, setWikiError] = useState('');
     const [historyStack, setHistoryStack] = useState([]);
+
+    // Recursive Repo Tree Explorer States
+    const [repoTree, setRepoTree] = useState(null);
+    const [expandedFolders, setExpandedFolders] = useState({});
+    const [treeLoading, setTreeLoading] = useState(false);
+    const [treeError, setTreeError] = useState('');
 
     // DSA Practice Sheet States
     const [dsaSearch, setDsaSearch] = useState('');
@@ -348,9 +446,10 @@ const Learning = () => {
         fetchData();
     }, [isAuthenticated]);
 
-    // Handle initial fetch of active repo contents
+    // Handle initial fetch of active repo tree and file contents
     useEffect(() => {
         if (activeSection === 'wiki') {
+            fetchRepoTree(selectedRepo.id);
             fetchRepoFile(selectedRepo.id, currentFilePath);
         }
     }, [selectedRepo, activeSection]);
@@ -442,6 +541,77 @@ const Learning = () => {
         }
     }, [completedQuestions, isAuthenticated, isInitialLoad]);
 
+    // Fetch Repo Recursive Directory Tree
+    const fetchRepoTree = async (repoId) => {
+        setTreeLoading(true);
+        setTreeError('');
+        setRepoTree(null);
+
+        const cacheKey = `repo_tree_${repoId}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                setRepoTree(buildFileTree(parsed));
+                setTreeLoading(false);
+
+                // Auto expand top level folders
+                const initialExpanded = {};
+                parsed.forEach(f => {
+                    const parts = f.path.split('/');
+                    if (parts.length > 1) {
+                        initialExpanded[parts[0]] = true;
+                    }
+                });
+                setExpandedFolders(initialExpanded);
+                return;
+            } catch (e) {
+                console.error('Failed to parse cached tree:', e);
+            }
+        }
+
+        const mainUrl = `https://api.github.com/repos/tusquake/${repoId}/git/trees/main?recursive=1`;
+        const masterUrl = `https://api.github.com/repos/tusquake/${repoId}/git/trees/master?recursive=1`;
+
+        try {
+            const res = await axios.get(mainUrl);
+            const treeData = res.data.tree || [];
+            localStorage.setItem(cacheKey, JSON.stringify(treeData));
+            setRepoTree(buildFileTree(treeData));
+
+            const initialExpanded = {};
+            treeData.forEach(f => {
+                const parts = f.path.split('/');
+                if (parts.length > 1) {
+                    initialExpanded[parts[0]] = true;
+                }
+            });
+            setExpandedFolders(initialExpanded);
+        } catch (err) {
+            console.log(`Failed to fetch main tree branch, trying master: ${repoId}`);
+            try {
+                const res = await axios.get(masterUrl);
+                const treeData = res.data.tree || [];
+                localStorage.setItem(cacheKey, JSON.stringify(treeData));
+                setRepoTree(buildFileTree(treeData));
+
+                const initialExpanded = {};
+                treeData.forEach(f => {
+                    const parts = f.path.split('/');
+                    if (parts.length > 1) {
+                        initialExpanded[parts[0]] = true;
+                    }
+                });
+                setExpandedFolders(initialExpanded);
+            } catch (fallbackErr) {
+                console.error(fallbackErr);
+                setTreeError('API Rate limit reached or repo not found. Click direct links or retry.');
+            }
+        } finally {
+            setTreeLoading(false);
+        }
+    };
+
     // Fetch Markdown file
     const fetchRepoFile = async (repoId, filePath) => {
         setWikiLoading(true);
@@ -473,6 +643,12 @@ const Learning = () => {
         setCurrentFilePath('README.md');
     };
 
+    const handleFileClick = (path) => {
+        setHistoryStack(prev => [...prev, currentFilePath]);
+        setCurrentFilePath(path);
+        fetchRepoFile(selectedRepo.id, path);
+    };
+
     const handleRelativeNav = (relPath) => {
         const resolved = resolvePath(currentFilePath, relPath);
         setHistoryStack(prev => [...prev, currentFilePath]);
@@ -494,6 +670,13 @@ const Learning = () => {
         setHistoryStack([]);
         setCurrentFilePath('README.md');
         fetchRepoFile(selectedRepo.id, 'README.md');
+    };
+
+    const toggleFolder = (folderPath) => {
+        setExpandedFolders(prev => ({
+            ...prev,
+            [folderPath]: !prev[folderPath]
+        }));
     };
 
     // Intercept clicks on markdown generated relative links
@@ -604,8 +787,6 @@ const Learning = () => {
         }
     };
 
-    if (loading) return <Loading fullScreen />;
-
     return (
         <div className="min-h-screen py-12 px-4 bg-dark-50 dark:bg-dark-950/20">
             <div className="max-w-7xl mx-auto">
@@ -649,7 +830,7 @@ const Learning = () => {
                             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
-                            Interactive Syllabus Wiki
+                            Syllabus Wiki Explorer
                         </button>
                         <button
                             onClick={() => setActiveSection('dsa')}
@@ -737,49 +918,84 @@ const Learning = () => {
                     </>
                 )}
 
-                {/* --- Tab 2: Syllabus Wiki --- */}
+                {/* --- Tab 2: Syllabus Wiki Explorer --- */}
                 {activeSection === 'wiki' && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in">
-                        {/* Sidebar: Repo Deck & Table of Contents Outline */}
+                        {/* Left Column: Repository Selector & File Explorer */}
                         <div className="lg:col-span-4 space-y-6">
+                            {/* Repo Dropdown Selector */}
                             <Card className="p-4">
-                                <h3 className="text-sm font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-4">
-                                    Learning Repositories
-                                </h3>
-                                <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-                                    {GITHUB_REPOS.map((repo) => (
-                                        <div
-                                            key={repo.id}
-                                            onClick={() => handleRepoChange(repo)}
-                                            className={`p-3 rounded-xl border-2 transition-all cursor-pointer ${
-                                                selectedRepo.id === repo.id
-                                                    ? 'border-primary-500 bg-primary-500/5'
-                                                    : 'border-dark-200/50 dark:border-dark-800 hover:border-dark-350 dark:hover:border-dark-700 bg-white/40 dark:bg-dark-900/10'
-                                            }`}
-                                        >
-                                            <div className="flex justify-between items-start gap-2">
-                                                <h4 className="font-bold text-sm text-dark-900 dark:text-white group-hover:text-primary-500">
-                                                    {repo.name}
-                                                </h4>
-                                                <span className="badge text-[9px] uppercase py-0.5 tracking-wider">
-                                                    {repo.category}
-                                                </span>
-                                            </div>
-                                            <p className="text-[11px] text-dark-500 dark:text-dark-400 mt-1 line-clamp-2">
-                                                {repo.description}
-                                            </p>
-                                        </div>
+                                <label className="block text-xs font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider mb-2">
+                                    Active Repository
+                                </label>
+                                <select
+                                    value={selectedRepo.id}
+                                    onChange={(e) => {
+                                        const repo = GITHUB_REPOS.find(r => r.id === e.target.value);
+                                        if (repo) handleRepoChange(repo);
+                                    }}
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-dark-950 dark:text-white font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                >
+                                    {GITHUB_REPOS.map(repo => (
+                                        <option key={repo.id} value={repo.id}>
+                                            {repo.name} ({repo.category})
+                                        </option>
                                     ))}
+                                </select>
+                            </Card>
+
+                            {/* File Explorer Tree */}
+                            <Card className="p-4">
+                                <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3 flex items-center justify-between">
+                                    <span>Repository Files</span>
+                                    {treeLoading && <span className="text-[10px] text-primary-500 animate-pulse">Scanning...</span>}
+                                </h3>
+                                
+                                <div className="border border-dark-200/50 dark:border-dark-800 rounded-xl p-2.5 max-h-[360px] overflow-y-auto bg-dark-50/20 dark:bg-dark-900/10">
+                                    {treeLoading ? (
+                                        <div className="py-8 text-center text-xs text-dark-400 dark:text-dark-550">
+                                            Scanning repository hierarchy...
+                                        </div>
+                                    ) : treeError ? (
+                                        <div className="py-6 text-center">
+                                            <p className="text-xs text-rose-500 font-semibold mb-2">{treeError}</p>
+                                            <button
+                                                onClick={() => fetchRepoTree(selectedRepo.id)}
+                                                className="px-2.5 py-1 bg-dark-200 dark:bg-dark-800 hover:bg-dark-300 text-dark-750 dark:text-dark-300 text-[10px] rounded font-bold transition-all"
+                                            >
+                                                Reload File Tree
+                                            </button>
+                                        </div>
+                                    ) : repoTree && Object.keys(repoTree.children).length > 0 ? (
+                                        <div className="space-y-1">
+                                            {/* Root level elements */}
+                                            {Object.keys(repoTree.children).map(key => (
+                                                <FileTreeItem
+                                                    key={key}
+                                                    item={repoTree.children[key]}
+                                                    level={0}
+                                                    selectedPath={currentFilePath}
+                                                    onFileClick={handleFileClick}
+                                                    expandedFolders={expandedFolders}
+                                                    toggleFolder={toggleFolder}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="py-8 text-center text-xs text-dark-400 dark:text-dark-550">
+                                            No markdown files detected in this repository.
+                                        </div>
+                                    )}
                                 </div>
                             </Card>
 
-                            {/* Section Outline (dynamic headings from current doc) */}
+                            {/* Document Outline (headings from currently loaded file) */}
                             {markdownContent && !wikiLoading && (
                                 <Card className="p-4 hidden lg:block">
-                                    <h3 className="text-sm font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3">
+                                    <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3">
                                         Document Outline
                                     </h3>
-                                    <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
                                         {getOutline(markdownContent).length > 0 ? (
                                             getOutline(markdownContent).map((h, i) => (
                                                 <div
@@ -787,8 +1003,8 @@ const Learning = () => {
                                                     style={{ paddingLeft: `${(h.level - 1) * 8}px` }}
                                                     className={`text-xs ${
                                                         h.level === 1 
-                                                            ? 'font-bold text-dark-800 dark:text-dark-200' 
-                                                            : 'text-dark-500 dark:text-dark-400 font-medium'
+                                                            ? 'font-bold text-dark-805 dark:text-dark-200' 
+                                                            : 'text-dark-500 dark:text-dark-405 font-medium'
                                                     }`}
                                                 >
                                                     • {h.text}
@@ -802,7 +1018,7 @@ const Learning = () => {
                             )}
                         </div>
 
-                        {/* Right: Markdown Documentation Viewer */}
+                        {/* Right Column: Markdown Reader Panel */}
                         <div className="lg:col-span-8">
                             <Card className="p-6 md:p-8 min-h-[640px] flex flex-col">
                                 {/* Header / Path bar */}
@@ -810,7 +1026,7 @@ const Learning = () => {
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="font-bold text-primary-500">{selectedRepo.name}</span>
                                         <span className="text-dark-350 dark:text-dark-600">/</span>
-                                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-dark-100 dark:bg-dark-800/80 text-dark-600 dark:text-dark-300">
+                                        <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-dark-100 dark:bg-dark-800/80 text-dark-650 dark:text-dark-300">
                                             {currentFilePath}
                                         </span>
                                     </div>
@@ -903,7 +1119,7 @@ const Learning = () => {
                             {/* Sync Status Badge */}
                             <div className="flex items-center self-start md:self-auto">
                                 {syncStatus === 'synced' && (
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-450 border border-emerald-200/30 dark:border-emerald-900/30">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-650 dark:text-emerald-450 border border-emerald-200/30 dark:border-emerald-900/30">
                                         <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                                         </svg>
@@ -911,7 +1127,7 @@ const Learning = () => {
                                     </div>
                                 )}
                                 {syncStatus === 'syncing' && (
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-405 border border-primary-200/30 dark:border-primary-900/30">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary-50 dark:bg-primary-950/20 text-primary-650 dark:text-primary-405 border border-primary-200/30 dark:border-primary-900/30">
                                         <svg className="animate-spin h-3.5 w-3.5 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -928,7 +1144,7 @@ const Learning = () => {
                                     </div>
                                 )}
                                 {syncStatus === 'error' && (
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 border border-rose-200/30 dark:border-rose-900/30">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/20 text-rose-650 dark:text-rose-450 border border-rose-200/30 dark:border-rose-900/30">
                                         <svg className="w-3.5 h-3.5 text-rose-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                         </svg>
@@ -945,7 +1161,7 @@ const Learning = () => {
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary-500/10 transition-all duration-300"></div>
                                 <div className="flex justify-between items-center mb-3">
                                     <span className="text-xs font-bold text-dark-400 dark:text-dark-500 tracking-wider uppercase font-display">Total Progress</span>
-                                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-primary-100 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 uppercase">Overall</span>
+                                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-primary-100 dark:bg-primary-950/50 text-primary-650 dark:text-primary-400 uppercase">Overall</span>
                                 </div>
                                 <div className="flex items-baseline gap-2 mb-2">
                                     <span className="text-3xl font-extrabold text-dark-900 dark:text-white font-display">
@@ -977,7 +1193,7 @@ const Learning = () => {
                             {/* Medium Stats */}
                             <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/45 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase font-display">Medium</span>
+                                    <span className="text-xs font-bold text-dark-455 dark:text-dark-500 tracking-wider uppercase font-display">Medium</span>
                                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                                 </div>
                                 <div className="text-2xl font-extrabold text-dark-900 dark:text-white font-display">
@@ -991,7 +1207,7 @@ const Learning = () => {
                             {/* Hard Stats */}
                             <div className="p-5 rounded-2xl border border-dark-200/60 dark:border-dark-800/80 bg-white dark:bg-dark-900/45 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs font-bold text-dark-450 dark:text-dark-500 tracking-wider uppercase font-display">Hard</span>
+                                    <span className="text-xs font-bold text-dark-455 dark:text-dark-500 tracking-wider uppercase font-display">Hard</span>
                                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
                                 </div>
                                 <div className="text-2xl font-extrabold text-dark-900 dark:text-white font-display">
@@ -1040,7 +1256,7 @@ const Learning = () => {
                                         onClick={() => setDsaDiffFilter(diff)}
                                         className={`px-4.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
                                             dsaDiffFilter === diff
-                                                ? 'bg-white dark:bg-dark-905 text-primary-600 dark:text-primary-400 shadow-sm font-bold'
+                                                ? 'bg-white dark:bg-dark-905 text-primary-600 dark:text-primary-405 shadow-sm font-bold'
                                                 : 'text-dark-500 dark:text-dark-405 hover:text-dark-800 dark:hover:text-dark-200'
                                         }`}
                                     >
@@ -1058,7 +1274,7 @@ const Learning = () => {
                                             TOPICS.forEach(t => { allExp[t.id] = true; });
                                             setExpandedTopics(allExp);
                                         }}
-                                        className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-400 hover:border-primary-500/50 transition-colors cursor-pointer flex items-center gap-1"
+                                        className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-405 hover:border-primary-505/50 transition-colors cursor-pointer flex items-center gap-1"
                                         title="Expand all"
                                     >
                                         <svg className="w-3.5 h-3.5 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1068,7 +1284,7 @@ const Learning = () => {
                                     </button>
                                     <button
                                         onClick={() => setExpandedTopics({})}
-                                        className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-400 hover:border-primary-500/50 transition-colors cursor-pointer flex items-center gap-1.5"
+                                        className="px-3 py-1.5 rounded-lg border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 text-xs font-semibold text-dark-600 dark:text-dark-400 hover:text-primary-500 dark:hover:text-primary-405 hover:border-primary-505/50 transition-colors cursor-pointer flex items-center gap-1.5"
                                         title="Collapse all"
                                     >
                                         <svg className="w-3.5 h-3.5 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1083,7 +1299,7 @@ const Learning = () => {
                                     className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 cursor-pointer border flex items-center gap-1.5 ${
                                         confirmReset
                                             ? 'bg-rose-500 border-rose-500 text-white animate-pulse'
-                                            : 'bg-white dark:bg-dark-900 text-dark-600 dark:text-dark-400 border-dark-200 dark:border-dark-800 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-500 hover:border-rose-300 dark:hover:border-rose-900/30'
+                                            : 'bg-white dark:bg-dark-900 text-dark-600 dark:text-dark-400 border-dark-200 dark:border-dark-800 hover:bg-rose-50 dark:hover:bg-rose-955/20 hover:text-rose-500 hover:border-rose-300 dark:hover:border-rose-900/30'
                                     }`}
                                 >
                                     {confirmReset ? (
@@ -1215,8 +1431,8 @@ const Learning = () => {
                                                                     q.d === 'Easy' 
                                                                         ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30' 
                                                                         : q.d === 'Medium'
-                                                                        ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30'
-                                                                        : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30'
+                                                                        ? 'bg-amber-50 dark:bg-amber-955/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30'
+                                                                        : 'bg-rose-50 dark:bg-rose-955/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30'
                                                                 }`}>
                                                                     {q.d}
                                                                 </span>
