@@ -33,9 +33,6 @@
   --color-dark-850: var(--theme-color-dark-850);
   --color-dark-900: var(--theme-color-dark-900);
   --color-dark-950: var(--theme-color-dark-950);
-
-  /* Override standard white background so it updates dynamically with theme surfaces */
-  --color-white: var(--theme-surface-card);
 }
 
 :root {
