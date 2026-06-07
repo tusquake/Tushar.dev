@@ -15,15 +15,22 @@ router.post('/reset-password/:token', resetPassword);
 
 // Google Auth Trigger and Callback endpoints
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
-router.get('/google/callback', 
-    passport.authenticate('google', { session: false, failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=OAuthFailed` }),
-    async (req, res) => {
+router.get('/google/callback', (req, res, next) => {
+    passport.authenticate('google', { session: false }, async (err, user, info) => {
+        if (err) {
+            console.error('Google Passport Authenticate Error:', err);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=PassportError&msg=${encodeURIComponent(err.message)}`);
+        }
+        if (!user) {
+            console.error('Google Passport Authenticate Failed, No User. Info:', info);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=NoUser&info=${encodeURIComponent(JSON.stringify(info || {}))}`);
+        }
         try {
-            const accessToken = generateAccessToken(req.user._id);
-            const refreshToken = generateRefreshToken(req.user._id);
+            const accessToken = generateAccessToken(user._id);
+            const refreshToken = generateRefreshToken(user._id);
 
-            req.user.refreshToken = refreshToken;
-            await req.user.save();
+            user.refreshToken = refreshToken;
+            await user.save();
 
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
@@ -33,31 +40,38 @@ router.get('/google/callback',
             });
 
             const userObj = {
-                id: req.user._id,
-                name: req.user.name,
-                email: req.user.email,
-                role: req.user.role
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
             };
 
-            res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
         } catch (error) {
             console.error('Google OAuth Callback Redirection Error:', error);
-            res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=RedirectionError`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=RedirectionError&msg=${encodeURIComponent(error.message)}`);
         }
-    }
-);
+    })(req, res, next);
+});
 
 // GitHub Auth Trigger and Callback endpoints
 router.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
-router.get('/github/callback', 
-    passport.authenticate('github', { session: false, failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=OAuthFailed` }),
-    async (req, res) => {
+router.get('/github/callback', (req, res, next) => {
+    passport.authenticate('github', { session: false }, async (err, user, info) => {
+        if (err) {
+            console.error('GitHub Passport Authenticate Error:', err);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=PassportError&msg=${encodeURIComponent(err.message)}`);
+        }
+        if (!user) {
+            console.error('GitHub Passport Authenticate Failed, No User. Info:', info);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=NoUser&info=${encodeURIComponent(JSON.stringify(info || {}))}`);
+        }
         try {
-            const accessToken = generateAccessToken(req.user._id);
-            const refreshToken = generateRefreshToken(req.user._id);
+            const accessToken = generateAccessToken(user._id);
+            const refreshToken = generateRefreshToken(user._id);
 
-            req.user.refreshToken = refreshToken;
-            await req.user.save();
+            user.refreshToken = refreshToken;
+            await user.save();
 
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
@@ -67,19 +81,19 @@ router.get('/github/callback',
             });
 
             const userObj = {
-                id: req.user._id,
-                name: req.user.name,
-                email: req.user.email,
-                role: req.user.role
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
             };
 
-            res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
         } catch (error) {
             console.error('GitHub OAuth Callback Redirection Error:', error);
-            res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=RedirectionError`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=RedirectionError&msg=${encodeURIComponent(error.message)}`);
         }
-    }
-);
+    })(req, res, next);
+});
 
 // User profile route (public)
 router.get('/profile', getProfile);
