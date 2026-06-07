@@ -334,3 +334,27 @@ body {
 .animate-delay-500 {
   animation-delay: 500ms;
 }
+
+/* Syllabus Wiki Explorer page lock and scroll controls */
+html.wiki-explorer-active,
+html.wiki-explorer-active body,
+html.wiki-explorer-active .layout-wrapper {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden !important;
+}
+
+html.wiki-explorer-active footer {
+  display: none !important;
+}
+
+html.wiki-explorer-active main {
+  height: calc(100vh - 4rem) !important;
+  overflow: hidden !important;
+}
+
+@media (min-width: 768px) {
+  html.wiki-explorer-active main {
+    height: calc(100vh - 5rem) !important;
+  }
+}
