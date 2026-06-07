@@ -53,6 +53,7 @@ const Navbar = () => {
         { name: 'Projects', path: '/projects' },
         { name: 'About Creator', path: '/about' },
         { name: 'Contact', path: '/contact' },
+        { name: 'AI Interview', path: '/ai-interview' },
     ];
 
     const visibleNavLinks = isAuthenticated

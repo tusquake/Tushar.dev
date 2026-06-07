@@ -19,6 +19,7 @@ import ResumeBuilder from './pages/ResumeBuilder';
 import AtsReviewer from './pages/AtsReviewer';
 import LatexResume from './pages/LatexResume';
 import Settings from './pages/Settings';
+import AIInterview from './pages/AIInterview';
 
 // Wrapper to redirect direct access to home
 const DirectAccessRedirect = ({ children }) => {
