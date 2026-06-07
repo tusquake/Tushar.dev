@@ -127,5 +127,11 @@ export const uploadAPI = {
     },
 };
 
+// DSA Progress API
+export const dsaProgressAPI = {
+    getProgress: () => api.get('/learning/dsa/progress'),
+    updateProgress: (completedQuestions) => api.post('/learning/dsa/progress', { completedQuestions }),
+};
+
 export default api;
 

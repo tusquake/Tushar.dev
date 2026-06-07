@@ -8,6 +8,10 @@ const {
     updateLearningStatus,
     deleteLearningTopic
 } = require('../controllers/learningController');
+const {
+    getDsaProgress,
+    updateDsaProgress
+} = require('../controllers/dsaProgressController');
 const { protect } = require('../middlewares/authMiddleware');
 const {
     learningGetLimiter,
@@ -17,6 +21,10 @@ const {
 
 // All routes require authentication
 router.use(protect);
+
+// DSA Progress routes (defined before parameterized routes to avoid conflicts)
+router.get('/dsa/progress', learningGetLimiter, getDsaProgress);
+router.post('/dsa/progress', learningMutateLimiter, updateDsaProgress);
 
 // GET routes with rate limiting
 router.get('/', learningGetLimiter, getLearningTopics);

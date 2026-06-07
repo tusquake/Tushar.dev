@@ -31,8 +31,11 @@ app.use(helmet());
 const allowedOrigins = [
     'https://tushar-dev-1.onrender.com',
     'https://portfolio-tushar-bf51e.web.app',
-    'https://portfolio-tushar-bf51e.firebaseapp.com'
-];
+    'https://portfolio-tushar-bf51e.firebaseapp.com',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    process.env.CLIENT_URL
+].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {
