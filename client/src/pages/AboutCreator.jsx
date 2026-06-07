@@ -181,7 +181,7 @@ const AboutCreator = () => {
                             <p className="text-lg md:text-xl text-primary-500 font-medium mb-4">
                                 Associate Software Engineer @ Incture Technologies
                             </p>
-                            <p className="text-dark-500 dark:text-dark-450 leading-relaxed max-w-3xl">
+                            <p className="text-dark-500 dark:text-dark-300 leading-relaxed max-w-3xl">
                                 Results-driven Software Engineer with 2+ years of experience in designing and developing scalable enterprise applications. Proficient in Java, Spring Boot, React.js, and cloud platforms including SAP BTP and AWS. Strong problem-solving skills with 1200+ Data Structures and Algorithms problems solved.
                             </p>
                         </div>
@@ -202,7 +202,7 @@ const AboutCreator = () => {
                             className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                                 activeTab === tab.id
                                     ? 'bg-primary-500 text-white shadow-md'
-                                    : 'bg-dark-55/40 dark:bg-dark-900 text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                                    : 'bg-dark-100/40 dark:bg-dark-900 text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
                             }`}
                         >
                             {tab.name}
@@ -231,7 +231,7 @@ const AboutCreator = () => {
                                             <span className="inline-block px-3 py-1 bg-dark-100 dark:bg-dark-800 text-dark-700 dark:text-dark-300 rounded-lg text-sm font-medium">
                                                 {exp.period}
                                             </span>
-                                            <p className="text-sm text-dark-450 dark:text-dark-500 mt-1">{exp.location}</p>
+                                            <p className="text-sm text-dark-400 dark:text-dark-400 mt-1">{exp.location}</p>
                                         </div>
                                     </div>
 
@@ -242,7 +242,7 @@ const AboutCreator = () => {
                                         </h4>
                                         <ul className="space-y-3">
                                             {exp.highlights.map((item, idx) => (
-                                                <li key={idx} className="flex items-start text-dark-600 dark:text-dark-305 text-sm leading-relaxed">
+                                                <li key={idx} className="flex items-start text-dark-700 dark:text-white text-sm leading-relaxed">
                                                     <span className="text-primary-500 mr-3 mt-1.5 flex-shrink-0">
                                                         <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 8 8">
                                                             <circle cx="4" cy="4" r="4" />
@@ -285,7 +285,7 @@ const AboutCreator = () => {
                             {experience[0].techCategories.map((category, catIdx) => (
                                 <Card key={catIdx} className="p-6">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-950/30 text-primary-550 flex items-center justify-center">
+                                        <div className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-950/30 text-primary-500 flex items-center justify-center">
                                             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                                             </svg>
@@ -298,7 +298,7 @@ const AboutCreator = () => {
                                         {category.skills.map((skill) => (
                                             <span
                                                 key={skill}
-                                                className="px-3 py-1 bg-dark-55/50 dark:bg-dark-800 text-dark-700 dark:text-dark-300 text-sm rounded-lg font-medium"
+                                                className="px-3 py-1 bg-dark-100/50 dark:bg-dark-800 text-dark-700 dark:text-dark-300 text-sm rounded-lg font-medium"
                                             >
                                                 {skill}
                                             </span>
@@ -330,7 +330,7 @@ const AboutCreator = () => {
                                             <h3 className="text-lg font-bold text-dark-900 dark:text-white pr-20 leading-snug">
                                                 {edu.degree}
                                             </h3>
-                                            <p className="text-primary-555 font-medium text-sm mt-1">{edu.institution}</p>
+                                            <p className="text-primary-500 font-medium text-sm mt-1">{edu.institution}</p>
                                             <p className="text-xs text-dark-400 dark:text-dark-500 mt-2">{edu.location}</p>
                                             {edu.gpa && (
                                                 <div className="mt-4 inline-block px-3 py-1 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-md">
@@ -358,7 +358,7 @@ const AboutCreator = () => {
                                 <div className="space-y-4">
                                     {achievements.map((ach, achIdx) => (
                                         <Card key={achIdx} className="p-5 flex items-start gap-4">
-                                            <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/20 text-purple-650 dark:text-purple-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                 <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                                                 </svg>
@@ -367,7 +367,7 @@ const AboutCreator = () => {
                                                 <h3 className="text-md font-bold text-dark-900 dark:text-white leading-snug">
                                                     {ach.title}
                                                 </h3>
-                                                <p className="text-sm text-dark-500 dark:text-dark-405 mt-1">{ach.description}</p>
+                                                <p className="text-sm text-dark-500 dark:text-dark-300 mt-1">{ach.description}</p>
                                                 
                                                 {/* Links */}
                                                 {ach.link && (
