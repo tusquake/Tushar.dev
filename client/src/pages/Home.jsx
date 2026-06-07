@@ -163,6 +163,71 @@ const DeploymentSVG = ({ accent, text, muted, secondary }) => (
     </svg>
 );
 
+// Micro-Animatic Feature Icons
+const DSAPatternIcon = ({ accent }) => (
+    <svg className="w-9 h-9 mb-4 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="4" r="2" stroke={accent} strokeWidth="1.5" />
+        <circle cx="6" cy="12" r="2" stroke={accent} strokeWidth="1.5" />
+        <circle cx="18" cy="12" r="2" stroke={accent} strokeWidth="1.5" />
+        <circle cx="12" cy="20" r="2" stroke={accent} strokeWidth="1.5" />
+        <path d="M10.5 5.5L7.5 10.5M13.5 5.5l3 5M7.5 13.5l3 5M16.5 13.5l-3 5" stroke={accent} strokeWidth="1.2" strokeLinecap="round" strokeDasharray="2 2" />
+        <circle cx="12" cy="20" r="1.2" fill={accent} className="animate-ping" />
+    </svg>
+);
+
+const SystemDesignIcon = ({ accent }) => (
+    <svg className="w-9 h-9 mb-4 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="18" height="4" rx="1" stroke={accent} strokeWidth="1.5" />
+        <rect x="3" y="10" width="18" height="4" rx="1" stroke={accent} strokeWidth="1.5" />
+        <rect x="3" y="17" width="18" height="4" rx="1" stroke={accent} strokeWidth="1.5" />
+        <circle cx="6" cy="5" r="0.75" fill={accent} className="animate-pulse" />
+        <circle cx="6" cy="12" r="0.75" fill={accent} className="animate-pulse" />
+        <circle cx="6" cy="19" r="0.75" fill={accent} className="animate-pulse" />
+        <line x1="17" y1="7" x2="17" y2="10" stroke={accent} strokeWidth="1" strokeDasharray="1.5 1" />
+        <line x1="17" y1="14" x2="17" y2="17" stroke={accent} strokeWidth="1" strokeDasharray="1.5 1" />
+    </svg>
+);
+
+const LaTeXResumeIcon = ({ accent }) => (
+    <svg className="w-9 h-9 mb-4 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="2" width="16" height="20" rx="2" stroke={accent} strokeWidth="1.5" />
+        <line x1="7" y1="6" x2="13" y2="6" stroke={accent} strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="7" y1="10" x2="17" y2="10" stroke={accent} strokeWidth="1.2" strokeLinecap="round" className="animate-pulse" />
+        <line x1="7" y1="14" x2="15" y2="14" stroke={accent} strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="7" y1="18" x2="12" y2="18" stroke={accent} strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+);
+
+const ATSResumeIcon = ({ accent }) => (
+    <svg className="w-9 h-9 mb-4 group-hover:scale-110 transition-transform duration-300 relative overflow-hidden" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="3" width="14" height="18" rx="2" stroke={accent} strokeWidth="1.5" />
+        <circle cx="9" cy="7" r="1.2" fill={accent} />
+        <line x1="8" y1="11" x2="16" y2="11" stroke={accent} strokeWidth="1" />
+        <line x1="8" y1="14" x2="16" y2="14" stroke={accent} strokeWidth="1" />
+        <line x1="8" y1="17" x2="13" y2="17" stroke={accent} strokeWidth="1" />
+        {/* Animated Scan Line */}
+        <line x1="3" y1="10" x2="21" y2="10" stroke={accent} strokeWidth="1.5" className="animate-bounce" />
+    </svg>
+);
+
+const CodeBuilderIcon = ({ accent }) => (
+    <svg className="w-9 h-9 mb-4 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="18" height="18" rx="3" stroke={accent} strokeWidth="1.5" />
+        <path d="M7 8l3 3-3 3" stroke={accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="11" y1="14" x2="15" y2="14" stroke={accent} strokeWidth="2" strokeLinecap="round" className="animate-pulse" />
+    </svg>
+);
+
+const DevCustomizationIcon = ({ accent }) => (
+    <svg className="w-9 h-9 mb-4 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9" stroke={accent} strokeWidth="1.5" />
+        <path d="M12 3v18" stroke={accent} strokeWidth="1.5" />
+        <path d="M12 3a9 9 0 0 1 0 18" fill={accent} fillOpacity="0.25" />
+        <circle cx="7" cy="12" r="1.2" fill={accent} className="animate-pulse" />
+        <circle cx="17" cy="12" r="1.2" fill={accent} className="animate-ping" />
+    </svg>
+);
+
 const themeSpecs = {
     terminal: {
         accent: '#39d353',
@@ -437,35 +502,52 @@ const Home = () => {
                         {[
                             {
                                 title: 'DSA Pattern Hub',
-                                desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly. Includes progress tracker.'
+                                desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly. Includes progress tracker.',
+                                icon: (acc) => <DSAPatternIcon accent={acc} />
                             },
                             {
                                 title: 'System Design Wiki',
-                                desc: 'Scale your architectures with structured HLD and LLD materials, microservices, databases, and real-world system designs.'
+                                desc: 'Scale your architectures with structured HLD and LLD materials, microservices, databases, and real-world system designs.',
+                                icon: (acc) => <SystemDesignIcon accent={acc} />
                             },
                             {
                                 title: 'LaTeX Resume Editor',
-                                desc: 'Write and compile professional resumes using LaTeX directly in the browser, matching top-tier templates.'
+                                desc: 'Write and compile professional resumes using LaTeX directly in the browser, matching top-tier templates.',
+                                icon: (acc) => <LaTeXResumeIcon accent={acc} />
                             },
                             {
                                 title: 'ATS Resume Reviewer',
-                                desc: 'Get your resume parsed and scored by our ATS algorithm to optimize formatting, keywords, and layout impact.'
+                                desc: 'Get your resume parsed and scored by our ATS algorithm to optimize formatting, keywords, and layout impact.',
+                                icon: (acc) => <ATSResumeIcon accent={acc} />
                             },
                             {
                                 title: 'Interactive Code Builder',
-                                desc: 'Build, compile, and run your code within custom workspaces designed for low-level design problems.'
+                                desc: 'Build, compile, and run your code within custom workspaces designed for low-level design problems.',
+                                icon: (acc) => <CodeBuilderIcon accent={acc} />
                             },
                             {
                                 title: 'Developer Customization',
-                                desc: 'Toggle between terminal dark themes and elegant soft violet themes tailored to your aesthetic preference.'
+                                desc: 'Toggle between terminal dark themes and elegant soft violet themes tailored to your aesthetic preference.',
+                                icon: (acc) => <DevCustomizationIcon accent={acc} />
                             }
                         ].map((feature, idx) => (
                             <div 
                                 key={idx}
-                                className="p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-lg border border-dark-250/20 dark:border-dark-850/20"
+                                className="p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border group cursor-pointer"
                                 style={currentTheme.featureCardStyle}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = currentTheme.accent;
+                                    e.currentTarget.style.boxShadow = `0 10px 25px -5px ${currentTheme.accent}20`;
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = isDark ? '#30363d' : '#ddd6fe';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }}
                             >
                                 <div>
+                                    <div className="mb-2">
+                                        {feature.icon(currentTheme.accent)}
+                                    </div>
                                     <h3 className={`text-lg font-bold mb-3 ${currentTheme.featureTitleClass}`}>
                                         {feature.title}
                                     </h3>
@@ -479,7 +561,7 @@ const Home = () => {
                                     style={{ color: currentTheme.accent }}
                                 >
                                     Start Learning
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                                     </svg>
                                 </Link>
