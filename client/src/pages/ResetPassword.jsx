@@ -73,8 +73,8 @@ const ResetPassword = () => {
             <Card className="w-full max-w-md p-8 relative">
                 <div className="text-center mb-8">
                     <Link to="/" className="inline-flex items-center space-x-2 text-2xl font-display font-bold mb-4">
-                        <span className="gradient-text">Tushar</span>
-                        <span className="text-dark-700 dark:text-white">.dev</span>
+                        <span className="text-dark-900 dark:text-white">CodeForge</span>
+                        <span className="gradient-text">.dev</span>
                     </Link>
                     <h1 className="text-2xl font-semibold text-dark-900 dark:text-white">
                         Reset Password
