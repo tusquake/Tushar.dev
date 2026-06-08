@@ -514,92 +514,327 @@ JSON Evaluation:`;
     };
 
     const handleDownloadSessionReport = () => {
-        const printWindow = window.open('', '_blank');
-        
+        const correctCount = sessionLogs.filter(l => l.correct).length;
+        const totalCount = sessionLogs.length;
+        const scorePercentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+
         let logsHtml = '';
         sessionLogs.forEach((log, idx) => {
             logsHtml += `
-                <div class="card">
-                    <h3 class="q-title">Question ${idx + 1}</h3>
-                    <p class="question-text">${log.question}</p>
-                    <div class="ans-grid">
-                        <div>
-                            <span class="label">Your Response:</span>
-                            <span class="value ${log.correct ? 'correct-text' : 'incorrect-text'}">${log.answer || '(No Answer Provided)'}</span>
-                        </div>
-                        <div>
-                            <span class="label">AI Evaluation & Corrections:</span>
-                            <p class="value-text">${log.feedback}</p>
-                        </div>
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-num">Question ${idx + 1}</span>
+                        <span class="status-badge ${log.correct ? 'status-correct' : 'status-needs-work'}">
+                            ${log.correct ? 'Correct' : 'Needs Focus'}
+                        </span>
+                    </div>
+                    <div class="question-body">${log.question}</div>
+                    
+                    <div class="response-section">
+                        <div class="response-label">Your Response:</div>
+                        <p class="response-text">${log.answer || '(No response provided or skipped)'}</p>
+                    </div>
+                    
+                    <div class="feedback-section">
+                        <div class="feedback-label">AI Analysis & Recommended Corrections:</div>
+                        <p class="feedback-text">${log.feedback}</p>
                     </div>
                 </div>
             `;
         });
 
-        const correctCount = sessionLogs.filter(l => l.correct).length;
-        const totalCount = sessionLogs.length;
-        const scorePercentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
-
-        printWindow.document.write(`
+        const htmlContent = `
             <html>
                 <head>
-                    <title>CodeForge Mock Interview Performance Report</title>
+                    <title>CodeForge AI Mock Interview Evaluation Report</title>
                     <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
                         body {
                             font-family: 'Inter', Arial, sans-serif;
-                            color: #111827;
-                            line-height: 1.5;
+                            color: #1f2937;
+                            line-height: 1.6;
                             padding: 40px;
-                            max-width: 800px;
+                            max-width: 850px;
                             margin: 0 auto;
+                            background-color: #ffffff;
                         }
-                        .header { text-align: center; border-bottom: 2px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 30px; }
-                        .title { font-size: 24pt; font-weight: 800; margin-bottom: 5px; color: #10B981; }
-                        .meta-info { font-size: 10pt; color: #6B7280; }
-                        .score-container { display: flex; align-items: center; gap: 40px; margin: 25px 0; }
-                        .score-badge { font-size: 48pt; font-weight: 900; color: #10B981; border: 5px solid #10B981; border-radius: 50%; width: 120px; height: 120px; display: flex; justify-content: center; align-items: center; }
-                        .section-title { font-size: 14pt; font-weight: 700; color: #1F2937; border-bottom: 1px solid #E5E7EB; padding-bottom: 5px; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; }
-                        .card { border: 1px solid #E5E7EB; border-radius: 12px; padding: 18px; margin-bottom: 20px; background-color: #F9FAFB; }
-                        .q-title { font-size: 11pt; font-weight: bold; margin: 0 0 5px 0; color: #374151; }
-                        .question-text { font-size: 11pt; margin-bottom: 12px; color: #111827; font-weight: 500; }
-                        .ans-grid { border-top: 1px dashed #E5E7EB; padding-top: 10px; }
-                        .label { font-size: 9pt; font-weight: bold; color: #6B7280; text-transform: uppercase; display: block; margin-top: 10px; }
-                        .value { font-size: 10pt; font-weight: 600; display: block; margin-top: 2px; }
-                        .correct-text { color: #059669; }
-                        .incorrect-text { color: #DC2626; }
-                        .value-text { font-size: 10pt; color: #4B5563; margin: 4px 0 0 0; }
+                        .report-header {
+                            border-bottom: 2px solid #e5e7eb;
+                            padding-bottom: 20px;
+                            margin-bottom: 30px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+                        .report-logo {
+                            font-size: 18px;
+                            font-weight: 800;
+                            color: #7c3aed;
+                            letter-spacing: -0.025em;
+                        }
+                        .report-title {
+                            font-size: 22px;
+                            font-weight: 800;
+                            color: #111827;
+                            text-transform: uppercase;
+                            margin-top: 4px;
+                        }
+                        .meta-details {
+                            font-size: 11px;
+                            color: #6b7280;
+                            margin-top: 4px;
+                        }
+                        .dashboard-grid {
+                            display: flex;
+                            align-items: stretch;
+                            gap: 30px;
+                            background-color: #f9fafb;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin-bottom: 35px;
+                        }
+                        .score-circle-container {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            border-right: 1px solid #e5e7eb;
+                            padding-right: 40px;
+                            min-width: 140px;
+                        }
+                        .score-label {
+                            font-size: 10px;
+                            font-weight: 700;
+                            color: #6b7280;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                            margin-bottom: 8px;
+                        }
+                        .score-value {
+                            font-size: 40px;
+                            font-weight: 800;
+                            color: #7c3aed;
+                        }
+                        .stat-list {
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            flex-grow: 1;
+                            gap: 12px;
+                        }
+                        .stat-row {
+                            display: flex;
+                            justify-content: space-between;
+                            font-size: 13px;
+                            border-bottom: 1px dashed #e5e7eb;
+                            padding-bottom: 6px;
+                        }
+                        .stat-label {
+                            color: #4b5563;
+                            font-weight: 500;
+                        }
+                        .stat-val {
+                            color: #111827;
+                            font-weight: 700;
+                        }
+                        .section-title {
+                            font-size: 15px;
+                            font-weight: 700;
+                            color: #111827;
+                            margin-top: 10px;
+                            margin-bottom: 20px;
+                            border-bottom: 2px solid #7c3aed;
+                            padding-bottom: 6px;
+                            display: inline-block;
+                            text-transform: uppercase;
+                            letter-spacing: 0.025em;
+                        }
+                        .question-card {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin-bottom: 25px;
+                            background-color: #ffffff;
+                            page-break-inside: avoid;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+                        }
+                        .question-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 15px;
+                        }
+                        .question-num {
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: #7c3aed;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                        }
+                        .status-badge {
+                            font-size: 10px;
+                            font-weight: 700;
+                            padding: 4px 10px;
+                            border-radius: 9999px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                        }
+                        .status-correct {
+                            background-color: #d1fae5;
+                            color: #065f46;
+                        }
+                        .status-needs-work {
+                            background-color: #fee2e2;
+                            color: #991b1b;
+                        }
+                        .question-body {
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: #111827;
+                            margin-bottom: 16px;
+                            line-height: 1.5;
+                        }
+                        .response-section {
+                            background-color: #f9fafb;
+                            border-left: 4px solid #9ca3af;
+                            padding: 12px 16px;
+                            margin-bottom: 16px;
+                            border-radius: 0 8px 8px 0;
+                        }
+                        .response-label {
+                            font-size: 10px;
+                            font-weight: 700;
+                            color: #6b7280;
+                            text-transform: uppercase;
+                            margin-bottom: 4px;
+                            letter-spacing: 0.025em;
+                        }
+                        .response-text {
+                            font-family: 'Lora', Georgia, serif;
+                            font-style: italic;
+                            font-size: 13px;
+                            color: #374151;
+                            margin: 0;
+                        }
+                        .feedback-section {
+                            background-color: #f5f3ff;
+                            border-left: 4px solid #7c3aed;
+                            padding: 12px 16px;
+                            border-radius: 0 8px 8px 0;
+                        }
+                        .feedback-label {
+                            font-size: 10px;
+                            font-weight: 700;
+                            color: #6d28d9;
+                            text-transform: uppercase;
+                            margin-bottom: 4px;
+                            letter-spacing: 0.025em;
+                        }
+                        .feedback-text {
+                            font-size: 13px;
+                            color: #4b5563;
+                            margin: 0;
+                            white-space: pre-wrap;
+                        }
                         @media print {
-                            body { padding: 0; }
+                            body {
+                                padding: 0;
+                                margin: 0;
+                            }
+                            .question-card {
+                                page-break-inside: avoid;
+                            }
+                            @page {
+                                size: A4 portrait;
+                                margin: 20mm 15mm;
+                            }
+                            * {
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
                         }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <div class="title">MOCK INTERVIEW REPORT</div>
-                        <div class="meta-info">CodeForge AI Interview Simulator | Date: ${new Date().toLocaleDateString()}</div>
+                    <div class="report-header">
+                        <div>
+                            <span class="report-logo">CodeForge</span>
+                            <div class="report-title">Mock Interview Report</div>
+                            <div class="meta-details">AI Evaluation Log & Assessment Summary</div>
+                        </div>
+                        <div style="text-align: right; font-size: 11px; color: #6b7280;">
+                            <div>Date: ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                            <div>System: Gemini evaluation coprocessor</div>
+                        </div>
                     </div>
                     
-                    <div class="score-container">
-                        <div class="score-badge">${scorePercentage}%</div>
-                        <div>
-                            <h2 style="margin: 0; font-size: 16pt; color: #1F2937;">Topic Focus: ${topic}</h2>
-                            <p class="meta-info" style="margin: 5px 0 0 0;">Questions Attempted: ${totalCount} | Correct: ${correctCount}</p>
+                    <div class="dashboard-grid">
+                        <div class="score-circle-container">
+                            <span class="score-label">Overall Match</span>
+                            <span class="score-value">${scorePercentage}%</span>
+                        </div>
+                        <div class="stat-list">
+                            <div class="stat-row">
+                                <span class="stat-label">Focus Area Topic:</span>
+                                <span class="stat-val">${topic}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Total Questions Evaluated:</span>
+                                <span class="stat-val">${totalCount}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Correct Responses:</span>
+                                <span class="stat-val">${correctCount}</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="section-title">Interview Question & Evaluation Log</div>
                     ${logsHtml}
 
+                    <div style="text-align: center; font-size: 10px; color: #9ca3af; margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 15px; page-break-inside: avoid;">
+                        Mock interview completed successfully via CodeForge. Keep learning and practicing!
+                    </div>
+
                     <script>
                         window.onload = function() {
-                            window.print();
-                            window.close();
+                            setTimeout(function() {
+                                window.print();
+                                window.close();
+                            }, 500);
                         }
                     </script>
                 </body>
             </html>
-        `);
-        printWindow.document.close();
+        `;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+        } else {
+            // Fallback hidden iframe if popup blocked
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+            
+            iframe.contentDocument.write(htmlContent);
+            iframe.contentDocument.close();
+            
+            iframe.onload = () => {
+                setTimeout(() => {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    document.body.removeChild(iframe);
+                }, 500);
+            };
+        }
     };
 
     const clearHistory = async () => {

@@ -365,52 +365,90 @@ const ResumeBuilder = () => {
 
     // Download PDF (native printing)
     const downloadPdf = () => {
-        const printWindow = window.open('', '_blank');
-        const previewContent = document.getElementById('resume-preview-doc').innerHTML;
         const name = resumeData.personalInfo.name || 'Resume';
+        const element = document.getElementById('resume-preview-doc');
+        if (!element) return;
+        
+        const previewContent = element.innerHTML;
+        
+        // Copy all parent document stylesheets (Tailwind config, custom styles)
+        const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+            .map(el => el.outerHTML)
+            .join('\n');
 
-        printWindow.document.write(`
+        const htmlContent = `
             <html>
                 <head>
                     <title>Resume - ${name}</title>
+                    ${stylesheets}
                     <style>
+                        /* Custom printing overrides */
                         body {
-                            font-family: 'Times New Roman', Times, serif, Arial, sans-serif;
-                            color: #000;
-                            line-height: 1.4;
-                            padding: 30px;
-                            font-size: 11pt;
-                            margin: 0;
-                            background-color: #fff;
+                            background-color: white !important;
+                            color: black !important;
+                            padding: 2.5cm 2cm;
+                            font-family: 'Times New Roman', Times, serif, Georgia, serif !important;
                         }
-                        .text-center { text-align: center; }
-                        .name-header { font-size: 20pt; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
-                        .contact-header { font-size: 9.5pt; margin-bottom: 15px; }
-                        .section-title { font-size: 11pt; font-weight: bold; border-bottom: 1.5px solid #000; padding-bottom: 2px; margin-top: 15px; margin-bottom: 8px; text-transform: uppercase; }
-                        .summary-text { margin-bottom: 10px; text-align: justify; }
-                        .flex-row { display: flex; justify-content: space-between; }
-                        .item-bold { font-weight: bold; }
-                        .item-italic { font-style: italic; }
-                        .bullet-list { margin: 4px 0 8px 0; padding-left: 20px; }
-                        .bullet-item { margin-bottom: 2px; text-align: justify; }
-                        .skills-list { margin-bottom: 5px; }
                         @media print {
-                            body { padding: 0; }
+                            body {
+                                padding: 0 !important;
+                                margin: 0 !important;
+                                background-color: white !important;
+                                color: black !important;
+                            }
+                            @page {
+                                size: A4 portrait;
+                                margin: 1.5cm;
+                            }
+                            * {
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
                         }
                     </style>
                 </head>
-                <body>
-                    ${previewContent}
+                <body class="bg-white text-black font-serif">
+                    <div class="light">
+                        ${previewContent}
+                    </div>
                     <script>
                         window.onload = function() {
-                            window.print();
-                            window.close();
+                            setTimeout(function() {
+                                window.print();
+                                window.close();
+                            }, 500);
                         }
                     </script>
                 </body>
             </html>
-        `);
-        printWindow.document.close();
+        `;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+        } else {
+            // Popup blocker fallback: Use hidden iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+            
+            iframe.contentDocument.write(htmlContent);
+            iframe.contentDocument.close();
+            
+            iframe.onload = () => {
+                setTimeout(() => {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    document.body.removeChild(iframe);
+                }, 500);
+            };
+        }
     };
 
     return (
