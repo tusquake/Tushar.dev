@@ -157,16 +157,28 @@ const Contact = () => {
                                 required
                             />
 
-                            <Button
+                            <button
                                 type="submit"
-                                loading={loading}
-                                className="w-full"
+                                disabled={loading}
+                                className={`w-full flex items-center justify-center gap-2.5 btn-primary py-3 text-base font-semibold transition-all duration-200 ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
-                                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                </svg>
-                                Send Message
-                            </Button>
+                                {loading ? (
+                                    <>
+                                        <svg className="animate-spin h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Sending...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                        </svg>
+                                        Send Message
+                                    </>
+                                )}
+                            </button>
                         </form>
                     </Card>
 
