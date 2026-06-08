@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         select: false
     },
+    subscriptionTier: {
+        type: String,
+        enum: ['none', 'basic', 'premium'],
+        default: 'none'
+    },
     resetPasswordToken: {
         type: String,
         select: false

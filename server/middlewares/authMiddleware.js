@@ -62,4 +62,45 @@ const adminOnly = (req, res, next) => {
     }
 };
 
-module.exports = { protect, adminOnly };
+// Subscription verification middleware
+const checkSubscription = (tierRequired) => {
+    return (req, res, next) => {
+        // If user is Admin, bypass subscription checks
+        if (req.user && req.user.role === 'ADMIN') {
+            return next();
+        }
+
+        // Grace period check (5 minutes from registration/createdAt)
+        const registrationTime = new Date(req.user.createdAt).getTime();
+        const currentTime = Date.now();
+        const gracePeriodMs = 5 * 60 * 1000; // 5 minutes
+
+        if (currentTime - registrationTime <= gracePeriodMs) {
+            return next();
+        }
+
+        // Check subscription tier
+        const userTier = req.user.subscriptionTier || 'none';
+
+        if (tierRequired === 'basic') {
+            if (userTier === 'basic' || userTier === 'premium') {
+                return next();
+            }
+        } else if (tierRequired === 'premium') {
+            if (userTier === 'premium') {
+                return next();
+            }
+        }
+
+        return res.status(402).json({
+            success: false,
+            message: `Subscription required. This action requires a ${tierRequired} subscription.`,
+            code: 'SUBSCRIPTION_REQUIRED',
+            gracePeriodExpired: true,
+            requiredTier: tierRequired,
+            userTier
+        });
+    };
+};
+
+module.exports = { protect, adminOnly, checkSubscription };

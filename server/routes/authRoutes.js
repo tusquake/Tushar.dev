@@ -4,6 +4,7 @@ const passport = require('passport');
 const { register, login, refreshAccessToken, logout, getProfile, forgotPassword, resetPassword } = require('../controllers/authController');
 const { loginLimiter, registerLimiter } = require('../middlewares/rateLimiter');
 const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtils');
+const { protect } = require('../middlewares/authMiddleware');
 
 // Local credentials Auth routes
 router.post('/register', registerLimiter, register);
@@ -12,6 +13,52 @@ router.post('/refresh', refreshAccessToken);
 router.post('/logout', logout);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
+
+// Get currently logged-in user profile
+router.get('/me', protect, (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            user: {
+                id: req.user._id,
+                name: req.user.name,
+                email: req.user.email,
+                role: req.user.role,
+                subscriptionTier: req.user.subscriptionTier || 'none',
+                createdAt: req.user.createdAt
+            }
+        }
+    });
+});
+
+// Update user subscription tier
+router.post('/subscribe', protect, async (req, res) => {
+    try {
+        const { tier } = req.body;
+        if (!['none', 'basic', 'premium'].includes(tier)) {
+            return res.status(400).json({ success: false, message: 'Invalid subscription tier' });
+        }
+        req.user.subscriptionTier = tier;
+        await req.user.save();
+        res.json({
+            success: true,
+            message: `Successfully subscribed to ${tier} tier`,
+            data: {
+                user: {
+                    id: req.user._id,
+                    name: req.user.name,
+                    email: req.user.email,
+                    role: req.user.role,
+                    subscriptionTier: req.user.subscriptionTier,
+                    createdAt: req.user.createdAt
+                }
+            }
+        });
+    } catch (err) {
+        console.error('Subscription update error:', err);
+        res.status(500).json({ success: false, message: 'Internal server error during subscription update' });
+    }
+});
 
 // Google Auth Trigger and Callback endpoints
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
@@ -43,7 +90,9 @@ router.get('/google/callback', (req, res, next) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                subscriptionTier: user.subscriptionTier || 'none',
+                createdAt: user.createdAt
             };
 
             return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
@@ -84,7 +133,9 @@ router.get('/github/callback', (req, res, next) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                subscriptionTier: user.subscriptionTier || 'none',
+                createdAt: user.createdAt
             };
 
             return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);

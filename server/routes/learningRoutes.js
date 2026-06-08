@@ -13,15 +13,16 @@ const {
     getDsaProgress,
     updateDsaProgress
 } = require('../controllers/dsaProgressController');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, checkSubscription } = require('../middlewares/authMiddleware');
 const {
     learningGetLimiter,
     learningMutateLimiter,
     learningUpdateLimiter
 } = require('../middlewares/rateLimiter');
 
-// All routes require authentication
+// All routes require authentication and basic subscription
 router.use(protect);
+router.use(checkSubscription('basic'));
 
 // DSA Progress & Activity History routes (defined before parameterized routes to avoid conflicts)
 router.get('/dsa/progress', learningGetLimiter, getDsaProgress);

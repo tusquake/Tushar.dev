@@ -31,6 +31,12 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        // Handle subscription required
+        if (error.response?.status === 402) {
+            window.dispatchEvent(new CustomEvent('subscription-required', { detail: error.response.data }));
+            return Promise.reject(error);
+        }
+
         // If error is 401 and we haven't tried to refresh yet
         if (error.response?.status === 401 &&
             error.response?.data?.code === 'TOKEN_EXPIRED' &&
@@ -69,6 +75,8 @@ export const authAPI = {
     getProfile: () => api.get('/user/profile'),
     forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
     resetPassword: (token, password) => api.post(`/auth/reset-password/${token}`, { password }),
+    getMe: () => api.get('/auth/me'),
+    subscribe: (tier) => api.post('/auth/subscribe', { tier }),
 };
 
 // Projects API
