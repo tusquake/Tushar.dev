@@ -8,6 +8,7 @@ import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
 import Heatmap from '../components/common/Heatmap';
 import AssessmentArena from '../components/learning/AssessmentArena';
+import SystemDesignCanvas from '../components/learning/SystemDesignCanvas';
 
 // Configure marked options
 marked.setOptions({
@@ -850,6 +851,18 @@ const Learning = () => {
                             Syllabus Wiki Explorer
                         </button>
                         <button
+                            onClick={() => setActiveSection('system-canvas')}
+                            className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${activeSection === 'system-canvas'
+                                ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
+                                : 'text-dark-600 dark:text-dark-400 hover:text-dark-900 dark:hover:text-dark-200'
+                                }`}
+                        >
+                            <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A2 2 0 013 15.485V6.515a2 2 0 011.553-1.791l5.447-2.724a2 2 0 011.791 0l5.447 2.724A2 2 0 0119 6.515v8.97a2 2 0 01-1.553 1.791L12 20a2 2 0 01-1.791 0z" />
+                            </svg>
+                            Design Canvas
+                        </button>
+                        <button
                             onClick={() => setActiveSection('dsa')}
                             className={`px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${activeSection === 'dsa'
                                 ? 'bg-white dark:bg-dark-900 text-primary-600 dark:text-primary-400 shadow-md'
@@ -1514,6 +1527,11 @@ const Learning = () => {
                 {/* --- Tab 4: Assessment Arena --- */}
                 {activeSection === 'assessment' && (
                     <AssessmentArena />
+                )}
+
+                {/* --- Tab 5: System Design Canvas --- */}
+                {activeSection === 'system-canvas' && (
+                    <SystemDesignCanvas />
                 )}
             </div>
         </div>
