@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import Logo from '../common/Logo';
+import BrandLogo from '../common/BrandLogo';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
@@ -56,13 +56,7 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* Brand */}
                     <div className="md:col-span-2">
-                        <Link to="/" className="inline-flex items-center space-x-2 text-2xl font-display font-bold">
-                            <Logo className="w-8 h-8" />
-                            <span>
-                                <span className="gradient-text">CodeForge</span>
-                                <span className="text-dark-700 dark:text-white">.dev</span>
-                            </span>
-                        </Link>
+                        <BrandLogo />
                         <p className="mt-4 text-dark-500 dark:text-dark-400 max-w-md">
                             An interactive developer platform to track DSA preparation, organize study roadmaps, write notes, and level up software engineering skills.
                         </p>
