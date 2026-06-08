@@ -537,7 +537,10 @@ ${JSON.stringify(gradingData, null, 2)}`;
                                         <span className="text-dark-400">Verifying resume connection...</span>
                                     ) : profileResumeData ? (
                                         <span className="text-emerald-500 font-medium flex items-center gap-1.5">
-                                            <span>✓</span> Profile Resume Synced
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Profile Resume Synced
                                         </span>
                                     ) : (
                                         <span className="text-rose-500 font-medium">
@@ -558,7 +561,10 @@ ${JSON.stringify(gradingData, null, 2)}`;
                                 onClick={handleStartAssessment}
                                 className="btn-primary w-full py-3 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer mt-4"
                             >
-                                🎯 Generate Custom Arena
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Generate Custom Arena
                             </button>
                         </Card>
                     </div>
@@ -612,7 +618,11 @@ ${JSON.stringify(gradingData, null, 2)}`;
                                         >
                                             <span>{option}</span>
                                             {isSelected && (
-                                                <div className="w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center text-[10px] text-white">✓</div>
+                                                <div className="w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center text-white">
+                                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
                                             )}
                                         </button>
                                     );
@@ -709,13 +719,19 @@ ${JSON.stringify(gradingData, null, 2)}`;
                             onClick={handleDownloadReport}
                             className="px-5 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-xs font-semibold rounded-xl cursor-pointer text-dark-750 dark:text-dark-300 flex items-center gap-1.5"
                         >
-                            📥 Download Report PDF
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Report PDF
                         </button>
                         <button
                             onClick={handleRestart}
-                            className="btn-primary px-5 py-2.5 text-xs font-semibold cursor-pointer"
+                            className="btn-primary px-5 py-2.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
                         >
-                            🔄 Try Another Topic
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Try Another Topic
                         </button>
                     </div>
 
