@@ -261,7 +261,6 @@ ${JSON.stringify(gradingData, null, 2)}`;
     };
 
     const handleDownloadReport = () => {
-        const printWindow = window.open('', '_blank');
         const activeTopicObj = ASSESSMENT_TOPICS.find(t => t.id === selectedTopic);
         const activeTopicName = selectedTopic === 'custom' ? customTopic : activeTopicObj?.name;
         
@@ -297,7 +296,7 @@ ${JSON.stringify(gradingData, null, 2)}`;
             lackingHtml += `<li>${area}</li>`;
         });
 
-        printWindow.document.write(`
+        const htmlContent = `
             <html>
                 <head>
                     <title>CodeForge - Assessment Report</title>
@@ -330,6 +329,14 @@ ${JSON.stringify(gradingData, null, 2)}`;
                         li { margin-bottom: 5px; font-weight: 500; color: #374151; }
                         @media print {
                             body { padding: 0; }
+                            @page {
+                                size: A4 portrait;
+                                margin: 20mm 15mm;
+                            }
+                            * {
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
                         }
                     </style>
                 </head>
@@ -346,28 +353,62 @@ ${JSON.stringify(gradingData, null, 2)}`;
                             <p class="meta-info" style="margin: 5px 0 0 0;">Total Questions Evaluated: 10</p>
                         </div>
                     </div>
-
+                    
                     <div class="section-title">Performance Summary</div>
                     <p class="feedback-summary">${results.feedback}</p>
-
+                    
                     <div class="section-title">Key Areas for Improvement</div>
                     <ul>
                         ${lackingHtml}
                     </ul>
-
+                    
                     <div class="section-title">Question-by-Question Breakdown</div>
                     ${breakdownHtml}
-
+                    
                     <script>
                         window.onload = function() {
-                            window.print();
-                            window.close();
+                            setTimeout(function() {
+                                window.print();
+                                window.close();
+                            }, 500);
                         }
                     </script>
                 </body>
             </html>
-        `);
-        printWindow.document.close();
+        `;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+        } else {
+            // Popup blocker fallback: Use hidden iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+            
+            iframe.contentDocument.write(htmlContent);
+            iframe.contentDocument.close();
+            
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    setTimeout(() => {
+                        if (document.body.contains(iframe)) {
+                            document.body.removeChild(iframe);
+                        }
+                    }, 3000);
+                } catch (err) {
+                    console.error('Iframe printing failed:', err);
+                }
+            }, 600);
+        }
     };
 
     const handleRestart = () => {

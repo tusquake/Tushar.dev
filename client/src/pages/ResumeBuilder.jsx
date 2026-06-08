@@ -1246,13 +1246,19 @@ ${JSON.stringify(experienceWithHighlights.flatMap(exp => exp.highlights.filter(B
             iframe.contentDocument.write(htmlContent);
             iframe.contentDocument.close();
             
-            iframe.onload = () => {
-                setTimeout(() => {
+            setTimeout(() => {
+                try {
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
-                    document.body.removeChild(iframe);
-                }, 500);
-            };
+                    setTimeout(() => {
+                        if (document.body.contains(iframe)) {
+                            document.body.removeChild(iframe);
+                        }
+                    }, 3000);
+                } catch (err) {
+                    console.error('Iframe printing failed:', err);
+                }
+            }, 600);
         }
     };
 

@@ -623,11 +623,9 @@ ${escapeLatex(summary)}
         return html.join('\n');
     };
 
-    // Native PDF Print Handler
     const handlePrint = () => {
         const printContent = previewRef.current.innerHTML;
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
+        const htmlContent = `
             <html>
                 <head>
                     <title>Resume LaTeX PDF Preview</title>
@@ -645,6 +643,14 @@ ${escapeLatex(summary)}
                         @media print {
                             body { margin: 1cm; }
                             button { display: none; }
+                            @page {
+                                size: A4 portrait;
+                                margin: 1.5cm;
+                            }
+                            * {
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
                         }
                     </style>
                 </head>
@@ -652,14 +658,48 @@ ${escapeLatex(summary)}
                     ${printContent}
                     <script>
                         window.onload = function() {
-                            window.print();
-                            window.close();
+                            setTimeout(function() {
+                                window.print();
+                                window.close();
+                            }, 500);
                         }
                     </script>
                 </body>
             </html>
-        `);
-        printWindow.document.close();
+        `;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+        } else {
+            // Popup blocker fallback: Use hidden iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+            
+            iframe.contentDocument.write(htmlContent);
+            iframe.contentDocument.close();
+            
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    setTimeout(() => {
+                        if (document.body.contains(iframe)) {
+                            document.body.removeChild(iframe);
+                        }
+                    }, 3000);
+                } catch (err) {
+                    console.error('Iframe printing failed:', err);
+                }
+            }, 600);
+        }
     };
 
     return (
