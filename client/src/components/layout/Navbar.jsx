@@ -51,9 +51,8 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Learning Hub', path: '/learning' },
         { name: 'Projects', path: '/projects' },
-        { name: 'About Creator', path: '/about' },
-        { name: 'Contact', path: '/contact' },
         { name: 'AI Interview', path: '/ai-interview' },
+        { name: 'Code Editor', path: '/code-editor' },
     ];
 
     const visibleNavLinks = isAuthenticated
@@ -90,7 +89,7 @@ const Navbar = () => {
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-1">
-                        {visibleNavLinks.slice(0, 3).map((link) => (
+                        {visibleNavLinks.map((link) => (
                             <NavLink
                                 key={link.path}
                                 to={link.path}
@@ -129,20 +128,25 @@ const Navbar = () => {
                             </div>
                         )}
 
-                        {visibleNavLinks.slice(3).map((link) => (
-                            <NavLink
-                                key={link.path}
-                                to={link.path}
-                                className={({ isActive }) =>
-                                    `px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${isActive
-                                        ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                                        : 'text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-dark-50 dark:hover:bg-dark-800'
-                                    }`
-                                }
-                            >
-                                {link.name}
-                            </NavLink>
-                        ))}
+                        {/* Connect Dropdown */}
+                        {isAuthenticated && (
+                            <div className="relative group">
+                                <button className="px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-dark-50 dark:hover:bg-dark-800 flex items-center gap-1.5 cursor-pointer">
+                                    Connect
+                                    <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div className="absolute right-0 mt-1 w-48 rounded-xl bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-50">
+                                    <Link to="/about" className="block px-4 py-2 text-sm text-dark-600 dark:text-dark-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400">
+                                        About Creator
+                                    </Link>
+                                    <Link to="/contact" className="block px-4 py-2 text-sm text-dark-600 dark:text-dark-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400">
+                                        Contact Info
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right side actions */}
@@ -251,7 +255,7 @@ const Navbar = () => {
                     }`}
             >
                 <div className="px-4 py-4 space-y-2 bg-white dark:bg-dark-900 border-t border-dark-100 dark:border-dark-800">
-                    {visibleNavLinks.slice(0, 3).map((link) => (
+                    {visibleNavLinks.map((link) => (
                         <NavLink
                             key={link.path}
                             to={link.path}
@@ -309,20 +313,36 @@ const Navbar = () => {
                         </div>
                     )}
 
-                    {visibleNavLinks.slice(3).map((link) => (
-                        <NavLink
-                            key={link.path}
-                            to={link.path}
-                            className={({ isActive }) =>
-                                `block px-4 py-3 rounded-lg font-medium transition-all ${isActive
-                                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                                    : 'text-dark-600 dark:text-dark-300'
-                                }`
-                            }
-                        >
-                            {link.name}
-                        </NavLink>
-                    ))}
+                    {/* Mobile Connect Links */}
+                    {isAuthenticated && (
+                        <div className="px-4 py-2 border-l-2 border-primary-500/30 space-y-1 my-2">
+                            <div className="text-xs font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider flex items-center mb-1">
+                                Connect
+                            </div>
+                            <NavLink
+                                to="/about"
+                                className={({ isActive }) =>
+                                    `block px-2 py-2 rounded-lg font-medium text-sm transition-all ${isActive
+                                        ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                                        : 'text-dark-600 dark:text-dark-300'
+                                    }`
+                                }
+                            >
+                                About Creator
+                            </NavLink>
+                            <NavLink
+                                to="/contact"
+                                className={({ isActive }) =>
+                                    `block px-2 py-2 rounded-lg font-medium text-sm transition-all ${isActive
+                                        ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                                        : 'text-dark-600 dark:text-dark-300'
+                                    }`
+                                }
+                            >
+                                Contact Info
+                            </NavLink>
+                        </div>
+                    )}
                     <div className="pt-4 border-t border-dark-100 dark:border-dark-800 space-y-2">
                         {isAuthenticated && (
                             <Link

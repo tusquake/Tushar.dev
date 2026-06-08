@@ -20,6 +20,7 @@ import AtsReviewer from './pages/AtsReviewer';
 import LatexResume from './pages/LatexResume';
 import Settings from './pages/Settings';
 import AIInterview from './pages/AIInterview';
+import CodeEditor from './pages/CodeEditor';
 
 // Wrapper to redirect direct access to home
 const DirectAccessRedirect = ({ children }) => {
@@ -67,6 +68,7 @@ function App() {
             <Route path="resume/latex" element={<ProtectedRoute><LatexResume /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="ai-interview" element={<ProtectedRoute><AIInterview /></ProtectedRoute>} />
+            <Route path="code-editor" element={<ProtectedRoute><CodeEditor /></ProtectedRoute>} />
           </Route>
 
           {/* 404 - Not Found */}
