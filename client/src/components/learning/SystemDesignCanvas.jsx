@@ -196,6 +196,19 @@ const SystemDesignCanvas = () => {
     // Temp state for connection drawing
     const [connectionSource, setConnectionSource] = useState(null);
 
+    const [isFullscreenPreview, setIsFullscreenPreview] = useState(false);
+
+    // Keyboard listener to escape fullscreen mode
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setIsFullscreenPreview(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     // Grid details
     const gridSize = 20;
     const canvasRef = useRef(null);
@@ -413,6 +426,193 @@ const SystemDesignCanvas = () => {
         };
     };
 
+    if (isFullscreenPreview) {
+        return (
+            <div className="fixed inset-0 bg-dark-950/98 backdrop-blur-xl z-[99999] p-6 flex flex-col animate-fade-in text-white select-none">
+                {/* Fullscreen Header */}
+                <div className="flex items-center justify-between border-b border-dark-800 pb-4 mb-4">
+                    <div className="flex flex-col">
+                        <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-primary-500 animate-pulse"></span>
+                            System Design Blueprint Presentation
+                        </h2>
+                        <p className="text-xs text-dark-400">Press Esc or click Exit to return to the editor workspace</p>
+                    </div>
+                    
+                    <button
+                        onClick={() => setIsFullscreenPreview(false)}
+                        className="px-4 py-2 rounded-xl text-xs font-semibold bg-dark-800 hover:bg-dark-700 text-white transition-all cursor-pointer flex items-center gap-2 border border-dark-700/65"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Exit Fullscreen
+                    </button>
+                </div>
+
+                {/* Canvas Workspace in Fullscreen */}
+                <div className="flex-grow overflow-auto border border-dark-800 rounded-3xl bg-dark-900/40 relative scrollbar-thin">
+                    <div
+                        ref={canvasRef}
+                        onClick={handleCanvasClick}
+                        onMouseMove={handleCanvasMouseMove}
+                        onMouseUp={handleCanvasMouseUp}
+                        className="h-[80vh] min-h-[600px] w-full min-w-[1200px] relative overflow-hidden bg-dark-950 cursor-crosshair"
+                        style={{
+                            backgroundImage: `
+                                linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+                                linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px)
+                            `,
+                            backgroundSize: `${gridSize}px ${gridSize}px`
+                        }}
+                    >
+                        {/* SVGs rendering the Flow Links / Arrows */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                            <defs>
+                                <marker
+                                    id="arrowhead-fs"
+                                    viewBox="0 0 10 10"
+                                    refX="6"
+                                    refY="5"
+                                    markerWidth="6"
+                                    markerHeight="6"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6366f1" />
+                                </marker>
+                                <marker
+                                    id="arrowhead-active-fs"
+                                    viewBox="0 0 10 10"
+                                    refX="6"
+                                    refY="5"
+                                    markerWidth="7"
+                                    markerHeight="7"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b" />
+                                </marker>
+                            </defs>
+
+                            {connections.map((conn) => {
+                                const fromCenter = getNodeCenter(conn.from);
+                                const toCenter = getNodeCenter(conn.to);
+                                const isActive = selectedConnectionId === conn.id;
+
+                                return (
+                                    <g key={conn.id} className="pointer-events-auto cursor-pointer">
+                                        <line
+                                            x1={fromCenter.x}
+                                            y1={fromCenter.y}
+                                            x2={toCenter.x}
+                                            y2={toCenter.y}
+                                            stroke={isActive ? '#f59e0b' : '#6366f1'}
+                                            strokeWidth={isActive ? 3 : 2}
+                                            strokeDasharray={conn.label?.toLowerCase().includes('async') ? '5,5' : '0'}
+                                            markerEnd={isActive ? 'url(#arrowhead-active-fs)' : 'url(#arrowhead-fs)'}
+                                            className="transition-all"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedConnectionId(conn.id);
+                                            }}
+                                        />
+                                        <line
+                                            x1={fromCenter.x}
+                                            y1={fromCenter.y}
+                                            x2={toCenter.x}
+                                            y2={toCenter.y}
+                                            stroke="transparent"
+                                            strokeWidth={15}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedConnectionId(conn.id);
+                                            }}
+                                        />
+                                    </g>
+                                );
+                            })}
+                        </svg>
+
+                        {connections.map((conn) => {
+                            const fromCenter = getNodeCenter(conn.from);
+                            const toCenter = getNodeCenter(conn.to);
+                            const midX = (fromCenter.x + toCenter.x) / 2;
+                            const midY = (fromCenter.y + toCenter.y) / 2;
+
+                            return (
+                                <div
+                                    key={`label-${conn.id}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedConnectionId(conn.id);
+                                    }}
+                                    className={`absolute px-2 py-0.5 rounded text-[10px] font-mono font-bold border transform -translate-x-1/2 -translate-y-1/2 cursor-pointer shadow-sm z-10 transition-all ${selectedConnectionId === conn.id
+                                        ? 'bg-amber-500 border-amber-550 text-white'
+                                        : 'bg-dark-900 border-dark-800 text-dark-350 hover:border-primary-500'
+                                        }`}
+                                    style={{ left: midX, top: midY }}
+                                >
+                                    {conn.label}
+                                </div>
+                            );
+                        })}
+
+                        {nodes.map((node) => {
+                            const isSelected = selectedNodeId === node.id;
+                            const typeMeta = COMPONENT_TYPES[node.type];
+                            const isSource = connectionSource === node.id;
+
+                            return (
+                                <div
+                                    key={node.id}
+                                    onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                                    className={`absolute w-40 h-[70px] rounded-xl border p-2.5 flex flex-col justify-between cursor-grab active:cursor-grabbing shadow-sm transition-all z-20 ${isSelected
+                                        ? 'border-primary-500 ring-2 ring-primary-500/20'
+                                        : isSource
+                                            ? 'border-amber-500 ring-2 ring-amber-500/20 animate-pulse'
+                                            : 'border-dark-800 bg-dark-900/90'
+                                        }`}
+                                    style={{ left: node.x, top: node.y }}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className={`p-1.5 rounded-lg bg-gradient-to-br ${node.color || typeMeta?.color} text-white flex-shrink-0`}>
+                                            {typeMeta?.icon}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-xs font-bold text-white truncate">
+                                                {node.label}
+                                            </span>
+                                            <span className="text-[9px] text-dark-400 capitalize truncate">
+                                                {typeMeta?.label}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between mt-1 text-[9px] text-dark-500 border-t border-dark-800 pt-1">
+                                        <span className="truncate max-w-[100px]" title={node.description}>
+                                            {node.description}
+                                        </span>
+                                        <button
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteNode(node.id);
+                                            }}
+                                            className="text-dark-500 hover:text-rose-500 transition-colors p-0.5 cursor-pointer"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col xl:flex-row gap-6 animate-tab-switch pb-4 w-full">
             {/* Left Column: Toolbox and Templates */}
@@ -502,6 +702,18 @@ const SystemDesignCanvas = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                 </svg>
                                 Flow Linker
+                            </button>
+
+                            {/* Preview Fullscreen Tool */}
+                            <button
+                                onClick={() => setIsFullscreenPreview(true)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-dark-200 dark:border-dark-800 text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-950/50 transition-all cursor-pointer flex items-center gap-1.5"
+                                title="Open canvas in fullscreen presentation mode"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                </svg>
+                                Fullscreen Preview
                             </button>
                         </div>
 
