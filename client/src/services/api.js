@@ -149,5 +149,11 @@ export const interviewAPI = {
     clear: () => api.delete('/interviews'),
 };
 
+// Reviews API
+export const reviewsAPI = {
+    getAll: () => api.get('/reviews'),
+    create: (data) => api.post('/reviews', data),
+};
+
 export default api;
 

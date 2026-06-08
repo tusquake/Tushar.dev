@@ -3,6 +3,7 @@ import Card from '../components/common/Card';
 import { callLlm, parseJsonResponse } from '../utils/ai';
 import { useAuth } from '../context/AuthContext';
 import { interviewAPI } from '../services/api';
+import ReviewModal from '../components/common/ReviewModal';
 
 const AIInterview = () => {
     const { isAuthenticated } = useAuth();
@@ -15,6 +16,7 @@ const AIInterview = () => {
     const [answer, setAnswer] = useState('');
     const [feedback, setFeedback] = useState(null);
     const [stage, setStage] = useState('idle'); // idle, asking, listening, evaluating
+    const [showReviewModal, setShowReviewModal] = useState(false);
     const [pdfLoading, setPdfLoading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const [error, setError] = useState('');
@@ -39,6 +41,7 @@ const AIInterview = () => {
                     if (prev <= 1) {
                         clearInterval(interval);
                         setStage('session_summary');
+                        setTimeout(() => setShowReviewModal(true), 1500);
                         window.speechSynthesis.cancel();
                         showToast("Time is up! Generating your session report.");
                         return 0;
@@ -893,7 +896,8 @@ JSON Evaluation:`;
     }
 
     return (
-        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-dark-50 dark:bg-dark-950/20 mt-16 animate-fade-in">
+        <>
+            <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-dark-50 dark:bg-dark-950/20 mt-16 animate-fade-in">
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="mb-4">
                     <h1 className="text-3xl font-display font-bold text-dark-900 dark:text-white">AI Interview Prep</h1>
@@ -1415,7 +1419,7 @@ JSON Evaluation:`;
 
                             <div className="flex gap-4">
                                 <button
-                                    onClick={handleDownloadSessionReport}
+                                    onClick={() => { handleDownloadSessionReport(); setTimeout(() => setShowReviewModal(true), 1200); }}
                                     className="btn-primary text-xs py-2.5 flex-1 cursor-pointer flex items-center justify-center gap-2"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1524,6 +1528,13 @@ JSON Evaluation:`;
                 )}
             </div>
         </div>
+
+        <ReviewModal
+            isOpen={showReviewModal}
+            onClose={() => setShowReviewModal(false)}
+            defaultTriggerAction="interview"
+        />
+        </>
     );
 };
 

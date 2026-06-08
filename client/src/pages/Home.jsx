@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { reviewsAPI } from '../services/api';
 
 // Vector diagrams
 const TwoPointersSVG = ({ accent, text, muted }) => (
@@ -337,6 +338,22 @@ const themeSpecs = {
 const Home = () => {
     const { isAuthenticated } = useAuth();
     const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+    const [reviews, setReviews] = useState([]);
+
+    // Fetch reviews on mount
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const response = await reviewsAPI.getAll();
+                if (response.data && response.data.data) {
+                    setReviews(response.data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+            }
+        };
+        fetchReviews();
+    }, []);
 
     // Keep theme updated when class changes on root
     useEffect(() => {
@@ -661,49 +678,90 @@ const Home = () => {
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                quote: "CodeForge's pattern hub helped me classify LeetCode patterns instead of trying to memorize hundreds of individual problems. It was instrumental in my prep!",
-                                name: "Alex Mercer",
-                                role: "Software Engineer @ Google",
-                                initials: "AM",
-                                color: "bg-red-500/10 text-red-500"
-                            },
-                            {
-                                quote: "The built-in LaTeX compiler works seamlessly. I wrote my resume in 10 minutes, checked the formatting score using the ATS reviewer, and landed my Stripe callback.",
-                                name: "Sarah Jenkins",
-                                role: "Senior Dev @ Stripe",
-                                initials: "SJ",
-                                color: "bg-purple-500/10 text-purple-500"
-                            },
-                            {
-                                quote: "The visual system design components are simply stunning. Dynamic flow diagrams help clarify concepts much faster than standard text books.",
-                                name: "Vikram Malhotra",
-                                role: "DevOps Engineer @ AWS",
-                                initials: "VM",
-                                color: "bg-green-500/10 text-green-500"
-                            }
-                        ].map((test, idx) => (
-                            <div 
-                                key={idx}
-                                className="p-6 md:p-8 flex flex-col justify-between border border-dark-250/20 dark:border-dark-850/20 transition-all duration-300 hover:scale-102 hover:shadow-xl relative"
-                                style={currentTheme.testimonialCardStyle}
-                            >
-                                <div className="absolute -top-3.5 left-6 text-3xl font-serif text-primary-500/40 select-none">“</div>
-                                <p className="text-xs leading-relaxed opacity-85 italic mb-6">
-                                    {test.quote}
-                                </p>
-                                <div className="flex items-center gap-3 pt-4 border-t border-dark-200/40 dark:border-dark-800/40">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${test.color}`}>
-                                        {test.initials}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-bold leading-tight">{test.name}</h4>
-                                        <p className="text-[10px] opacity-65 mt-0.5">{test.role}</p>
+                        {(() => {
+                            const getInitials = (n) => {
+                                if (!n) return 'U';
+                                const parts = n.split(' ');
+                                if (parts.length > 1) {
+                                    return (parts[0][0] + parts[1][0]).toUpperCase();
+                                }
+                                return n.substring(0, 2).toUpperCase();
+                            };
+
+                            const getColorClass = (n) => {
+                                const colors = [
+                                    'bg-red-500/10 text-red-500',
+                                    'bg-purple-500/10 text-purple-500',
+                                    'bg-green-500/10 text-green-500',
+                                    'bg-blue-500/10 text-blue-500',
+                                    'bg-yellow-500/10 text-yellow-500',
+                                    'bg-pink-500/10 text-pink-500'
+                                ];
+                                let hash = 0;
+                                for (let i = 0; i < n.length; i++) {
+                                    hash = n.charCodeAt(i) + ((hash << 5) - hash);
+                                }
+                                const index = Math.abs(hash) % colors.length;
+                                return colors[index];
+                            };
+
+                            const defaultTestimonials = [
+                                {
+                                    quote: "CodeForge's pattern hub helped me classify LeetCode patterns instead of trying to memorize hundreds of individual problems. It was instrumental in my prep!",
+                                    name: "Alex Mercer",
+                                    role: "Software Engineer @ Google",
+                                    initials: "AM",
+                                    color: "bg-red-500/10 text-red-500"
+                                },
+                                {
+                                    quote: "The built-in LaTeX compiler works seamlessly. I wrote my resume in 10 minutes, checked the formatting score using the ATS reviewer, and landed my Stripe callback.",
+                                    name: "Sarah Jenkins",
+                                    role: "Senior Dev @ Stripe",
+                                    initials: "SJ",
+                                    color: "bg-purple-500/10 text-purple-500"
+                                },
+                                {
+                                    quote: "The visual system design components are simply stunning. Dynamic flow diagrams help clarify concepts much faster than standard text books.",
+                                    name: "Vikram Malhotra",
+                                    role: "DevOps Engineer @ AWS",
+                                    initials: "VM",
+                                    color: "bg-green-500/10 text-green-500"
+                                }
+                            ];
+
+                            const displayTestimonials = [
+                                ...reviews.map(r => ({
+                                    quote: r.quote,
+                                    name: r.name,
+                                    role: r.role,
+                                    initials: getInitials(r.name),
+                                    color: getColorClass(r.name)
+                                })),
+                                ...defaultTestimonials
+                            ].slice(0, Math.max(3, reviews.length));
+
+                            return displayTestimonials.map((test, idx) => (
+                                <div 
+                                    key={idx}
+                                    className="p-6 md:p-8 flex flex-col justify-between border border-dark-250/20 dark:border-dark-850/20 transition-all duration-300 hover:scale-102 hover:shadow-xl relative"
+                                    style={currentTheme.testimonialCardStyle}
+                                >
+                                    <div className="absolute -top-3.5 left-6 text-3xl font-serif text-primary-500/40 select-none">“</div>
+                                    <p className="text-xs leading-relaxed opacity-85 italic mb-6">
+                                        {test.quote}
+                                    </p>
+                                    <div className="flex items-center gap-3 pt-4 border-t border-dark-200/40 dark:border-dark-800/40">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${test.color}`}>
+                                            {test.initials}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-bold leading-tight">{test.name}</h4>
+                                            <p className="text-[10px] opacity-65 mt-0.5">{test.role}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ));
+                        })()}
                     </div>
                 </div>
             </section>

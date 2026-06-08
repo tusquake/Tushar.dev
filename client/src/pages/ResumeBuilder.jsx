@@ -3,6 +3,7 @@ import ResumeHeader from '../components/layout/ResumeHeader';
 import Card from '../components/common/Card';
 import { callLlm, getApiKeys } from '../utils/ai';
 import { resumeAPI } from '../services/api';
+import ReviewModal from '../components/common/ReviewModal';
 
 const initialResumeState = {
     personalInfo: {
@@ -54,6 +55,7 @@ const ResumeBuilder = () => {
     const [toast, setToast] = useState('');
     const [apiKeyWarning, setApiKeyWarning] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
 
     const [selectedLayout, setSelectedLayout] = useState(() => localStorage.getItem('codeforge_resume_layout') || 'classic');
     const [selectedAccent, setSelectedAccent] = useState(() => localStorage.getItem('codeforge_resume_accent') || 'charcoal');
@@ -1265,7 +1267,8 @@ ${JSON.stringify(experienceWithHighlights.flatMap(exp => exp.highlights.filter(B
     const atsInfo = calculateAtsScore();
 
     return (
-        <div className="min-h-screen py-6 bg-dark-50 dark:bg-dark-950/20">
+        <>
+            <div className="min-h-screen py-6 bg-dark-50 dark:bg-dark-950/20">
             <ResumeHeader />
             
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1651,7 +1654,7 @@ ${JSON.stringify(experienceWithHighlights.flatMap(exp => exp.highlights.filter(B
                             </button>
 
                             <button
-                                onClick={downloadPdf}
+                                onClick={() => { downloadPdf(); setTimeout(() => setShowReviewModal(true), 1500); }}
                                 className="btn-primary text-sm py-2 flex items-center gap-1.5 cursor-pointer"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1853,6 +1856,13 @@ ${JSON.stringify(experienceWithHighlights.flatMap(exp => exp.highlights.filter(B
                 </div>
             </div>
         </div>
+
+        <ReviewModal
+            isOpen={showReviewModal}
+            onClose={() => setShowReviewModal(false)}
+            defaultTriggerAction="resume"
+        />
+        </>
     );
 };
 
