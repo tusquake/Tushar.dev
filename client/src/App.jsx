@@ -66,6 +66,7 @@ function App() {
             <Route path="resume/reviewer" element={<ProtectedRoute><AtsReviewer /></ProtectedRoute>} />
             <Route path="resume/latex" element={<ProtectedRoute><LatexResume /></ProtectedRoute>} />
             <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="ai-interview" element={<ProtectedRoute><AIInterview /></ProtectedRoute>} />
           </Route>
 
           {/* 404 - Not Found */}
