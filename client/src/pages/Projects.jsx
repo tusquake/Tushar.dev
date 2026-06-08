@@ -78,7 +78,7 @@ const Projects = () => {
     const [filter, setFilter] = useState('all');
 
     const getImageUrl = (imagePath) => {
-        if (!imagePath) return '';
+        if (!imagePath || imagePath === 'undefined' || imagePath === 'null') return '';
         if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
         if (imagePath.startsWith('/projects/') || imagePath.startsWith('/images/')) {
             return imagePath;
