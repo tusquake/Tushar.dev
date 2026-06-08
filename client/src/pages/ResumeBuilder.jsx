@@ -58,6 +58,18 @@ const ResumeBuilder = () => {
     const [selectedLayout, setSelectedLayout] = useState(() => localStorage.getItem('codeforge_resume_layout') || 'classic');
     const [selectedAccent, setSelectedAccent] = useState(() => localStorage.getItem('codeforge_resume_accent') || 'charcoal');
     const [selectedFont, setSelectedFont] = useState(() => localStorage.getItem('codeforge_resume_font') || 'serif');
+    
+    // Advanced professional customization options
+    const [selectedFontSize, setSelectedFontSize] = useState(() => localStorage.getItem('codeforge_resume_fontsize') || 'normal');
+    const [selectedMargins, setSelectedMargins] = useState(() => localStorage.getItem('codeforge_resume_margins') || 'normal');
+    const [dividerStyle, setDividerStyle] = useState(() => localStorage.getItem('codeforge_resume_divider') || 'solid');
+    const [sectionOrder, setSectionOrder] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('codeforge_resume_section_order')) || ['summary', 'experience', 'skills', 'projects', 'education', 'certifications'];
+        } catch {
+            return ['summary', 'experience', 'skills', 'projects', 'education', 'certifications'];
+        }
+    });
 
     // Save selection changes
     useEffect(() => {
@@ -69,6 +81,26 @@ const ResumeBuilder = () => {
     useEffect(() => {
         localStorage.setItem('codeforge_resume_font', selectedFont);
     }, [selectedFont]);
+    useEffect(() => {
+        localStorage.setItem('codeforge_resume_fontsize', selectedFontSize);
+    }, [selectedFontSize]);
+    useEffect(() => {
+        localStorage.setItem('codeforge_resume_margins', selectedMargins);
+    }, [selectedMargins]);
+    useEffect(() => {
+        localStorage.setItem('codeforge_resume_divider', dividerStyle);
+    }, [dividerStyle]);
+    useEffect(() => {
+        localStorage.setItem('codeforge_resume_section_order', JSON.stringify(sectionOrder));
+    }, [sectionOrder]);
+
+    const moveSection = (index, direction) => {
+        const newOrder = [...sectionOrder];
+        const temp = newOrder[index];
+        newOrder[index] = newOrder[index + direction];
+        newOrder[index + direction] = temp;
+        setSectionOrder(newOrder);
+    };
 
     const getAccentClass = () => {
         switch (selectedAccent) {
@@ -95,50 +127,226 @@ const ResumeBuilder = () => {
         }
     };
 
-    const renderClassicLayout = () => {
-        const accentClass = getAccentClass();
-        return (
-            <div>
-                {/* Header */}
-                <div className="text-center mb-6">
-                    <h1 className={`text-2xl font-bold uppercase tracking-tight mb-1 ${accentClass}`}>
-                        {resumeData.personalInfo.name || 'YOUR NAME'}
-                    </h1>
-                    <div className="text-[10px] text-gray-700">
-                        {[
-                            resumeData.personalInfo.email,
-                            resumeData.personalInfo.phone,
-                            resumeData.personalInfo.linkedIn,
-                            resumeData.personalInfo.gitHub,
-                            resumeData.personalInfo.portfolio
-                        ].filter(Boolean).join('  |  ')}
-                    </div>
-                </div>
+    const getMarginsCss = () => {
+        switch (selectedMargins) {
+            case 'compact': return 'padding: 1.25cm 1.0cm !important;';
+            case 'spacious': return 'padding: 2.6cm 2.2cm !important;';
+            default: return 'padding: 1.8cm 1.5cm !important;'; // normal
+        }
+    };
 
-                {/* Summary */}
-                {resumeData.summary && (
-                    <div className="mb-4">
-                        <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-1.5 uppercase ${accentClass}`}>
-                            Professional Summary
-                        </h2>
-                        <p className="text-[10.5px] text-gray-800 text-justify">
+    const getMarginsPreviewStyle = () => {
+        switch (selectedMargins) {
+            case 'compact': return { padding: '1.25cm 1.0cm' };
+            case 'spacious': return { padding: '2.6cm 2.2cm' };
+            default: return { padding: '1.8cm 1.5cm' }; // normal
+        }
+    };
+
+    const getFontSizeClasses = () => {
+        switch (selectedFontSize) {
+            case 'small':
+                return {
+                    body: 'text-[9.5px] leading-relaxed',
+                    heading: 'text-[10px]',
+                    name: 'text-xl'
+                };
+            case 'large':
+                return {
+                    body: 'text-[11.5px] leading-relaxed',
+                    heading: 'text-[12.5px]',
+                    name: 'text-3xl'
+                };
+            default:
+                return {
+                    body: 'text-[10.5px] leading-relaxed',
+                    heading: 'text-[11px]',
+                    name: 'text-2xl'
+                };
+        }
+    };
+
+    const getClassicHeadingClass = () => {
+        const accentClass = getAccentClass();
+        const fs = getFontSizeClasses();
+        let border = 'border-b pb-0.5';
+        if (dividerStyle === 'left-bar') border = 'border-l-4 pl-2';
+        else if (dividerStyle === 'none') border = '';
+        return `${fs.heading} font-bold mb-1.5 uppercase ${border} ${accentClass}`;
+    };
+
+    const getModernHeadingClass = () => {
+        const accentClass = getAccentClass();
+        const fs = getFontSizeClasses();
+        let border = 'border-l-4 pl-2';
+        if (dividerStyle === 'solid') border = 'border-b pb-0.5';
+        else if (dividerStyle === 'none') border = '';
+        return `${fs.heading} font-bold mb-2 uppercase ${border} ${accentClass}`;
+    };
+
+    // Calculate dynamic ATS score and details
+    const calculateAtsScore = () => {
+        let score = 0;
+        const suggestions = [];
+
+        // 1. Personal Contact Info
+        if (resumeData.personalInfo.name) score += 5;
+        if (resumeData.personalInfo.email && resumeData.personalInfo.phone) {
+            score += 15;
+        } else {
+            suggestions.push("Add your email and phone number to make contacting you simple.");
+        }
+        if (resumeData.personalInfo.linkedIn || resumeData.personalInfo.gitHub) {
+            score += 10;
+        } else {
+            suggestions.push("Provide LinkedIn or GitHub profile link to prove digital footprints.");
+        }
+
+        // 2. Summary
+        if (resumeData.summary) {
+            if (resumeData.summary.length >= 100 && resumeData.summary.length <= 400) {
+                score += 15;
+            } else if (resumeData.summary.length > 400) {
+                score += 10;
+                suggestions.push("Shorten summary under 400 chars to avoid cognitive overload.");
+            } else {
+                score += 10;
+                suggestions.push("Extend summary slightly to properly detail career credentials.");
+            }
+        } else {
+            suggestions.push("Write a short Professional Summary outlining core engineering competencies.");
+        }
+
+        // 3. Technical Skills
+        const skillsCount = [
+            resumeData.skills.languages,
+            resumeData.skills.frameworks,
+            resumeData.skills.tools,
+            resumeData.skills.concepts
+        ].filter(Boolean).length;
+        if (skillsCount >= 3) {
+            score += 20;
+        } else if (skillsCount > 0) {
+            score += 10;
+            suggestions.push("Add specialized frameworks & tools to trigger resume parsing algorithms.");
+        } else {
+            suggestions.push("Incorporate Technical Skills sections showing your full engineering stack.");
+        }
+
+        // 4. Experience & Action Verbs
+        const hasExp = resumeData.experience.some(exp => exp.company);
+        if (hasExp) {
+            score += 15;
+            
+            const actionVerbs = [
+                'led', 'developed', 'designed', 'built', 'optimized', 'created', 'spearheaded', 'implemented', 
+                'improved', 'managed', 'engineered', 'launched', 'architected', 'scaled', 'delivered', 
+                'automated', 'reduced', 'increased', 'mentored', 'directed'
+            ];
+            let actionVerbUsed = false;
+            resumeData.experience.forEach(exp => {
+                exp.highlights.forEach(bullet => {
+                    if (bullet) {
+                        const words = bullet.toLowerCase().split(/\s+/);
+                        if (words.some(w => actionVerbs.includes(w))) {
+                            actionVerbUsed = true;
+                        }
+                    }
+                });
+            });
+
+            if (actionVerbUsed) {
+                score += 10;
+            } else {
+                suggestions.push("Start experience highlights with strong action verbs (e.g. Optimized, Automated).");
+            }
+        } else {
+            suggestions.push("Add Professional Experience timeline details.");
+        }
+
+        // 5. Education
+        if (resumeData.education.some(edu => edu.institution)) {
+            score += 10;
+        } else {
+            suggestions.push("List education details/degree information.");
+        }
+
+        return { score: Math.min(100, score), suggestions };
+    };
+
+    // AI ATS bullet optimizer
+    const optimizeAtsBullets = async () => {
+        const experienceWithHighlights = resumeData.experience.filter(exp => exp.company && exp.highlights.some(h => h.trim()));
+        if (experienceWithHighlights.length === 0) {
+            showToast("Please fill out some experience highlights first!");
+            return;
+        }
+
+        setAiLoading(prev => ({ ...prev, ats: true }));
+        try {
+            const prompt = `You are a world-class resume optimizer specializing in ATS algorithms. Re-write the following resume highlights so that they strictly conform to the Google XYZ layout: Accomplished [X], as measured by [Y], by doing [Z]. Start each bullet point with a strong, distinct action verb. Avoid any adjectives or fluff. Respond ONLY with a valid JSON array of strings containing the exact re-written highlights. Do not include markdown tags.
+Original highlights:
+${JSON.stringify(experienceWithHighlights.flatMap(exp => exp.highlights.filter(Boolean)))}`;
+
+            const result = await callLlm(prompt);
+            let cleanedResult = result.trim();
+            if (cleanedResult.startsWith('```json')) {
+                cleanedResult = cleanedResult.substring(7, cleanedResult.length - 3).trim();
+            } else if (cleanedResult.startsWith('```')) {
+                cleanedResult = cleanedResult.substring(3, cleanedResult.length - 3).trim();
+            }
+            
+            const newBullets = JSON.parse(cleanedResult);
+            if (Array.isArray(newBullets)) {
+                let bulletIdx = 0;
+                updateResumeData(prev => {
+                    const newExp = prev.experience.map(exp => {
+                        if (!exp.company) return exp;
+                        const nextHighlights = exp.highlights.map(h => {
+                            if (!h.trim()) return h;
+                            const replacement = newBullets[bulletIdx] || h;
+                            bulletIdx++;
+                            return replacement;
+                        });
+                        return { ...exp, highlights: nextHighlights };
+                    });
+                    return { ...prev, experience: newExp };
+                });
+                showToast("All bullets rewritten for ATS compatibility!");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to run AI ATS optimization.");
+        } finally {
+            setAiLoading(prev => ({ ...prev, ats: false }));
+        }
+    };
+
+    const renderClassicSection = (sectionName) => {
+        const accentClass = getAccentClass();
+        const headingClass = getClassicHeadingClass();
+        switch (sectionName) {
+            case 'summary':
+                if (!resumeData.summary) return null;
+                return (
+                    <div className="mb-4" key="summary">
+                        <h2 className={headingClass}>Professional Summary</h2>
+                        <p className="text-gray-800 text-justify">
                             {resumeData.summary}
                         </p>
                     </div>
-                )}
-
-                {/* Experience */}
-                {resumeData.experience.some(exp => exp.company) && (
-                    <div className="mb-4">
-                        <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-1.5 uppercase ${accentClass}`}>
-                            Professional Experience
-                        </h2>
+                );
+            case 'experience':
+                if (!resumeData.experience.some(exp => exp.company)) return null;
+                return (
+                    <div className="mb-4" key="experience">
+                        <h2 className={headingClass}>Professional Experience</h2>
                         <div className="space-y-3">
                             {resumeData.experience.map((exp, idx) => {
                                 if (!exp.company) return null;
                                 return (
                                     <div key={idx}>
-                                        <div className="flex justify-between font-bold text-[10.5px] text-black">
+                                        <div className="flex justify-between font-bold text-black">
                                             <span>{exp.company}</span>
                                             <span>{exp.period || 'Period'}</span>
                                         </div>
@@ -146,7 +354,7 @@ const ResumeBuilder = () => {
                                             <span>{exp.role || 'Job Title'}</span>
                                             <span>{exp.location || 'Location'}</span>
                                         </div>
-                                        <ul className="list-disc pl-5 text-[10.5px] text-gray-800 space-y-1">
+                                        <ul className="list-disc pl-5 text-gray-800 space-y-1">
                                             {exp.highlights.map((bullet, bIdx) => (
                                                 bullet && <li key={bIdx}>{bullet}</li>
                                             ))}
@@ -156,15 +364,13 @@ const ResumeBuilder = () => {
                             })}
                         </div>
                     </div>
-                )}
-
-                {/* Skills */}
-                {(resumeData.skills.languages || resumeData.skills.frameworks || resumeData.skills.tools || resumeData.skills.concepts) && (
-                    <div className="mb-4">
-                        <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-1.5 uppercase ${accentClass}`}>
-                            Technical Skills
-                        </h2>
-                        <div className="text-[10.5px] text-gray-800 space-y-1">
+                );
+            case 'skills':
+                if (!(resumeData.skills.languages || resumeData.skills.frameworks || resumeData.skills.tools || resumeData.skills.concepts)) return null;
+                return (
+                    <div className="mb-4" key="skills">
+                        <h2 className={headingClass}>Technical Skills</h2>
+                        <div className="text-gray-800 space-y-1">
                             {resumeData.skills.languages && (
                                 <div><span className="font-bold">Languages:</span> {resumeData.skills.languages}</div>
                             )}
@@ -179,20 +385,18 @@ const ResumeBuilder = () => {
                             )}
                         </div>
                     </div>
-                )}
-
-                {/* Projects */}
-                {resumeData.projects.some(proj => proj.title) && (
-                    <div className="mb-4">
-                        <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-1.5 uppercase ${accentClass}`}>
-                            Key Projects
-                        </h2>
+                );
+            case 'projects':
+                if (!resumeData.projects.some(proj => proj.title)) return null;
+                return (
+                    <div className="mb-4" key="projects">
+                        <h2 className={headingClass}>Key Projects</h2>
                         <div className="space-y-3">
                             {resumeData.projects.map((proj, idx) => {
                                 if (!proj.title) return null;
                                 return (
                                     <div key={idx}>
-                                        <div className="flex justify-between font-bold text-[10.5px] text-black">
+                                        <div className="flex justify-between font-bold text-black">
                                             <span>{proj.title}</span>
                                             <span className="font-normal text-[10px] text-gray-600 italic">
                                                 {proj.githubLink || ''}
@@ -201,7 +405,7 @@ const ResumeBuilder = () => {
                                         <div className="italic text-[10px] text-gray-700 mb-1">
                                             <span>Tech Stack: {proj.techStack}</span>
                                         </div>
-                                        <p className="text-[10.5px] text-gray-800 text-justify">
+                                        <p className="text-gray-800 text-justify">
                                             {proj.description}
                                         </p>
                                     </div>
@@ -209,20 +413,18 @@ const ResumeBuilder = () => {
                             })}
                         </div>
                     </div>
-                )}
-
-                {/* Education */}
-                {resumeData.education.some(edu => edu.institution) && (
-                    <div className="mb-4">
-                        <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-1.5 uppercase ${accentClass}`}>
-                            Education
-                        </h2>
+                );
+            case 'education':
+                if (!resumeData.education.some(edu => edu.institution)) return null;
+                return (
+                    <div className="mb-4" key="education">
+                        <h2 className={headingClass}>Education</h2>
                         <div className="space-y-2">
                             {resumeData.education.map((edu, idx) => {
                                 if (!edu.institution) return null;
                                 return (
                                     <div key={idx}>
-                                        <div className="flex justify-between font-bold text-[10.5px] text-black">
+                                        <div className="flex justify-between font-bold text-black">
                                             <span>{edu.institution}</span>
                                             <span>{edu.year}</span>
                                         </div>
@@ -235,31 +437,188 @@ const ResumeBuilder = () => {
                             })}
                         </div>
                     </div>
-                )}
-
-                {/* Certifications */}
-                {resumeData.certifications && (
-                    <div className="mb-4">
-                        <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-1.5 uppercase ${accentClass}`}>
-                            Certifications & Achievements
-                        </h2>
-                        <p className="text-[10.5px] text-gray-800 whitespace-pre-line leading-relaxed">
+                );
+            case 'certifications':
+                if (!resumeData.certifications) return null;
+                return (
+                    <div className="mb-4" key="certifications">
+                        <h2 className={headingClass}>Certifications & Achievements</h2>
+                        <p className="text-gray-800 whitespace-pre-line leading-relaxed">
                             {resumeData.certifications}
                         </p>
                     </div>
-                )}
+                );
+            default:
+                return null;
+        }
+    };
+
+    const renderModernSection = (sectionName) => {
+        const accentClass = getAccentClass();
+        const headingClass = getModernHeadingClass();
+        switch (sectionName) {
+            case 'summary':
+                if (!resumeData.summary) return null;
+                return (
+                    <div className="mb-5" key="summary">
+                        <h2 className={headingClass}>Professional Summary</h2>
+                        <p className="text-gray-800 text-justify">
+                            {resumeData.summary}
+                        </p>
+                    </div>
+                );
+            case 'experience':
+                if (!resumeData.experience.some(exp => exp.company)) return null;
+                return (
+                    <div className="mb-5" key="experience">
+                        <h2 className={headingClass}>Professional Experience</h2>
+                        <div className="space-y-4">
+                            {resumeData.experience.map((exp, idx) => {
+                                if (!exp.company) return null;
+                                return (
+                                    <div key={idx}>
+                                        <div className="flex justify-between font-bold text-black">
+                                            <span>{exp.role || 'Job Title'}</span>
+                                            <span>{exp.period || 'Period'}</span>
+                                        </div>
+                                        <div className="flex justify-between italic text-[10px] text-gray-600 mb-1.5">
+                                            <span>{exp.company}</span>
+                                            <span>{exp.location || 'Location'}</span>
+                                        </div>
+                                        <ul className="list-disc pl-5 text-gray-800 space-y-1">
+                                            {exp.highlights.map((bullet, bIdx) => (
+                                                bullet && <li key={bIdx}>{bullet}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            case 'skills':
+                if (!(resumeData.skills.languages || resumeData.skills.frameworks || resumeData.skills.tools || resumeData.skills.concepts)) return null;
+                return (
+                    <div className="mb-5" key="skills">
+                        <h2 className={headingClass}>Technical Skills</h2>
+                        <div className="text-gray-800 space-y-1">
+                            {resumeData.skills.languages && (
+                                <div><span className="font-bold">Languages:</span> {resumeData.skills.languages}</div>
+                            )}
+                            {resumeData.skills.frameworks && (
+                                <div><span className="font-bold">Frameworks & Libraries:</span> {resumeData.skills.frameworks}</div>
+                            )}
+                            {resumeData.skills.tools && (
+                                <div><span className="font-bold">Tools & Databases:</span> {resumeData.skills.tools}</div>
+                            )}
+                            {resumeData.skills.concepts && (
+                                <div><span className="font-bold">Core Concepts:</span> {resumeData.skills.concepts}</div>
+                            )}
+                        </div>
+                    </div>
+                );
+            case 'projects':
+                if (!resumeData.projects.some(proj => proj.title)) return null;
+                return (
+                    <div className="mb-5" key="projects">
+                        <h2 className={headingClass}>Key Projects</h2>
+                        <div className="space-y-4">
+                            {resumeData.projects.map((proj, idx) => {
+                                if (!proj.title) return null;
+                                return (
+                                    <div key={idx}>
+                                        <div className="flex justify-between font-bold text-black">
+                                            <span>{proj.title}</span>
+                                            <span className="font-normal text-[10px] text-gray-600 italic">
+                                                {proj.githubLink || ''}
+                                            </span>
+                                        </div>
+                                        <div className="italic text-[10px] text-gray-600 mb-1">
+                                            <span>Tech Stack: {proj.techStack}</span>
+                                        </div>
+                                        <p className="text-gray-800 text-justify">
+                                            {proj.description}
+                                        </p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            case 'education':
+                if (!resumeData.education.some(edu => edu.institution)) return null;
+                return (
+                    <div className="mb-5" key="education">
+                        <h2 className={headingClass}>Education</h2>
+                        <div className="space-y-2.5">
+                            {resumeData.education.map((edu, idx) => {
+                                if (!edu.institution) return null;
+                                return (
+                                    <div key={idx}>
+                                        <div className="flex justify-between font-bold text-black">
+                                            <span>{edu.degree}</span>
+                                            <span>{edu.year}</span>
+                                        </div>
+                                        <div className="flex justify-between italic text-[10px] text-gray-600">
+                                            <span>{edu.institution}</span>
+                                            <span>{edu.gpa ? `GPA: ${edu.gpa}` : ''}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            case 'certifications':
+                if (!resumeData.certifications) return null;
+                return (
+                    <div className="mb-5" key="certifications">
+                        <h2 className={headingClass}>Certifications & Achievements</h2>
+                        <p className="text-gray-800 whitespace-pre-line leading-relaxed">
+                            {resumeData.certifications}
+                        </p>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    const renderClassicLayout = () => {
+        const accentClass = getAccentClass();
+        const fs = getFontSizeClasses();
+        return (
+            <div className={fs.body}>
+                {/* Header */}
+                <div className="text-center mb-6">
+                    <h1 className={`font-bold uppercase tracking-tight mb-1 ${fs.name} ${accentClass}`}>
+                        {resumeData.personalInfo.name || 'YOUR NAME'}
+                    </h1>
+                    <div className="text-[10px] text-gray-700">
+                        {[
+                            resumeData.personalInfo.email,
+                            resumeData.personalInfo.phone,
+                            resumeData.personalInfo.linkedIn,
+                            resumeData.personalInfo.gitHub,
+                            resumeData.personalInfo.portfolio
+                        ].filter(Boolean).join('  |  ')}
+                    </div>
+                </div>
+
+                {sectionOrder.map(sec => renderClassicSection(sec))}
             </div>
         );
     };
 
     const renderModernLayout = () => {
         const accentClass = getAccentClass();
+        const fs = getFontSizeClasses();
         return (
-            <div>
+            <div className={fs.body}>
                 {/* Header Grid */}
                 <div className="flex justify-between items-start border-b pb-4 mb-5 border-gray-100">
                     <div>
-                        <h1 className={`text-2xl font-extrabold uppercase tracking-tight ${accentClass}`}>
+                        <h1 className={`font-extrabold uppercase tracking-tight ${fs.name} ${accentClass}`}>
                             {resumeData.personalInfo.name || 'YOUR NAME'}
                         </h1>
                         <p className="text-[10px] text-gray-600 uppercase tracking-wider mt-1 font-semibold">
@@ -275,147 +634,22 @@ const ResumeBuilder = () => {
                     </div>
                 </div>
 
-                {/* Summary */}
-                {resumeData.summary && (
-                    <div className="mb-5">
-                        <h2 className={`text-[11px] font-bold border-l-4 pl-2 mb-2 uppercase ${accentClass}`}>
-                            Professional Summary
-                        </h2>
-                        <p className="text-[10.5px] text-gray-800 text-justify">
-                            {resumeData.summary}
-                        </p>
-                    </div>
-                )}
-
-                {/* Experience */}
-                {resumeData.experience.some(exp => exp.company) && (
-                    <div className="mb-5">
-                        <h2 className={`text-[11px] font-bold border-l-4 pl-2 mb-3 uppercase ${accentClass}`}>
-                            Professional Experience
-                        </h2>
-                        <div className="space-y-4">
-                            {resumeData.experience.map((exp, idx) => {
-                                if (!exp.company) return null;
-                                return (
-                                    <div key={idx}>
-                                        <div className="flex justify-between font-bold text-[10.5px] text-black">
-                                            <span>{exp.role || 'Job Title'}</span>
-                                            <span>{exp.period || 'Period'}</span>
-                                        </div>
-                                        <div className="flex justify-between italic text-[10px] text-gray-600 mb-1.5">
-                                            <span>{exp.company}</span>
-                                            <span>{exp.location || 'Location'}</span>
-                                        </div>
-                                        <ul className="list-disc pl-5 text-[10.5px] text-gray-800 space-y-1">
-                                            {exp.highlights.map((bullet, bIdx) => (
-                                                bullet && <li key={bIdx}>{bullet}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Skills */}
-                {(resumeData.skills.languages || resumeData.skills.frameworks || resumeData.skills.tools || resumeData.skills.concepts) && (
-                    <div className="mb-5">
-                        <h2 className={`text-[11px] font-bold border-l-4 pl-2 mb-2 uppercase ${accentClass}`}>
-                            Technical Skills
-                        </h2>
-                        <div className="text-[10.5px] text-gray-800 space-y-1">
-                            {resumeData.skills.languages && (
-                                <div><span className="font-bold">Languages:</span> {resumeData.skills.languages}</div>
-                            )}
-                            {resumeData.skills.frameworks && (
-                                <div><span className="font-bold">Frameworks & Libraries:</span> {resumeData.skills.frameworks}</div>
-                            )}
-                            {resumeData.skills.tools && (
-                                <div><span className="font-bold">Tools & Databases:</span> {resumeData.skills.tools}</div>
-                            )}
-                            {resumeData.skills.concepts && (
-                                <div><span className="font-bold">Core Concepts:</span> {resumeData.skills.concepts}</div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Projects */}
-                {resumeData.projects.some(proj => proj.title) && (
-                    <div className="mb-5">
-                        <h2 className={`text-[11px] font-bold border-l-4 pl-2 mb-3 uppercase ${accentClass}`}>
-                            Key Projects
-                        </h2>
-                        <div className="space-y-4">
-                            {resumeData.projects.map((proj, idx) => {
-                                if (!proj.title) return null;
-                                return (
-                                    <div key={idx}>
-                                        <div className="flex justify-between font-bold text-[10.5px] text-black">
-                                            <span>{proj.title}</span>
-                                            <span className="font-normal text-[10px] text-gray-600 italic">
-                                                {proj.githubLink || ''}
-                                            </span>
-                                        </div>
-                                        <div className="italic text-[10px] text-gray-600 mb-1">
-                                            <span>Tech Stack: {proj.techStack}</span>
-                                        </div>
-                                        <p className="text-[10.5px] text-gray-800 text-justify">
-                                            {proj.description}
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Education */}
-                {resumeData.education.some(edu => edu.institution) && (
-                    <div className="mb-5">
-                        <h2 className={`text-[11px] font-bold border-l-4 pl-2 mb-2 uppercase ${accentClass}`}>
-                            Education
-                        </h2>
-                        <div className="space-y-2.5">
-                            {resumeData.education.map((edu, idx) => {
-                                if (!edu.institution) return null;
-                                return (
-                                    <div key={idx}>
-                                        <div className="flex justify-between font-bold text-[10.5px] text-black">
-                                            <span>{edu.degree}</span>
-                                            <span>{edu.year}</span>
-                                        </div>
-                                        <div className="flex justify-between italic text-[10px] text-gray-600">
-                                            <span>{edu.institution}</span>
-                                            <span>{edu.gpa ? `GPA: ${edu.gpa}` : ''}</span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Certifications */}
-                {resumeData.certifications && (
-                    <div className="mb-5">
-                        <h2 className={`text-[11px] font-bold border-l-4 pl-2 mb-2 uppercase ${accentClass}`}>
-                            Certifications & Achievements
-                        </h2>
-                        <p className="text-[10.5px] text-gray-800 whitespace-pre-line leading-relaxed">
-                            {resumeData.certifications}
-                        </p>
-                    </div>
-                )}
+                {sectionOrder.map(sec => renderModernSection(sec))}
             </div>
         );
     };
 
     const renderTwoColumnLayout = () => {
         const accentClass = getAccentClass();
+        const fs = getFontSizeClasses();
+        const headingClass = getClassicHeadingClass(); // fallback divider
+
+        // Group columns based on layout strategy
+        const leftSections = sectionOrder.filter(s => ['skills', 'education', 'certifications'].includes(s));
+        const rightSections = sectionOrder.filter(s => ['summary', 'experience', 'projects'].includes(s));
+
         return (
-            <div className="grid grid-cols-12 gap-6">
+            <div className={`grid grid-cols-12 gap-6 ${fs.body}`}>
                 {/* Left Side Column */}
                 <div className="col-span-4 border-r border-gray-100 pr-5 space-y-5">
                     {/* Contact Details */}
@@ -457,80 +691,87 @@ const ResumeBuilder = () => {
                         </div>
                     </div>
 
-                    {/* Technical Skills */}
-                    {(resumeData.skills.languages || resumeData.skills.frameworks || resumeData.skills.tools || resumeData.skills.concepts) && (
-                        <div>
-                            <h3 className={`text-[10px] font-extrabold uppercase tracking-wider mb-2 border-b pb-0.5 ${accentClass}`}>
-                                Skills
-                            </h3>
-                            <div className="text-[9.5px] text-gray-700 space-y-2.5">
-                                {resumeData.skills.languages && (
-                                    <div>
-                                        <div className="font-bold text-gray-900">Languages:</div>
-                                        <div className="text-gray-600">{resumeData.skills.languages}</div>
+                    {leftSections.map(secName => {
+                        if (secName === 'skills') {
+                            if (!(resumeData.skills.languages || resumeData.skills.frameworks || resumeData.skills.tools || resumeData.skills.concepts)) return null;
+                            return (
+                                <div key="skills">
+                                    <h3 className={`text-[10px] font-extrabold uppercase tracking-wider mb-2 border-b pb-0.5 ${accentClass}`}>
+                                        Skills
+                                    </h3>
+                                    <div className="text-[9.5px] text-gray-700 space-y-2.5">
+                                        {resumeData.skills.languages && (
+                                            <div>
+                                                <div className="font-bold text-gray-900">Languages:</div>
+                                                <div className="text-gray-600">{resumeData.skills.languages}</div>
+                                            </div>
+                                        )}
+                                        {resumeData.skills.frameworks && (
+                                            <div>
+                                                <div className="font-bold text-gray-900">Frameworks:</div>
+                                                <div className="text-gray-600">{resumeData.skills.frameworks}</div>
+                                            </div>
+                                        )}
+                                        {resumeData.skills.tools && (
+                                            <div>
+                                                <div className="font-bold text-gray-900">Tools:</div>
+                                                <div className="text-gray-600">{resumeData.skills.tools}</div>
+                                            </div>
+                                        )}
+                                        {resumeData.skills.concepts && (
+                                            <div>
+                                                <div className="font-bold text-gray-900">Concepts:</div>
+                                                <div className="text-gray-600">{resumeData.skills.concepts}</div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                {resumeData.skills.frameworks && (
-                                    <div>
-                                        <div className="font-bold text-gray-900">Frameworks:</div>
-                                        <div className="text-gray-600">{resumeData.skills.frameworks}</div>
+                                </div>
+                            );
+                        }
+                        if (secName === 'education') {
+                            if (!resumeData.education.some(edu => edu.institution)) return null;
+                            return (
+                                <div key="education">
+                                    <h3 className={`text-[10px] font-extrabold uppercase tracking-wider mb-2 border-b pb-0.5 ${accentClass}`}>
+                                        Education
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {resumeData.education.map((edu, idx) => {
+                                            if (!edu.institution) return null;
+                                            return (
+                                                <div key={idx} className="text-[9.5px]">
+                                                    <div className="font-bold text-gray-900">{edu.degree}</div>
+                                                    <div className="text-gray-600 italic">{edu.institution}</div>
+                                                    <div className="text-gray-500">{edu.year} {edu.gpa ? `| GPA: ${edu.gpa}` : ''}</div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                )}
-                                {resumeData.skills.tools && (
-                                    <div>
-                                        <div className="font-bold text-gray-900">Tools:</div>
-                                        <div className="text-gray-600">{resumeData.skills.tools}</div>
-                                    </div>
-                                )}
-                                {resumeData.skills.concepts && (
-                                    <div>
-                                        <div className="font-bold text-gray-900">Concepts:</div>
-                                        <div className="text-gray-600">{resumeData.skills.concepts}</div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Education */}
-                    {resumeData.education.some(edu => edu.institution) && (
-                        <div>
-                            <h3 className={`text-[10px] font-extrabold uppercase tracking-wider mb-2 border-b pb-0.5 ${accentClass}`}>
-                                Education
-                            </h3>
-                            <div className="space-y-3">
-                                {resumeData.education.map((edu, idx) => {
-                                    if (!edu.institution) return null;
-                                    return (
-                                        <div key={idx} className="text-[9.5px]">
-                                            <div className="font-bold text-gray-900">{edu.degree}</div>
-                                            <div className="text-gray-600 italic">{edu.institution}</div>
-                                            <div className="text-gray-500">{edu.year} {edu.gpa ? `| GPA: ${edu.gpa}` : ''}</div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Certifications */}
-                    {resumeData.certifications && (
-                        <div>
-                            <h3 className={`text-[10px] font-extrabold uppercase tracking-wider mb-2 border-b pb-0.5 ${accentClass}`}>
-                                Achievements
-                            </h3>
-                            <p className="text-[9.5px] text-gray-700 whitespace-pre-line leading-normal">
-                                {resumeData.certifications}
-                            </p>
-                        </div>
-                    )}
+                                </div>
+                            );
+                        }
+                        if (secName === 'certifications') {
+                            if (!resumeData.certifications) return null;
+                            return (
+                                <div key="certifications">
+                                    <h3 className={`text-[10px] font-extrabold uppercase tracking-wider mb-2 border-b pb-0.5 ${accentClass}`}>
+                                        Achievements
+                                    </h3>
+                                    <p className="text-[9.5px] text-gray-700 whitespace-pre-line leading-normal">
+                                        {resumeData.certifications}
+                                    </p>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })}
                 </div>
 
                 {/* Right Main Column */}
                 <div className="col-span-8 space-y-5">
                     {/* Header */}
                     <div>
-                        <h1 className={`text-2xl font-black uppercase tracking-tight ${accentClass}`}>
+                        <h1 className={`font-black uppercase tracking-tight ${fs.name} ${accentClass}`}>
                             {resumeData.personalInfo.name || 'YOUR NAME'}
                         </h1>
                         <p className="text-[10px] text-gray-600 uppercase tracking-widest font-bold mt-1">
@@ -538,78 +779,79 @@ const ResumeBuilder = () => {
                         </p>
                     </div>
 
-                    {/* Summary */}
-                    {resumeData.summary && (
-                        <div>
-                            <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-2 uppercase ${accentClass}`}>
-                                Professional Summary
-                            </h2>
-                            <p className="text-[10.5px] text-gray-800 text-justify">
-                                {resumeData.summary}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Experience */}
-                    {resumeData.experience.some(exp => exp.company) && (
-                        <div>
-                            <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-3 uppercase ${accentClass}`}>
-                                Professional Experience
-                            </h2>
-                            <div className="space-y-4">
-                                {resumeData.experience.map((exp, idx) => {
-                                    if (!exp.company) return null;
-                                    return (
-                                        <div key={idx}>
-                                            <div className="flex justify-between font-bold text-[10.5px] text-black">
-                                                <span>{exp.role || 'Job Title'}</span>
-                                                <span>{exp.period || 'Period'}</span>
-                                            </div>
-                                            <div className="flex justify-between italic text-[10px] text-gray-600 mb-1.5">
-                                                <span>{exp.company}</span>
-                                                <span>{exp.location || 'Location'}</span>
-                                            </div>
-                                            <ul className="list-disc pl-5 text-[10.5px] text-gray-800 space-y-1">
-                                                {exp.highlights.map((bullet, bIdx) => (
-                                                    bullet && <li key={bIdx}>{bullet}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Projects */}
-                    {resumeData.projects.some(proj => proj.title) && (
-                        <div>
-                            <h2 className={`text-[11px] font-bold border-b pb-0.5 mb-3 uppercase ${accentClass}`}>
-                                Key Projects
-                            </h2>
-                            <div className="space-y-4">
-                                {resumeData.projects.map((proj, idx) => {
-                                    if (!proj.title) return null;
-                                    return (
-                                        <div key={idx}>
-                                            <div className="flex justify-between font-bold text-[10.5px] text-black">
-                                                <span>{proj.title}</span>
-                                                <span className="font-normal text-[10px] text-gray-600 italic">
-                                                    {proj.githubLink || ''}
-                                                </span>
-                                            </div>
-                                            <div className="italic text-[10px] text-gray-600 mb-1">
-                                                <span>Tech Stack: {proj.techStack}</span>
-                                            </div>
-                                            <p className="text-[10.5px] text-gray-800 text-justify">
-                                                {proj.description}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+                    {rightSections.map(secName => {
+                        if (secName === 'summary') {
+                            if (!resumeData.summary) return null;
+                            return (
+                                <div key="summary">
+                                    <h2 className={headingClass}>Professional Summary</h2>
+                                    <p className="text-gray-800 text-justify font-serif">
+                                        {resumeData.summary}
+                                    </p>
+                                </div>
+                            );
+                        }
+                        if (secName === 'experience') {
+                            if (!resumeData.experience.some(exp => exp.company)) return null;
+                            return (
+                                <div key="experience">
+                                    <h2 className={headingClass}>Professional Experience</h2>
+                                    <div className="space-y-4">
+                                        {resumeData.experience.map((exp, idx) => {
+                                            if (!exp.company) return null;
+                                            return (
+                                                <div key={idx}>
+                                                    <div className="flex justify-between font-bold text-black">
+                                                        <span>{exp.role || 'Job Title'}</span>
+                                                        <span>{exp.period || 'Period'}</span>
+                                                    </div>
+                                                    <div className="flex justify-between italic text-[10px] text-gray-600 mb-1.5">
+                                                        <span>{exp.company}</span>
+                                                        <span>{exp.location || 'Location'}</span>
+                                                    </div>
+                                                    <ul className="list-disc pl-5 text-gray-800 space-y-1">
+                                                        {exp.highlights.map((bullet, bIdx) => (
+                                                            bullet && <li key={bIdx}>{bullet}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        if (secName === 'projects') {
+                            if (!resumeData.projects.some(proj => proj.title)) return null;
+                            return (
+                                <div key="projects">
+                                    <h2 className={headingClass}>Key Projects</h2>
+                                    <div className="space-y-4">
+                                        {resumeData.projects.map((proj, idx) => {
+                                            if (!proj.title) return null;
+                                            return (
+                                                <div key={idx}>
+                                                    <div className="flex justify-between font-bold text-black">
+                                                        <span>{proj.title}</span>
+                                                        <span className="font-normal text-[10px] text-gray-600 italic">
+                                                            {proj.githubLink || ''}
+                                                        </span>
+                                                    </div>
+                                                    <div className="italic text-[10px] text-gray-600 mb-1">
+                                                        <span>Tech Stack: {proj.techStack}</span>
+                                                    </div>
+                                                    <p className="text-gray-800 text-justify">
+                                                        {proj.description}
+                                                    </p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })}
                 </div>
             </div>
         );
@@ -1014,6 +1256,8 @@ const ResumeBuilder = () => {
         }
     };
 
+    const atsInfo = calculateAtsScore();
+
     return (
         <div className="min-h-screen py-6 bg-dark-50 dark:bg-dark-950/20">
             <ResumeHeader />
@@ -1412,8 +1656,9 @@ const ResumeBuilder = () => {
                         </div>
 
                         {/* Style & Layout Selectors */}
-                        <div className="bg-white dark:bg-dark-900/60 p-4 border border-dark-200/50 dark:border-dark-800 rounded-2xl space-y-3">
+                        <div className="bg-white dark:bg-dark-900/60 p-5 border border-dark-200/50 dark:border-dark-800 rounded-2xl space-y-4 shadow-sm">
                             <div className="text-xs font-bold text-dark-500 dark:text-dark-400 uppercase tracking-wider">Customize Template Structure & Theme</div>
+                            
                             <div className="grid grid-cols-3 gap-3">
                                 {/* Structure Selector */}
                                 <div className="space-y-1">
@@ -1421,7 +1666,7 @@ const ResumeBuilder = () => {
                                     <select 
                                         value={selectedLayout} 
                                         onChange={(e) => setSelectedLayout(e.target.value)}
-                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none"
+                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
                                     >
                                         <option value="classic">Classic Academic</option>
                                         <option value="modern">Modern Professional</option>
@@ -1435,7 +1680,7 @@ const ResumeBuilder = () => {
                                     <select 
                                         value={selectedAccent} 
                                         onChange={(e) => setSelectedAccent(e.target.value)}
-                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none"
+                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
                                     >
                                         <option value="charcoal">Charcoal Black</option>
                                         <option value="navy">Slate Navy</option>
@@ -1450,19 +1695,147 @@ const ResumeBuilder = () => {
                                     <select 
                                         value={selectedFont} 
                                         onChange={(e) => setSelectedFont(e.target.value)}
-                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none"
+                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
                                     >
                                         <option value="serif">Classic Serif</option>
                                         <option value="sans">Modern Sans</option>
                                         <option value="slab">Elegant Slab</option>
                                     </select>
                                 </div>
+
+                                {/* Font Size Selector */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase">Font Size</label>
+                                    <select 
+                                        value={selectedFontSize} 
+                                        onChange={(e) => setSelectedFontSize(e.target.value)}
+                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                    >
+                                        <option value="small">Small (Dense)</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="large">Large</option>
+                                    </select>
+                                </div>
+
+                                {/* Page Margins Selector */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase">Margins</label>
+                                    <select 
+                                        value={selectedMargins} 
+                                        onChange={(e) => setSelectedMargins(e.target.value)}
+                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                    >
+                                        <option value="compact">Compact (0.5 in)</option>
+                                        <option value="normal">Normal (0.75 in)</option>
+                                        <option value="spacious">Spacious (1.0 in)</option>
+                                    </select>
+                                </div>
+
+                                {/* Section Divider Style */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase">Section Dividers</label>
+                                    <select 
+                                        value={dividerStyle} 
+                                        onChange={(e) => setDividerStyle(e.target.value)}
+                                        className="w-full text-xs p-2 rounded-lg bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-850 text-dark-850 dark:text-dark-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                    >
+                                        <option value="solid">Underline</option>
+                                        <option value="left-bar">Left Accent Bar</option>
+                                        <option value="none">No Line</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Section Re-ordering */}
+                            <div className="space-y-2 pt-3 border-t border-dark-100 dark:border-dark-850">
+                                <label className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase block">Section Ordering (ATS Control)</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {sectionOrder.map((section, idx) => (
+                                        <div key={section} className="flex items-center gap-1.5 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 text-[10px] font-semibold py-1.5 px-2.5 rounded-lg text-dark-750 dark:text-dark-350 select-none">
+                                            <span className="capitalize">{section === 'certifications' ? 'Achievements' : section}</span>
+                                            <div className="flex flex-col text-[7px] leading-[1] text-dark-400">
+                                                {idx > 0 && <button type="button" onClick={() => moveSection(idx, -1)} className="hover:text-primary-500 cursor-pointer p-0.5">▲</button>}
+                                                {idx < sectionOrder.length - 1 && <button type="button" onClick={() => moveSection(idx, 1)} className="hover:text-primary-500 cursor-pointer p-0.5">▼</button>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
+                        {/* Real-time ATS Audit Card */}
+                        <div className="bg-white dark:bg-dark-900/60 p-5 border border-dark-200/50 dark:border-dark-800 rounded-2xl space-y-3">
+                            <div className="flex justify-between items-center">
+                                <div className="text-xs font-bold text-dark-500 dark:text-dark-400 uppercase tracking-wider">ATS Score & Audit</div>
+                                <div className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                                    atsInfo.score >= 80 
+                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                                        : atsInfo.score >= 50 
+                                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' 
+                                            : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                }`}>
+                                    {atsInfo.score}% Ready
+                                </div>
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            <div className="w-full bg-dark-100 dark:bg-dark-950 rounded-full h-1.5">
+                                <div 
+                                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                                        atsInfo.score >= 80 
+                                            ? 'bg-emerald-500' 
+                                            : atsInfo.score >= 50 
+                                                ? 'bg-amber-500' 
+                                                : 'bg-red-500'
+                                    }`} 
+                                    style={{ width: `${atsInfo.score}%` }}
+                                />
+                            </div>
+
+                            {/* Suggestions */}
+                            {atsInfo.suggestions.length > 0 ? (
+                                <ul className="text-[10px] space-y-1 text-dark-500 dark:text-dark-400 list-disc pl-4 leading-normal">
+                                    {atsInfo.suggestions.map((sug, sIdx) => (
+                                        <li key={sIdx}>{sug}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Excellent! Your resume layout and fields are highly optimized for ATS.
+                                </div>
+                            )}
+
+                            {/* AI ATS Enhancer Button */}
+                            <button
+                                onClick={optimizeAtsBullets}
+                                className="w-full mt-2 py-2 px-3 bg-primary-500/10 hover:bg-primary-500/25 text-primary-600 dark:text-primary-400 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-primary-500/20"
+                                disabled={aiLoading.ats}
+                            >
+                                {aiLoading.ats ? (
+                                    <>
+                                        <svg className="animate-spin h-3.5 w-3.5 text-current" viewBox="0 0 24 24" fill="none">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        Rewriting Experience Highlights for ATS...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                        Auto-Optimize Experience Bullets (Google XYZ Formula)
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
                         {/* Print Preview Container */}
-                        <div id="resume-preview" className="bg-white text-black p-8 sm:p-12 shadow-xl border border-dark-200/50 rounded-2xl min-h-[840px] max-h-[85vh] overflow-y-auto">
-                            <div id="resume-preview-doc" className="text-left leading-normal text-xs text-black bg-white" style={getFontFamilyStyle()}>
+                        <div id="resume-preview" className="bg-white text-black shadow-xl border border-dark-200/50 rounded-2xl min-h-[840px] max-h-[85vh] overflow-y-auto" style={getMarginsPreviewStyle()}>
+                            <div id="resume-preview-doc" className="text-left leading-normal text-black bg-white" style={getFontFamilyStyle()}>
                                 {selectedLayout === 'two-column' 
                                     ? renderTwoColumnLayout() 
                                     : selectedLayout === 'modern' 
