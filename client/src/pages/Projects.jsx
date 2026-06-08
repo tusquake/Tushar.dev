@@ -6,6 +6,72 @@ import Loading from '../components/common/Loading';
 // Server URL for static files (without /api suffix)
 const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
+const ProjectCover = ({ project }) => {
+    // Generate a deterministically seeded set of colors based on project title
+    const hashString = (str) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return Math.abs(hash);
+    };
+
+    const seed = hashString(project.title);
+    const hue1 = seed % 360;
+    const hue2 = (seed + 120) % 360;
+    const hue3 = (seed + 240) % 360;
+
+    const gradientStyle = {
+        background: `radial-gradient(circle at 20% 30%, hsl(${hue1}, 75%, 30%), transparent 60%),
+                    radial-gradient(circle at 80% 70%, hsl(${hue2}, 70%, 20%), transparent 65%),
+                    radial-gradient(circle at 50% 50%, hsl(${hue3}, 65%, 15%), transparent 70%),
+                    #0b0f19`
+    };
+
+    return (
+        <div 
+            className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-500" 
+            style={gradientStyle}
+        >
+            {/* Grid Overlay */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
+            
+            {/* Soft Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Top Bar */}
+            <div className="flex justify-between items-start z-10 w-full">
+                <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-white/10 text-white/95 backdrop-blur-md border border-white/10">
+                    {project.techStack[0] || 'System Design'}
+                </span>
+                {project.featured && (
+                    <span className="text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                        ★ Featured
+                    </span>
+                )}
+            </div>
+
+            {/* Central Icon Representation */}
+            <div className="flex justify-center items-center z-10 py-1">
+                <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform duration-300">
+                    <span className="text-lg font-bold text-white uppercase select-none">
+                        {project.title.substring(0, 2)}
+                    </span>
+                </div>
+            </div>
+
+            {/* Footer Stack Info */}
+            <div className="flex gap-1.5 flex-wrap z-10 w-full">
+                {project.techStack.slice(0, 3).map((tech, tIdx) => (
+                    <span key={tIdx} className="text-[9px] font-medium text-white/60">
+                        #{tech}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const Projects = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -168,6 +234,195 @@ const Projects = () => {
             image: '/projects/cricstream.png',
             featured: true,
         },
+        {
+            _id: '17',
+            title: 'GeoTrakr',
+            description: 'Real-time geo-tracking platform showcasing driver fleets, route histories, and geofencing triggers via microservices.',
+            techStack: ['Go', 'Redis', 'PostgreSQL', 'WebSockets', 'Leaflet'],
+            githubLink: 'https://github.com/tusquake/GeoTrakr',
+            image: '/projects/geotrakr.png',
+            featured: true,
+        },
+        {
+            _id: '18',
+            title: 'Production Sequencing Manager',
+            description: 'An enterprise-grade production scheduler utilizing sorting rules (EDD, SPT, LPT) and order prioritization pipelines.',
+            techStack: ['React', 'Spring Boot', 'PostgreSQL', 'Kafka', 'Tailwind CSS'],
+            githubLink: 'https://github.com/tusquake/Production-Sequencing-Manager',
+            image: '',
+            featured: true,
+        },
+        {
+            _id: '19',
+            title: 'env-validator',
+            description: 'Lightweight configuration verification module checking schema correctness, default fallbacks, and missing production variables.',
+            techStack: ['TypeScript', 'Node.js', 'npm', 'Jest', 'CI/CD'],
+            githubLink: 'https://github.com/tusquake/env-validator',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '20',
+            title: 'Taskedular',
+            description: 'A distributed task executor system supporting cron expressions, retry backoffs, and execution logs tracking.',
+            techStack: ['Spring Boot', 'Quartz', 'MySQL', 'React', 'RabbitMQ'],
+            githubLink: 'https://github.com/tusquake/Taskedular',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '21',
+            title: 'QuickPe',
+            description: 'A high-performance peer-to-peer payment gateway simulating transaction processing, ledger balancing, and audit runs.',
+            techStack: ['Go', 'Kafka', 'Redis', 'PostgreSQL', 'Docker'],
+            githubLink: 'https://github.com/tusquake/QuickPe',
+            image: '',
+            featured: true,
+        },
+        {
+            _id: '22',
+            title: 'Mobile-Geotkr',
+            description: 'Cross-platform mobile application capturing background GPS telemetry logs and syncing them to backend clusters.',
+            techStack: ['React Native', 'Expo', 'Google Maps API', 'Node.js'],
+            githubLink: 'https://github.com/tusquake/Mobile-Geotkr',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '23',
+            title: 'MFA',
+            description: 'A robust multi-factor authentication library implementing TOTP key generators, QR codes, and backup codes management.',
+            techStack: ['Spring Security', 'TOTP', 'Redis', 'Thymeleaf', 'PostgreSQL'],
+            githubLink: 'https://github.com/tusquake/MFA',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '24',
+            title: 'HealSync',
+            description: 'A patient-doctor collaboration portal offering video consultation scheduling, prescription records, and live chats.',
+            techStack: ['React', 'Express', 'MongoDB', 'Socket.io', 'Tailwind'],
+            githubLink: 'https://github.com/tusquake/HealSync',
+            image: '',
+            featured: true,
+        },
+        {
+            _id: '25',
+            title: 'Ecom-Mini',
+            description: 'A modular e-commerce engine providing catalog search, shopping carts management, checkout pipelines, and order logging.',
+            techStack: ['Spring Boot', 'Hibernate', 'PostgreSQL', 'React', 'Docker'],
+            githubLink: 'https://github.com/tusquake/Ecom-Mini',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '26',
+            title: 'Streamify',
+            description: 'A self-hosted video streaming service transcoding media assets into HLS segments for adaptive bitrate playback.',
+            techStack: ['Node.js', 'FFmpeg', 'HLS', 'React', 'AWS S3'],
+            githubLink: 'https://github.com/tusquake/Streamify',
+            image: '',
+            featured: true,
+        },
+        {
+            _id: '27',
+            title: 'AI-Customer-Support',
+            description: 'An AI-powered ticketing assistant classifying customer queries and generating context-aware support draft replies.',
+            techStack: ['Python', 'Gemini API', 'LangChain', 'FastAPI', 'React'],
+            githubLink: 'https://github.com/tusquake/AI-Customer-Support',
+            image: '',
+            featured: true,
+        },
+        {
+            _id: '28',
+            title: 'Procura',
+            description: 'An enterprise procurement tool facilitating vendor onboarding, RFQ submissions, and purchase order tracking.',
+            techStack: ['Spring Boot', 'PostgreSQL', 'React', 'Tailwind', 'Docker'],
+            githubLink: 'https://github.com/tusquake/Procura',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '29',
+            title: 'Servigo',
+            description: 'On-demand local service directory linking consumers with vetted local repair, cleaning, and maintenance specialists.',
+            techStack: ['Go', 'WebSockets', 'Redis', 'PostgreSQL', 'React'],
+            githubLink: 'https://github.com/tusquake/Servigo',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '30',
+            title: 'SnapURL',
+            description: 'Sleek, lightweight link-shortener application providing geo-location click metrics and QR-code generators.',
+            techStack: ['Node.js', 'Express', 'MongoDB', 'Redis', 'Tailwind'],
+            githubLink: 'https://github.com/tusquake/SnapURL',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '31',
+            title: 'Banking-System',
+            description: 'Core banking ledger simulator managing accounts creation, balance updates, funds transfers, and statements.',
+            techStack: ['Java', 'Spring Boot', 'JPA', 'MySQL', 'Thymeleaf'],
+            githubLink: 'https://github.com/tusquake/Banking-System',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '32',
+            title: 'Coffee-Shop',
+            description: 'A static landing page for a gourmet coffee cafe showcasing menu cards, booking sheets, and interactive reviews.',
+            techStack: ['HTML', 'CSS', 'JavaScript', 'Responsive Design'],
+            githubLink: 'https://github.com/tusquake/Coffee-Shop',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '33',
+            title: 'Stock-Trading-Platform',
+            description: 'Real-time stock portfolio tracker visualizing price tickers, order execution simulation, and history metrics.',
+            techStack: ['Go', 'WebSockets', 'Redis', 'React', 'TimescaleDB'],
+            githubLink: 'https://github.com/tusquake/Stock-Trading-Platform',
+            image: '',
+            featured: true,
+        },
+        {
+            _id: '34',
+            title: 'Nginx',
+            description: 'A library of custom NGINX configuration templates optimized for reverse proxy, SSL termination, and rate limiting.',
+            techStack: ['Bash', 'NGINX Config', 'SSL/TLS', 'Docker'],
+            githubLink: 'https://github.com/tusquake/Nginx',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '35',
+            title: 'Customer-Order-Management-Dashboard',
+            description: 'An analytical panel compiling sales metrics, customer orders fulfillment status, and order revenue breakdowns.',
+            techStack: ['React', 'Node.js', 'MongoDB', 'Chart.js', 'Tailwind'],
+            githubLink: 'https://github.com/tusquake/Customer-Order-Management-Dashboard',
+            image: '',
+            featured: false,
+        },
+        {
+            _id: '36',
+            title: 'AI-Research-Assistant',
+            description: 'An intelligent research canvas using RAG to extract semantic summaries and key citations from uploaded PDF papers.',
+            techStack: ['Python', 'Gemini API', 'ChromaDB', 'FastAPI', 'React'],
+            githubLink: 'https://github.com/tusquake/AI-Research-Assistant',
+            image: '',
+            featured: true,
+        },
+        {
+            _id: '37',
+            title: 'ServiCart',
+            description: 'Mobile grocery checkout assistant supporting item cataloging, real-time total updates, and local store locator.',
+            techStack: ['React Native', 'Node.js', 'MongoDB', 'Redux Toolkit'],
+            githubLink: 'https://github.com/tusquake/ServiCart',
+            image: '',
+            featured: false,
+        },
     ];
 
     useEffect(() => {
@@ -242,19 +497,24 @@ const Projects = () => {
                             style={{ animationDelay: `${index * 100}ms` }}
                         >
                             {/* Project image */}
-                            <div className="h-48 bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center relative overflow-hidden">
+                            <div className="h-48 relative overflow-hidden">
                                 {project.image ? (
-                                    <img
-                                        src={getImageUrl(project.image)}
-                                        alt={project.title}
-                                        className="w-full h-full object-cover"
-                                    />
+                                    <>
+                                        <img
+                                            src={getImageUrl(project.image)}
+                                            alt={project.title}
+                                            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                                        />
+                                        {project.featured && (
+                                            <span className="absolute top-4 right-4 px-3 py-1 bg-yellow-500 text-yellow-900 text-xs font-bold rounded-full z-10 shadow-md">
+                                                Featured
+                                            </span>
+                                        )}
+                                    </>
                                 ) : (
-                                    <svg className="w-16 h-16 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
+                                    <ProjectCover project={project} />
                                 )}
-                                <div className="absolute inset-0 bg-dark-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                <div className="absolute inset-0 bg-dark-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
                                     {project.githubLink && (
                                         <a
                                             href={project.githubLink}
@@ -280,11 +540,6 @@ const Projects = () => {
                                         </a>
                                     )}
                                 </div>
-                                {project.featured && (
-                                    <span className="absolute top-4 right-4 px-3 py-1 bg-yellow-500 text-yellow-900 text-xs font-bold rounded-full">
-                                        Featured
-                                    </span>
-                                )}
                             </div>
 
                             {/* Content */}
