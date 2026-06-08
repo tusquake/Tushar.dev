@@ -6,7 +6,7 @@ const BOILERPLATES = {
 // Write your code and click 'Run Code' to execute.
 
 function main() {
-    console.log("🚀 Starting Javascript Execution...");
+    console.log("Starting Javascript Execution...");
     
     const numbers = [5, 2, 9, 1, 5, 6];
     console.log("Original Array: " + JSON.stringify(numbers));
@@ -18,7 +18,7 @@ function main() {
     const sum = numbers.reduce((acc, curr) => acc + curr, 0);
     console.log("Sum of elements: " + sum);
     
-    console.log("✨ Execution completed successfully!");
+    console.log("Execution completed successfully!");
 }
 
 main();`,
@@ -26,7 +26,7 @@ main();`,
 # Write your code and click 'Run Code' to compile/execute.
 
 def main():
-    print("🚀 Initializing Python Sandbox...")
+    print("Initializing Python Sandbox...")
     
     # Generate a fibonacci sequence
     n = 10
@@ -35,7 +35,7 @@ def main():
         fib.append(fib[-1] + fib[-2])
         
     print(f"First {n} Fibonacci numbers: {fib}")
-    print("✨ Execution completed successfully!")
+    print("Execution completed successfully!")
 
 if __name__ == "__main__":
     main()`,
@@ -49,13 +49,13 @@ if __name__ == "__main__":
 using namespace std;
 
 int main() {
-    cout << "🚀 Running C++ Binary..." << endl;
+    cout << "Running C++ Binary..." << endl;
     
-    vector<int> data = {10, 20, 30, 40, 50};
+    vector<int> data = {10, 20, 30, 45, 50};
     int sum = accumulate(data.begin(), data.end(), 0);
     
     cout << "Dataset sum: " << sum << endl;
-    cout << "✨ Execution completed successfully!" << endl;
+    cout << "Execution completed successfully!" << endl;
     
     return 0;
 }`,
@@ -66,7 +66,7 @@ import java.util.*;
 
 public class Solution {
     public static void main(String[] args) {
-        System.out.println("🚀 Running JVM instance...");
+        System.out.println("Running JVM instance...");
         
         Map<String, String> config = new HashMap<>();
         config.put("environment", "Production");
@@ -74,7 +74,7 @@ public class Solution {
         config.put("optimization", "Level 3");
         
         System.out.println("System Config: " + config);
-        System.out.println("✨ Execution completed successfully!");
+        System.out.println("Execution completed successfully!");
     }
 }`
 };
@@ -303,7 +303,7 @@ Provide instructions and modified code structure to achieve this request.`;
             setCode(match[1].trim());
             setTerminalOutput(prev => [
                 ...prev,
-                { type: 'system', text: '⚡ Applied AI Intellisense suggestion to active document.' }
+                { type: 'system', text: 'System: Applied AI Intellisense suggestion to active document.' }
             ]);
         } else {
             alert("No clear code block found in the AI response to automatically apply.");
@@ -381,7 +381,10 @@ Provide instructions and modified code structure to achieve this request.`;
                 <div className={`p-5 mb-6 rounded-2xl border ${styles.container} ${styles.glow} flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all duration-300`}>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20">
-                            ⚙️
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
                         </div>
                         <div>
                             <h1 className="text-xl font-bold tracking-tight text-dark-900 dark:text-white flex items-center gap-2">
@@ -425,7 +428,10 @@ Provide instructions and modified code structure to achieve this request.`;
                         {/* AI Toggle */}
                         <div className="flex items-center gap-2 mt-4 md:mt-0 px-3 py-1.5 rounded-lg border border-dark-250 dark:border-dark-850 bg-dark-50/50 dark:bg-dark-900/50">
                             <span className="text-xs font-medium text-dark-600 dark:text-dark-300 flex items-center gap-1.5">
-                                🔮 AI Intellisense
+                                <svg className="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                AI Intellisense
                             </span>
                             <button
                                 onClick={() => setAiIntellisense(!aiIntellisense)}
@@ -516,7 +522,10 @@ Provide instructions and modified code structure to achieve this request.`;
                                             </>
                                         ) : (
                                             <>
-                                                <span>▶</span> Run Code
+                                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                                </svg>
+                                                Run Code
                                             </>
                                         )}
                                     </button>
@@ -537,8 +546,8 @@ Provide instructions and modified code structure to achieve this request.`;
                                 <div className="flex items-center gap-3">
                                     {performanceMetrics.time > 0 && (
                                         <div className="flex items-center gap-3 text-[10px] text-emerald-400 uppercase tracking-widest font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                            <span>⏱️ {performanceMetrics.time} ms</span>
-                                            <span>💾 {performanceMetrics.memory} KB</span>
+                                            <span>Time: {performanceMetrics.time} ms</span>
+                                            <span>Memory: {performanceMetrics.memory} KB</span>
                                         </div>
                                     )}
                                     <button
@@ -575,7 +584,10 @@ Provide instructions and modified code structure to achieve this request.`;
                             <div className="p-5 rounded-2xl border border-dark-250 dark:border-dark-850 bg-white dark:bg-dark-900/50 backdrop-blur-xl shadow-xl">
                                 <div className="flex items-center justify-between mb-4 border-b border-dark-100 dark:border-dark-800/80 pb-3">
                                     <h2 className="font-bold text-dark-900 dark:text-white flex items-center gap-1.5">
-                                        <span className="text-primary-500 animate-pulse text-lg">🔮</span> AI Copilot Coprocessor
+                                        <svg className="w-4 h-4 text-primary-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                        AI Copilot Coprocessor
                                     </h2>
                                     <span className="bg-[#10b981]/15 text-[#10b981] dark:bg-[#10b981]/25 dark:text-[#10b981] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Active</span>
                                 </div>
@@ -587,28 +599,28 @@ Provide instructions and modified code structure to achieve this request.`;
                                         disabled={aiLoading}
                                         className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
                                     >
-                                        🔬 Explain Code
+                                        Explain Code
                                     </button>
                                     <button
                                         onClick={() => handleCopilotAction('optimize')}
                                         disabled={aiLoading}
                                         className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
                                     >
-                                        ⚡ Optimize Logic
+                                        Optimize Logic
                                     </button>
                                     <button
                                         onClick={() => handleCopilotAction('fix_bugs')}
                                         disabled={aiLoading}
                                         className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
                                     >
-                                        🐛 Audit Bugs
+                                        Audit Bugs
                                     </button>
                                     <button
                                         onClick={() => handleCopilotAction('custom')}
                                         disabled={aiLoading || !aiQuery.trim()}
                                         className="py-2.5 px-2 text-xs font-semibold rounded-xl bg-primary-500/10 hover:bg-primary-500/20 text-primary-500 border border-primary-500/20 transition cursor-pointer text-center disabled:opacity-50"
                                     >
-                                        🤖 Submit Prompt
+                                        Submit Prompt
                                     </button>
                                 </div>
 

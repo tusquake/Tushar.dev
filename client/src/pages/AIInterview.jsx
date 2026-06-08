@@ -23,10 +23,77 @@ const AIInterview = () => {
     const [expandedItem, setExpandedItem] = useState(null);
     const [sessionLogs, setSessionLogs] = useState([]);
     const [inputMode, setInputMode] = useState('voice'); // 'voice', 'code'
+    const [timeRemaining, setTimeRemaining] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const [timerActive, setTimerActive] = useState(false);
 
     const recognitionRef = useRef(null);
     const idleTimerRef = useRef(null);
     const accumulatedTranscriptRef = useRef('');
+
+    useEffect(() => {
+        let interval = null;
+        if (timerActive && !isPaused && timeRemaining > 0 && stage !== 'idle' && stage !== 'session_summary') {
+            interval = setInterval(() => {
+                setTimeRemaining(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        setStage('session_summary');
+                        window.speechSynthesis.cancel();
+                        showToast("Time is up! Generating your session report.");
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [timerActive, isPaused, timeRemaining, stage]);
+
+    useEffect(() => {
+        if (inputMode === 'code') {
+            if (idleTimerRef.current) {
+                clearTimeout(idleTimerRef.current);
+                idleTimerRef.current = null;
+            }
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (e) {}
+                recognitionRef.current = null;
+            }
+            if (stage === 'listening') {
+                setStage('asking');
+            }
+        }
+    }, [inputMode]);
+
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const handleTogglePause = () => {
+        const nextPaused = !isPaused;
+        setIsPaused(nextPaused);
+        if (nextPaused) {
+            window.speechSynthesis.cancel();
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (e) {}
+            }
+            if (stage === 'listening') {
+                setStage('asking');
+            }
+            showToast("Interview session paused");
+        } else {
+            showToast("Interview session resumed");
+        }
+    };
 
     const showToast = (msg) => {
         setToast(msg);
@@ -309,16 +376,25 @@ const AIInterview = () => {
         setLoading(true);
         setError('');
         
-        // If this is the start of a session, reset session logs
+        // If this is the start of a session, reset session logs and initialize session timers
         if (stage === 'idle') {
             setSessionLogs([]);
+            setTimeRemaining(duration * 60);
+            setIsPaused(false);
+            setTimerActive(true);
         }
+
+        const previouslyAsked = sessionLogs.map(log => log.question);
+        const exclusionsPrompt = previouslyAsked.length > 0
+            ? `To ensure variety and progression, DO NOT ask any of the following questions that have already been asked in this session:\n${previouslyAsked.map(q => `- ${q}`).join('\n')}\nPlease choose a different sub-topic or specific question.`
+            : '';
 
         const prompt = `You are an expert technical interviewer conducting a mock interview.
 The candidate has selected the topic: "${topic}".
 Generate ONE highly relevant, specific, and challenging interview question strictly about "${topic}".
 Use the candidate's resume context below ONLY to calibrate the experience level (Junior, Mid, Senior) and the context of the question. 
 If the topic is "Data Structures & Algorithms", ask a specific conceptual or coding/problem-solving question (e.g., about arrays, trees, dynamic programming, complexity, etc.) rather than asking about their previous projects.
+${exclusionsPrompt}
 Respond with ONLY the question text itself. No introductory remarks, no meta-commentary, no markdown formatting.
 
 Candidate Resume Context:
@@ -733,7 +809,65 @@ JSON Evaluation:`;
                                 )}
                             </button>
                         </div>
-                    )}                    {/* Active Question & Voice Q&A Screen */}
+                    )}                    {/* Countdown Timer and Control Header */}
+                    {stage !== 'idle' && stage !== 'session_summary' && (
+                        <div className="mb-6 p-4 rounded-xl bg-dark-50 dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-primary-500/10 text-primary-500">
+                                    <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider">Time Remaining</div>
+                                    <div className="text-lg font-mono font-bold text-dark-900 dark:text-white flex items-center gap-2">
+                                        {formatTime(timeRemaining)}
+                                        {isPaused && (
+                                            <span className="text-[10px] bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/25 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse">Paused</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleTogglePause}
+                                    className="px-3 py-1.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                                >
+                                    {isPaused ? (
+                                        <>
+                                            <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                            </svg>
+                                            Resume
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                            Pause
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        window.speechSynthesis.cancel();
+                                        setStage('session_summary');
+                                        showToast("Interview finished. Generating scorecard.");
+                                    }}
+                                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 border-none"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Finish & Report
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Active Question & Voice Q&A Screen */}
                     {stage === 'asking' && (
                         <div className="space-y-6 animate-fade-in">
                             <div className="flex items-center justify-between">
@@ -752,7 +886,10 @@ JSON Evaluation:`;
                                     onClick={() => speak(question)}
                                     className="text-xs font-semibold text-emerald-500 hover:text-emerald-600 flex items-center gap-1.5 cursor-pointer mt-1"
                                 >
-                                    🔊 Repeat Question
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    </svg>
+                                    Repeat Question
                                 </button>
                             </div>
 
@@ -761,19 +898,25 @@ JSON Evaluation:`;
                                 <div className="inline-flex p-1 bg-dark-100 dark:bg-dark-850 rounded-xl border border-dark-200/50 dark:border-dark-800">
                                     <button
                                         onClick={() => setInputMode('voice')}
-                                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${
                                             inputMode === 'voice' ? 'bg-white dark:bg-dark-900 text-primary-500 shadow-sm' : 'text-dark-500 dark:text-dark-400'
                                         }`}
                                     >
-                                        🎙️ Voice Mode
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                        </svg>
+                                        Voice Mode
                                     </button>
                                     <button
                                         onClick={() => setInputMode('code')}
-                                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${
                                             inputMode === 'code' ? 'bg-white dark:bg-dark-900 text-primary-500 shadow-sm' : 'text-dark-500 dark:text-dark-400'
                                         }`}
                                     >
-                                        💻 Code Editor
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                        </svg>
+                                        Code Editor
                                     </button>
                                 </div>
                             </div>
@@ -792,9 +935,13 @@ JSON Evaluation:`;
                                     <div className="flex gap-4">
                                         <button
                                             onClick={startListening}
-                                            className="btn-primary px-6 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                                            disabled={isPaused}
+                                            className={`btn-primary px-6 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
-                                            🎙️ Start Speaking
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                            </svg>
+                                            Start Speaking
                                         </button>
                                         <button
                                             onClick={handleExitSession}
@@ -806,14 +953,18 @@ JSON Evaluation:`;
                                 </div>
                             ) : (
                                 <div className="space-y-4 w-full">
-                                    <div className="p-4 rounded-xl bg-primary-500/5 border border-primary-500/10 text-xs text-primary-600 dark:text-primary-400">
-                                        💻 <strong>Code Editor Active:</strong> Write your logic or pseudo-code below. Complete syntax compiling is not required, just explain your algorithms and logic.
+                                    <div className="p-4 rounded-xl bg-primary-500/5 border border-primary-500/10 text-xs text-primary-600 dark:text-primary-400 flex items-center gap-2">
+                                        <svg className="w-4 h-4 flex-shrink-0 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                        </svg>
+                                        <span><strong>Code Editor Active:</strong> Write your logic or pseudo-code below. Complete syntax compiling is not required, just explain your algorithms and logic.</span>
                                     </div>
                                     <textarea
                                         className="input font-mono text-sm min-h-[220px] p-4 leading-relaxed"
                                         placeholder="// Write your code or step-by-step logic here..."
                                         value={answer}
                                         onChange={(e) => setAnswer(e.target.value)}
+                                        disabled={isPaused}
                                     />
                                     <div className="flex gap-4">
                                         <button
@@ -825,9 +976,13 @@ JSON Evaluation:`;
                                                 setStage('evaluating');
                                                 evaluateAnswer();
                                             }}
-                                            className="btn-primary px-6 py-2.5 text-xs font-semibold flex-1 cursor-pointer"
+                                            disabled={isPaused}
+                                            className={`btn-primary px-6 py-2.5 text-xs font-semibold flex-1 cursor-pointer flex items-center justify-center gap-1.5 ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
-                                            🚀 Submit Code Response
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                            Submit Code Response
                                         </button>
                                         <button
                                             onClick={handleExitSession}
@@ -869,7 +1024,11 @@ JSON Evaluation:`;
                                     onClick={handleStopRecording}
                                     className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 cursor-pointer transition-all border-none"
                                 >
-                                    🛑 Stop & Submit
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                                    </svg>
+                                    Stop & Submit
                                 </button>
                                 <button
                                     onClick={handleExitSession}
@@ -904,7 +1063,15 @@ JSON Evaluation:`;
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
                                         feedback.correct ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
                                     }`}>
-                                        {feedback.correct ? '✓' : '✗'}
+                                        {feedback.correct ? (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="font-extrabold text-lg">
@@ -935,17 +1102,26 @@ JSON Evaluation:`;
                                 </button>
                                 {sessionLogs.length > 0 && (
                                     <button
-                                        onClick={() => setStage('session_summary')}
-                                        className="px-4 py-2.5 border border-emerald-500/30 dark:border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl transition-all cursor-pointer flex-1 min-w-[120px] text-center"
+                                        onClick={() => {
+                                            window.speechSynthesis.cancel();
+                                            setStage('session_summary');
+                                        }}
+                                        className="px-4 py-2.5 border border-emerald-500/30 dark:border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl transition-all cursor-pointer flex-1 min-w-[120px] text-center flex items-center justify-center gap-1.5"
                                     >
-                                        🏁 Finish Interview
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Finish Interview
                                     </button>
                                 )}
                                 <button
                                     onClick={generateQuestion}
-                                    className="btn-primary text-xs py-2.5 flex-1 min-w-[120px] cursor-pointer"
+                                    className="btn-primary text-xs py-2.5 flex-1 min-w-[120px] cursor-pointer flex items-center justify-center gap-1"
                                 >
-                                    Next Question →
+                                    <span>Next Question</span>
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                                    </svg>
                                 </button>
                             </div>
                         </div>
@@ -1001,7 +1177,10 @@ JSON Evaluation:`;
                                     onClick={handleDownloadSessionReport}
                                     className="btn-primary text-xs py-2.5 flex-1 cursor-pointer flex items-center justify-center gap-2"
                                 >
-                                    📥 Download Report PDF
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Download Report PDF
                                 </button>
                                 <button
                                     onClick={handleExitSession}
