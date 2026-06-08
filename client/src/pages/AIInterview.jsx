@@ -284,8 +284,12 @@ const AIInterview = () => {
     const generateQuestion = async () => {
         setLoading(true);
         setError('');
-        const prompt = `You are an expert technical interviewer. Based on the candidate's resume summary below, generate ONE professional interview question for a ${duration}-minute session on the topic "${topic}".
-Ensure the question is clear, concise, and challenging. Respond with ONLY the question text itself. No intros, no comments.
+        const prompt = `You are an expert technical interviewer conducting a mock interview.
+The candidate has selected the topic: "${topic}".
+Generate ONE highly relevant, specific, and challenging interview question strictly about "${topic}".
+Use the candidate's resume context below ONLY to calibrate the experience level (Junior, Mid, Senior) and the context of the question. 
+If the topic is "Data Structures & Algorithms", ask a specific conceptual or coding/problem-solving question (e.g., about arrays, trees, dynamic programming, complexity, etc.) rather than asking about their previous projects.
+Respond with ONLY the question text itself. No introductory remarks, no meta-commentary, no markdown formatting.
 
 Candidate Resume Context:
 ${resumeText}
