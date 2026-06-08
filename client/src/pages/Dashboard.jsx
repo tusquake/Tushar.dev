@@ -310,8 +310,11 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2.5">
                                                 <h3 className="font-bold text-lg text-dark-900 dark:text-white">{project.title}</h3>
                                                 {project.featured && (
-                                                    <span className="px-2 py-0.5 text-[10px] font-bold tracking-wide rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 uppercase">
-                                                        ★ Featured
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold tracking-wide rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 uppercase">
+                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                                        </svg>
+                                                        Featured
                                                     </span>
                                                 )}
                                             </div>

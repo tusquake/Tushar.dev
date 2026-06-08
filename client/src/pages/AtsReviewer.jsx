@@ -412,7 +412,11 @@ SECTION RATINGS & FEEDBACK:
                                             </div>
                                         ) : resumeText ? (
                                             <div className="space-y-3">
-                                                <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto border border-emerald-500/20">✓</div>
+                                                <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto border border-emerald-500/20">
+                                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
                                                 <p className="text-sm font-semibold text-dark-900 dark:text-white">PDF Loaded Successfully</p>
                                                 <button onClick={() => setResumeText('')} className="text-xs text-red-500 hover:underline">Clear & Reupload</button>
                                             </div>

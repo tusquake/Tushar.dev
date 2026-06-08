@@ -1358,7 +1358,22 @@ ${JSON.stringify(experienceWithHighlights.flatMap(exp => exp.highlights.filter(B
                                                 disabled={aiLoading.summary}
                                                 className="px-3 py-1 bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 text-xs font-bold rounded-lg border border-primary-500/20 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
                                             >
-                                                {aiLoading.summary ? 'Improving...' : '✨ Improve with AI'}
+                                                {aiLoading.summary ? (
+                                                    <>
+                                                        <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                        </svg>
+                                                        Improving...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                        </svg>
+                                                        Improve with AI
+                                                    </>
+                                                )}
                                             </button>
                                         </div>
                                         <textarea
@@ -1436,7 +1451,16 @@ ${JSON.stringify(experienceWithHighlights.flatMap(exp => exp.highlights.filter(B
                                                             className="px-2 py-2 bg-primary-500/10 text-primary-500 border border-primary-500/20 rounded-xl text-xs hover:bg-primary-500/20 transition-all flex-shrink-0 cursor-pointer disabled:opacity-50"
                                                             title="Enhance Bullet with AI"
                                                         >
-                                                            {aiLoading.experience[`${expIdx}-${bulletIdx}`] ? '⏳' : '✨'}
+                                                            {aiLoading.experience[`${expIdx}-${bulletIdx}`] ? (
+                                                                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                                </svg>
+                                                            ) : (
+                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                                </svg>
+                                                            )}
                                                         </button>
                                                         <button
                                                             onClick={() => handleRemoveBullet(expIdx, bulletIdx)}

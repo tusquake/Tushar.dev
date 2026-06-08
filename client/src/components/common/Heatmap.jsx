@@ -169,13 +169,25 @@ const Heatmap = ({ activities = [] }) => {
             {/* Stats Bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {[
-                    { icon: '✅', label: 'Total Done', value: stats.total, color: 'text-primary-500', bg: 'bg-primary-500/10' },
-                    { icon: '📅', label: 'Active Days', value: stats.activeDays, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                    { icon: '🔥', label: 'Current Streak', value: `${stats.currentStreak}d`, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-                    { icon: '🏆', label: 'Longest Streak', value: `${stats.longestStreak}d`, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-                ].map(({ icon, label, value, color, bg }) => (
+                    {
+                        svg: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+                        label: 'Total Done', value: stats.total, color: 'text-primary-500', bg: 'bg-primary-500/10'
+                    },
+                    {
+                        svg: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+                        label: 'Active Days', value: stats.activeDays, color: 'text-emerald-500', bg: 'bg-emerald-500/10'
+                    },
+                    {
+                        svg: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+                        label: 'Current Streak', value: `${stats.currentStreak}d`, color: 'text-rose-500', bg: 'bg-rose-500/10'
+                    },
+                    {
+                        svg: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>,
+                        label: 'Longest Streak', value: `${stats.longestStreak}d`, color: 'text-amber-500', bg: 'bg-amber-500/10'
+                    },
+                ].map(({ svg, label, value, color, bg }) => (
                     <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-dark-50/50 dark:bg-dark-950/30 border border-dark-200/30 dark:border-dark-800/30">
-                        <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center text-base`}>{icon}</div>
+                        <div className={`w-9 h-9 rounded-lg ${bg} ${color} flex items-center justify-center flex-shrink-0`}>{svg}</div>
                         <div>
                             <div className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider">{label}</div>
                             <div className={`text-lg font-extrabold font-mono leading-tight ${color}`}>{value}</div>
