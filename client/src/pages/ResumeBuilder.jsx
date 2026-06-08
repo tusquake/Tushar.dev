@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ResumeHeader from '../components/layout/ResumeHeader';
 import Card from '../components/common/Card';
 import { callLlm, getApiKeys } from '../utils/ai';
+import { resumeAPI } from '../services/api';
 
 const initialResumeState = {
     personalInfo: {
@@ -46,27 +47,42 @@ const initialResumeState = {
     ],
     certifications: ''
 };
-
 const ResumeBuilder = () => {
     const [resumeData, setResumeData] = useState(initialResumeState);
     const [activeSection, setActiveSection] = useState('personal');
     const [aiLoading, setAiLoading] = useState({ summary: false, experience: {} });
     const [toast, setToast] = useState('');
     const [apiKeyWarning, setApiKeyWarning] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load saved data
+    // Load saved data (local first, then sync from database)
     useEffect(() => {
-        const savedData = localStorage.getItem('codeforge_resume');
-        const saveLocal = localStorage.getItem('codeforge_save_local') !== 'false';
-        
-        if (savedData && saveLocal) {
-            try {
-                setResumeData(JSON.parse(savedData));
-                showToast('Resume restored');
-            } catch (e) {
-                console.error('Failed to parse saved resume data', e);
+        const loadInitialData = async () => {
+            const savedData = localStorage.getItem('codeforge_resume');
+            const saveLocal = localStorage.getItem('codeforge_save_local') !== 'false';
+            
+            if (savedData && saveLocal) {
+                try {
+                    setResumeData(JSON.parse(savedData));
+                } catch (e) {
+                    console.error('Failed to parse saved resume data', e);
+                }
             }
-        }
+
+            try {
+                const response = await resumeAPI.get();
+                if (response.data && response.data.data) {
+                    setResumeData(response.data.data);
+                    localStorage.setItem('codeforge_resume', JSON.stringify(response.data.data));
+                }
+            } catch (err) {
+                console.error('Failed to load resume from DB', err);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+
+        loadInitialData();
 
         // Check API key
         const keys = getApiKeys();
@@ -74,6 +90,21 @@ const ResumeBuilder = () => {
             setApiKeyWarning(true);
         }
     }, []);
+
+    // Debounced database sync to avoid hitting the DB on every single key stroke
+    useEffect(() => {
+        if (!isLoaded) return;
+
+        const timer = setTimeout(async () => {
+            try {
+                await resumeAPI.save(resumeData);
+            } catch (err) {
+                console.error('Failed to sync resume to DB', err);
+            }
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, [resumeData, isLoaded]);
 
     // Save data on change
     const updateResumeData = (updater) => {

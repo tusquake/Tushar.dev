@@ -136,5 +136,18 @@ export const dsaProgressAPI = {
     updateProgress: (completedQuestions) => api.post('/learning/dsa/progress', { completedQuestions }),
 };
 
+// Resume API
+export const resumeAPI = {
+    get: () => api.get('/resume'),
+    save: (resumeData) => api.post('/resume', { resumeData }),
+};
+
+// Interview API
+export const interviewAPI = {
+    getAll: () => api.get('/interviews'),
+    create: (data) => api.post('/interviews', data),
+    clear: () => api.delete('/interviews'),
+};
+
 export default api;
 

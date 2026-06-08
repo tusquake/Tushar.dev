@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Card from '../components/common/Card';
 import { callLlm, parseJsonResponse } from '../utils/ai';
 import { useAuth } from '../context/AuthContext';
+import { interviewAPI } from '../services/api';
 
 const AIInterview = () => {
     const { isAuthenticated } = useAuth();
@@ -18,6 +19,8 @@ const AIInterview = () => {
     const [dragActive, setDragActive] = useState(false);
     const [error, setError] = useState('');
     const [toast, setToast] = useState('');
+    const [history, setHistory] = useState([]);
+    const [expandedItem, setExpandedItem] = useState(null);
 
     const recognitionRef = useRef(null);
     const idleTimerRef = useRef(null);
@@ -27,6 +30,28 @@ const AIInterview = () => {
         setToast(msg);
         setTimeout(() => setToast(''), 3000);
     };
+
+    // Load initial history from database, fallback to local storage
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const response = await interviewAPI.getAll();
+                if (response.data && response.data.data) {
+                    setHistory(response.data.data);
+                } else {
+                    const savedHistory = localStorage.getItem('codeforge_interview_history');
+                    if (savedHistory) setHistory(JSON.parse(savedHistory));
+                }
+            } catch (e) {
+                console.error('Failed to fetch interview history from DB', e);
+                const savedHistory = localStorage.getItem('codeforge_interview_history');
+                if (savedHistory) setHistory(JSON.parse(savedHistory));
+            }
+        };
+        if (isAuthenticated) {
+            fetchHistory();
+        }
+    }, [isAuthenticated]);
 
     // Clean up speech synthesis & recognition on unmount
     useEffect(() => {
@@ -152,7 +177,6 @@ const AIInterview = () => {
         utter.lang = 'en-US';
 
         const voices = window.speechSynthesis.getVoices();
-        // Look for premium, natural sounding English voices
         const preferredVoice = voices.find(v => 
             v.lang.startsWith('en-') && 
             (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft') || v.name.includes('Samantha') || v.name.includes('Daniel'))
@@ -162,7 +186,7 @@ const AIInterview = () => {
             utter.voice = preferredVoice;
         }
         utter.pitch = 1.0;
-        utter.rate = 0.92; // Slightly slower, more professional, interviewer-like cadence
+        utter.rate = 0.92;
         window.speechSynthesis.speak(utter);
     };
 
@@ -184,7 +208,7 @@ const AIInterview = () => {
             return;
         }
         
-        window.speechSynthesis.cancel(); // Stop interviewer speech
+        window.speechSynthesis.cancel();
 
         accumulatedTranscriptRef.current = '';
         setAnswer('');
@@ -211,10 +235,7 @@ const AIInterview = () => {
                 accumulatedTranscriptRef.current += finalTranscript;
             }
 
-            // Real-time update to state
             setAnswer(accumulatedTranscriptRef.current + interimTranscript);
-            
-            // User is speaking, reset the 5s idle timer
             resetIdleTimer();
         };
 
@@ -229,8 +250,6 @@ const AIInterview = () => {
         recognitionRef.current = recognizer;
         recognizer.start();
         setStage('listening');
-
-        // Start the initial 5 seconds idle timer
         resetIdleTimer();
     };
 
@@ -324,11 +343,49 @@ JSON Evaluation:`;
             const parsed = parseJsonResponse(raw);
             setFeedback(parsed);
             speak(parsed.feedback);
+
+            // Log this session in history
+            const payload = {
+                topic,
+                question,
+                answer,
+                correct: parsed.correct,
+                feedbackText: parsed.feedback
+            };
+
+            try {
+                const response = await interviewAPI.create(payload);
+                if (response.data && response.data.data) {
+                    setHistory(prev => [response.data.data, ...prev]);
+                }
+            } catch (err) {
+                console.error('Failed to save interview log to DB', err);
+                const newHistoryItem = {
+                    _id: Date.now().toString(),
+                    createdAt: new Date().toISOString(),
+                    ...payload
+                };
+                setHistory(prev => [newHistoryItem, ...prev]);
+            }
         } catch (e) {
             console.error('Evaluation failed', e);
             setFeedback({ correct: false, feedback: 'Could not evaluate the answer successfully due to an API timeout. Please try again.' });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const clearHistory = async () => {
+        if (window.confirm('Are you sure you want to clear your entire interview log history?')) {
+            try {
+                await interviewAPI.clear();
+                setHistory([]);
+                localStorage.removeItem('codeforge_interview_history');
+                showToast('Interview log history cleared');
+            } catch (err) {
+                console.error('Failed to clear interview logs from DB', err);
+                showToast('Failed to clear history. Try again.');
+            }
         }
     };
 
@@ -680,6 +737,95 @@ JSON Evaluation:`;
                         </div>
                     )}
                 </Card>
+
+                {/* PAST INTERVIEW HISTORY LOGS SECTION */}
+                {stage === 'idle' && history.length > 0 && (
+                    <Card className="p-6 md:p-8 space-y-6">
+                        <div className="flex items-center justify-between border-b border-dark-200/50 dark:border-dark-800 pb-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-dark-900 dark:text-white flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                    </svg>
+                                    Past Interview Logs
+                                </h2>
+                                <p className="text-xs text-dark-400 dark:text-dark-500 mt-1">Review your historical answers and evaluation logs</p>
+                            </div>
+                            <button
+                                onClick={clearHistory}
+                                className="text-xs font-bold text-red-500 hover:text-red-600 transition-all border border-red-500/20 px-3 py-1.5 rounded-lg hover:bg-red-500/5 cursor-pointer"
+                            >
+                                Clear Logs
+                            </button>
+                        </div>
+
+                        <div className="divide-y divide-dark-200/50 dark:divide-dark-800/60 max-h-[450px] overflow-y-auto pr-1">
+                            {history.map((item) => {
+                                const itemId = item._id || item.id;
+                                const isExpanded = expandedItem === itemId;
+                                const itemDate = item.createdAt 
+                                    ? new Date(item.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                                    : item.date;
+                                return (
+                                    <div key={itemId} className="py-4 space-y-3">
+                                        <div
+                                            className="flex items-center justify-between cursor-pointer group"
+                                            onClick={() => setExpandedItem(isExpanded ? null : itemId)}
+                                        >
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                                        item.correct 
+                                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                                                             : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                                                    }`}>
+                                                        {item.correct ? 'Correct' : 'Needs Work'}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-dark-400 dark:text-dark-500">
+                                                        {item.topic}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm font-semibold text-dark-800 dark:text-dark-200 line-clamp-1 group-hover:text-primary-500 transition-colors">
+                                                    {item.question}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] text-dark-400 font-medium whitespace-nowrap">{itemDate}</span>
+                                                <svg 
+                                                    className={`w-4 h-4 text-dark-400 transition-transform duration-200 ${isExpanded ? 'transform rotate-180' : ''}`}
+                                                    fill="none" 
+                                                    stroke="currentColor" 
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        {isExpanded && (
+                                            <div className="pl-2 pr-2 pb-2 pt-1 border-l-2 border-dark-200 dark:border-dark-850 space-y-4 text-xs leading-relaxed animate-fade-in">
+                                                <div className="space-y-1">
+                                                    <h4 className="font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider text-[9px]">Full Question</h4>
+                                                    <p className="text-dark-900 dark:text-white font-medium">{item.question}</p>
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <h4 className="font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider text-[9px]">Your Answer</h4>
+                                                    <p className="italic text-dark-700 dark:text-dark-300 font-medium">"{item.answer}"</p>
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <h4 className="font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider text-[9px]">AI Feedback</h4>
+                                                    <p className="text-dark-800 dark:text-dark-200 font-medium">{item.feedbackText}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </Card>
+                )}
             </div>
         </div>
     );
