@@ -393,6 +393,96 @@ const resetPassword = async (req, res) => {
     }
 };
 
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+    try {
+        const { title, bio, location, targetRole, skills, socials, themeColor, widgets } = req.body;
+        
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        if (title !== undefined) user.title = title;
+        if (bio !== undefined) user.bio = bio;
+        if (location !== undefined) user.location = location;
+        if (targetRole !== undefined) user.targetRole = targetRole;
+        if (skills !== undefined) user.skills = skills;
+        if (socials !== undefined) user.socials = socials;
+        if (themeColor !== undefined) user.themeColor = themeColor;
+        if (widgets !== undefined) user.widgets = widgets;
+
+        await user.save();
+
+        // Award XP for customizing profile
+        const { awardXP } = require('../utils/gamification');
+        const xpResult = await awardXP(req.user._id, 'PROFILE_CUSTOMIZED');
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    subscriptionTier: user.subscriptionTier || 'none',
+                    createdAt: user.createdAt,
+                    title: user.title,
+                    bio: user.bio,
+                    location: user.location,
+                    targetRole: user.targetRole,
+                    skills: user.skills || [],
+                    socials: user.socials || {},
+                    themeColor: user.themeColor || 'purple',
+                    xp: user.xp || 0,
+                    level: user.level || 1,
+                    achievements: user.achievements || [],
+                    widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
+                },
+                xpResult
+            }
+        });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update profile',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get user leaderboard
+// @route   GET /api/auth/leaderboard
+// @access  Private
+const getLeaderboard = async (req, res) => {
+    try {
+        // Fetch top 10 users by XP
+        const users = await User.find({ role: 'USER' })
+            .select('name title avatar xp level achievements')
+            .sort({ xp: -1 })
+            .limit(10);
+
+        res.json({
+            success: true,
+            data: users
+        });
+    } catch (error) {
+        console.error('Get leaderboard error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch leaderboard'
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -400,5 +490,7 @@ module.exports = {
     logout,
     getProfile,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    updateProfile,
+    getLeaderboard
 };

@@ -96,6 +96,8 @@ const createLearningTopic = async (req, res) => {
                 detail: `Completed topic: ${title}`,
                 date: new Date()
             });
+            const { awardXP } = require('../utils/gamification');
+            await awardXP(req.user._id, 'TOPIC_COMPLETED');
         }
 
         res.status(201).json({
@@ -144,6 +146,8 @@ const updateLearningTopic = async (req, res) => {
                 detail: `Completed topic: ${topic.title}`,
                 date: new Date()
             });
+            const { awardXP } = require('../utils/gamification');
+            await awardXP(req.user._id, 'TOPIC_COMPLETED');
         } else if (topic.status !== 'completed' && oldStatus === 'completed') {
             await Activity.deleteMany({
                 user: req.user._id,
@@ -207,6 +211,8 @@ const updateLearningStatus = async (req, res) => {
                 detail: `Completed topic: ${topic.title}`,
                 date: new Date()
             });
+            const { awardXP } = require('../utils/gamification');
+            await awardXP(req.user._id, 'TOPIC_COMPLETED');
         } else if (status !== 'completed' && oldStatus === 'completed') {
             await Activity.deleteMany({
                 user: req.user._id,

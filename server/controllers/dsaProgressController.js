@@ -78,6 +78,10 @@ const updateDsaProgress = async (req, res) => {
                 });
             });
             await Promise.all(activityPromises);
+
+            // Award XP
+            const { awardXP } = require('../utils/gamification');
+            await awardXP(req.user._id, 'DSA_SOLVED', newlyCompleted.length * 20);
         }
 
         if (removedQuestions.length > 0) {

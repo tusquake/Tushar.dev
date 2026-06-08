@@ -77,6 +77,8 @@ export const authAPI = {
     resetPassword: (token, password) => api.post(`/auth/reset-password/${token}`, { password }),
     getMe: () => api.get('/auth/me'),
     subscribe: (tier) => api.post('/auth/subscribe', { tier }),
+    updateProfile: (data) => api.put('/auth/profile', data),
+    getLeaderboard: () => api.get('/auth/leaderboard'),
 };
 
 // Projects API

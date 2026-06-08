@@ -21,6 +21,7 @@ import LatexResume from './pages/LatexResume';
 import Settings from './pages/Settings';
 import AIInterview from './pages/AIInterview';
 import CodeEditor from './pages/CodeEditor';
+import Profile from './pages/Profile';
 
 import { useState } from 'react';
 import SubscriptionModal from './components/common/SubscriptionModal';
@@ -147,6 +148,7 @@ const AppContent = () => {
           <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="ai-interview" element={<ProtectedRoute><AIInterview /></ProtectedRoute>} />
           <Route path="code-editor" element={<ProtectedRoute><CodeEditor /></ProtectedRoute>} />
+          <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         </Route>
 
         {/* 404 - Not Found */}

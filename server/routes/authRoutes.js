@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-const { register, login, refreshAccessToken, logout, getProfile, forgotPassword, resetPassword } = require('../controllers/authController');
+const { register, login, refreshAccessToken, logout, getProfile, forgotPassword, resetPassword, updateProfile, getLeaderboard } = require('../controllers/authController');
 const { loginLimiter, registerLimiter } = require('../middlewares/rateLimiter');
 const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtils');
 const { protect } = require('../middlewares/authMiddleware');
@@ -14,6 +14,10 @@ router.post('/logout', logout);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
 
+// Profile customization & leaderboard
+router.put('/profile', protect, updateProfile);
+router.get('/leaderboard', protect, getLeaderboard);
+
 // Get currently logged-in user profile
 router.get('/me', protect, (req, res) => {
     res.json({
@@ -25,7 +29,18 @@ router.get('/me', protect, (req, res) => {
                 email: req.user.email,
                 role: req.user.role,
                 subscriptionTier: req.user.subscriptionTier || 'none',
-                createdAt: req.user.createdAt
+                createdAt: req.user.createdAt,
+                title: req.user.title,
+                bio: req.user.bio,
+                location: req.user.location,
+                targetRole: req.user.targetRole,
+                skills: req.user.skills || [],
+                socials: req.user.socials || {},
+                themeColor: req.user.themeColor || 'purple',
+                xp: req.user.xp || 0,
+                level: req.user.level || 1,
+                achievements: req.user.achievements || [],
+                widgets: req.user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
             }
         }
     });

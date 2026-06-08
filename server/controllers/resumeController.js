@@ -40,6 +40,10 @@ exports.saveResume = async (req, res, next) => {
             });
         }
 
+        // Award XP
+        const { awardXP } = require('../utils/gamification');
+        await awardXP(req.user._id, 'RESUME_BUILT');
+
         res.status(200).json({
             success: true,
             data: resume.resumeData

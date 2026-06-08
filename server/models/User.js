@@ -39,6 +39,54 @@ const userSchema = new mongoose.Schema({
         enum: ['USER', 'ADMIN'],
         default: 'USER'
     },
+    title: {
+        type: String,
+        default: 'Software Explorer'
+    },
+    bio: {
+        type: String,
+        default: 'Learning, coding, and building cool things.'
+    },
+    location: {
+        type: String,
+        default: ''
+    },
+    targetRole: {
+        type: String,
+        default: ''
+    },
+    skills: [{
+        name: { type: String },
+        level: { type: Number, default: 50 }
+    }],
+    socials: {
+        github: { type: String, default: '' },
+        linkedin: { type: String, default: '' },
+        twitter: { type: String, default: '' },
+        website: { type: String, default: '' }
+    },
+    themeColor: {
+        type: String,
+        default: 'purple' // purple, blue, emerald, amber, rose
+    },
+    xp: {
+        type: Number,
+        default: 0
+    },
+    level: {
+        type: Number,
+        default: 1
+    },
+    achievements: {
+        type: [String],
+        default: []
+    },
+    widgets: {
+        showStats: { type: Boolean, default: true },
+        showAchievements: { type: Boolean, default: true },
+        showActivity: { type: Boolean, default: true },
+        showSkills: { type: Boolean, default: true }
+    },
     refreshToken: {
         type: String,
         select: false

@@ -74,6 +74,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const refreshUser = async () => {
+        try {
+            const response = await authAPI.getMe();
+            const { user: updatedUser } = response.data.data;
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            return updatedUser;
+        } catch (error) {
+            console.error('Failed to refresh user:', error);
+            return null;
+        }
+    };
+
     const isAdmin = user?.role === 'ADMIN' && user?.email === 'sethtushar111@gmail.com';
 
     const value = {
@@ -84,6 +97,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        refreshUser,
+        setUser
     };
 
     return (

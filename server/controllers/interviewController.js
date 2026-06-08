@@ -38,6 +38,10 @@ exports.addInterviewLog = async (req, res, next) => {
             feedbackText
         });
 
+        // Award XP
+        const { awardXP } = require('../utils/gamification');
+        await awardXP(req.user._id, 'INTERVIEW_COMPLETED');
+
         res.status(201).json({
             success: true,
             data: log
