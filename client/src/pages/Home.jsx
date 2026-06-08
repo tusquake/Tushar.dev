@@ -335,6 +335,153 @@ const themeSpecs = {
     }
 };
 
+const FadeInUp = ({ children, delay = 0 }) => {
+    const [visible, setVisible] = useState(false);
+    const [element, setElement] = useState(null);
+
+    useEffect(() => {
+        if (!element) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setVisible(true);
+                    observer.unobserve(element);
+                }
+            },
+            { threshold: 0.1, rootMargin: '0px 0px -60px 0px' }
+        );
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [element]);
+
+    return (
+        <div
+            ref={setElement}
+            className={`transition-all duration-1000 ease-out transform ${
+                visible 
+                    ? 'opacity-100 translate-y-0' 
+                    : 'opacity-0 translate-y-12 pointer-events-none'
+            }`}
+            style={{ transitionDelay: `${delay}ms` }}
+        >
+            {children}
+        </div>
+    );
+};
+
+const TerminalConsole = ({ accent }) => {
+    const [lines, setLines] = useState([]);
+    const [cursor, setCursor] = useState(true);
+
+    useEffect(() => {
+        const script = [
+            { type: 'comment', text: '// Querying unique features...' },
+            { type: 'input', text: 'codeforge --motivation' },
+            { type: 'output', text: '> Build structured pattern systems instead of random practice lists.' },
+            { type: 'input', text: 'codeforge --difference' },
+            { type: 'output', text: '> Fully interactive code compilers coupled with LaTeX template compilers.' },
+            { type: 'input', text: 'codeforge --status' },
+            { type: 'output', text: '> status: active ● online' }
+        ];
+
+        let currentLine = 0;
+        let currentChar = 0;
+        let activeText = '';
+        let timer;
+
+        const cursorInterval = setInterval(() => {
+            setCursor(prev => !prev);
+        }, 500);
+
+        const typeNext = () => {
+            if (currentLine >= script.length) {
+                timer = setTimeout(() => {
+                    setLines([]);
+                    currentLine = 0;
+                    currentChar = 0;
+                    activeText = '';
+                    typeNext();
+                }, 4000);
+                return;
+            }
+
+            const line = script[currentLine];
+            if (line.type === 'comment' || line.type === 'output') {
+                setLines(prev => [...prev, line]);
+                currentLine++;
+                timer = setTimeout(typeNext, 1000);
+            } else if (line.type === 'input') {
+                if (currentChar === 0) {
+                    setLines(prev => [...prev, { type: 'input', text: '' }]);
+                }
+                
+                if (currentChar < line.text.length) {
+                    activeText += line.text[currentChar];
+                    currentChar++;
+                    setLines(prev => {
+                        const copy = [...prev];
+                        copy[copy.length - 1] = { type: 'input', text: activeText };
+                        return copy;
+                    });
+                    timer = setTimeout(typeNext, 40 + Math.random() * 40);
+                } else {
+                    currentLine++;
+                    currentChar = 0;
+                    activeText = '';
+                    timer = setTimeout(typeNext, 800);
+                }
+            }
+        };
+
+        timer = setTimeout(typeNext, 500);
+
+        return () => {
+            clearTimeout(timer);
+            clearInterval(cursorInterval);
+        };
+    }, []);
+
+    return (
+        <div className="rounded-xl border border-dark-200/60 dark:border-dark-800 bg-dark-900 text-dark-100 p-5 font-mono text-[11px] shadow-2xl relative overflow-hidden min-h-[190px] flex flex-col justify-start">
+            <div className="flex gap-1.5 mb-3.5 pb-2 border-b border-dark-800/80">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+            </div>
+            <div className="flex-grow space-y-2 text-left">
+                {lines.map((line, i) => {
+                    if (line.type === 'comment') {
+                        return <p key={i} className="text-dark-500 italic">{line.text}</p>;
+                    }
+                    if (line.type === 'input') {
+                        const isLast = i === lines.length - 1;
+                        return (
+                            <p key={i} className="text-primary-400 font-bold flex items-center">
+                                <span className="text-dark-500 mr-1.5">$</span>
+                                {line.text}
+                                {isLast && cursor && <span className="inline-block w-1.5 h-3.5 bg-primary-400 ml-1 animate-pulse" />}
+                            </p>
+                        );
+                    }
+                    if (line.text.includes('● online')) {
+                        const parts = line.text.split('● online');
+                        return (
+                            <p key={i} className="text-dark-300 leading-relaxed">
+                                {parts[0]}
+                                <span className="text-[#39d353] font-bold inline-flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-[#39d353] inline-block animate-ping mr-1" />
+                                    online
+                                </span>
+                            </p>
+                        );
+                    }
+                    return <p key={i} className="text-dark-350 leading-relaxed">{line.text}</p>;
+                })}
+            </div>
+        </div>
+    );
+};
+
 const Home = () => {
     const { isAuthenticated } = useAuth();
     const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
@@ -367,12 +514,16 @@ const Home = () => {
     const currentTheme = isDark ? themeSpecs.terminal : themeSpecs.purple;
 
     return (
-        <div className="w-full flex flex-col transition-all duration-200 relative overflow-hidden">
+        <div className="w-full flex flex-col transition-all duration-200 relative overflow-hidden grid-bg">
             {/* Background glowing decorations */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                 <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-primary-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse" />
                 <div className="absolute top-2/3 -left-48 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl" />
                 <div className="absolute top-1/2 -right-48 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
+                
+                {/* Visual glow anchors / tech lines */}
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary-500/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/15 to-transparent" />
             </div>
 
             {/* Hero Section */}
@@ -502,85 +653,89 @@ const Home = () => {
             {/* Feature Row Section */}
             <section className="relative z-10 w-full py-16 px-6 md:px-12 bg-dark-50/20 dark:bg-dark-950/10 border-y border-dark-200/30 dark:border-dark-900/55">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl font-extrabold tracking-tight font-display mb-4">
-                            All the features you need to scale
-                        </h2>
-                        <p className="text-sm max-w-xl mx-auto opacity-75 leading-relaxed">
-                            A highly structured suite engineered specifically for fast paced preparation and optimal retention.
-                        </p>
-                    </div>
+                    <FadeInUp>
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-extrabold tracking-tight font-display mb-4">
+                                All the features you need to scale
+                            </h2>
+                            <p className="text-sm max-w-xl mx-auto opacity-75 leading-relaxed">
+                                A highly structured suite engineered specifically for fast paced preparation and optimal retention.
+                            </p>
+                        </div>
+                    </FadeInUp>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                title: 'DSA Pattern Hub',
-                                desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly. Includes progress tracker.',
-                                icon: (acc) => <DSAPatternIcon accent={acc} />
-                            },
-                            {
-                                title: 'System Design Wiki',
-                                desc: 'Scale your architectures with structured HLD and LLD materials, microservices, databases, and real-world system designs.',
-                                icon: (acc) => <SystemDesignIcon accent={acc} />
-                            },
-                            {
-                                title: 'LaTeX Resume Editor',
-                                desc: 'Write and compile professional resumes using LaTeX directly in the browser, matching top-tier templates.',
-                                icon: (acc) => <LaTeXResumeIcon accent={acc} />
-                            },
-                            {
-                                title: 'ATS Resume Reviewer',
-                                desc: 'Get your resume parsed and scored by our ATS algorithm to optimize formatting, keywords, and layout impact.',
-                                icon: (acc) => <ATSResumeIcon accent={acc} />
-                            },
-                            {
-                                title: 'Interactive Code Builder',
-                                desc: 'Build, compile, and run your code within custom workspaces designed for low-level design problems.',
-                                icon: (acc) => <CodeBuilderIcon accent={acc} />
-                            },
-                            {
-                                title: 'Developer Customization',
-                                desc: 'Toggle between terminal dark themes and elegant soft violet themes tailored to your aesthetic preference.',
-                                icon: (acc) => <DevCustomizationIcon accent={acc} />
-                            }
-                        ].map((feature, idx) => (
-                            <div 
-                                key={idx}
-                                className="p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border group cursor-pointer"
-                                style={currentTheme.featureCardStyle}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.borderColor = currentTheme.accent;
-                                    e.currentTarget.style.boxShadow = `0 10px 25px -5px ${currentTheme.accent}20`;
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = isDark ? '#30363d' : '#ddd6fe';
-                                    e.currentTarget.style.boxShadow = 'none';
-                                }}
-                            >
-                                <div>
-                                    <div className="mb-2">
-                                        {feature.icon(currentTheme.accent)}
-                                    </div>
-                                    <h3 className={`text-lg font-bold mb-3 ${currentTheme.featureTitleClass}`}>
-                                        {feature.title}
-                                    </h3>
-                                    <p className="text-xs leading-relaxed opacity-85">
-                                        {feature.desc}
-                                    </p>
-                                </div>
-                                <Link 
-                                    to="/learning" 
-                                    className="mt-6 text-xs font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
-                                    style={{ color: currentTheme.accent }}
+                    <FadeInUp delay={200}>
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {[
+                                {
+                                    title: 'DSA Pattern Hub',
+                                    desc: 'Master 15+ algorithmic patterns instead of memorizing 500+ LeetCode problems blindly. Includes progress tracker.',
+                                    icon: (acc) => <DSAPatternIcon accent={acc} />
+                                },
+                                {
+                                    title: 'System Design Wiki',
+                                    desc: 'Scale your architectures with structured HLD and LLD materials, microservices, databases, and real-world system designs.',
+                                    icon: (acc) => <SystemDesignIcon accent={acc} />
+                                },
+                                {
+                                    title: 'LaTeX Resume Editor',
+                                    desc: 'Write and compile professional resumes using LaTeX directly in the browser, matching top-tier templates.',
+                                    icon: (acc) => <LaTeXResumeIcon accent={acc} />
+                                },
+                                {
+                                    title: 'ATS Resume Reviewer',
+                                    desc: 'Get your resume parsed and scored by our ATS algorithm to optimize formatting, keywords, and layout impact.',
+                                    icon: (acc) => <ATSResumeIcon accent={acc} />
+                                },
+                                {
+                                    title: 'Interactive Code Builder',
+                                    desc: 'Build, compile, and run your code within custom workspaces designed for low-level design problems.',
+                                    icon: (acc) => <CodeBuilderIcon accent={acc} />
+                                },
+                                {
+                                    title: 'Developer Customization',
+                                    desc: 'Toggle between terminal dark themes and elegant soft violet themes tailored to your aesthetic preference.',
+                                    icon: (acc) => <DevCustomizationIcon accent={acc} />
+                                }
+                            ].map((feature, idx) => (
+                                <div 
+                                    key={idx}
+                                    className="p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 hover:shadow-xl border group cursor-pointer"
+                                    style={currentTheme.featureCardStyle}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = currentTheme.accent;
+                                        e.currentTarget.style.boxShadow = `0 10px 25px -5px ${currentTheme.accent}20`;
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = isDark ? '#30363d' : '#ddd6fe';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                    }}
                                 >
-                                    Start Learning
-                                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
+                                    <div>
+                                        <div className="mb-2">
+                                            {feature.icon(currentTheme.accent)}
+                                        </div>
+                                        <h3 className={`text-lg font-bold mb-3 ${currentTheme.featureTitleClass}`}>
+                                            {feature.title}
+                                        </h3>
+                                        <p className="text-xs leading-relaxed opacity-85">
+                                            {feature.desc}
+                                        </p>
+                                    </div>
+                                    <Link 
+                                        to="/learning" 
+                                        className="mt-6 text-xs font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                        style={{ color: currentTheme.accent }}
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    </FadeInUp>
                 </div>
             </section>
 
@@ -589,75 +744,69 @@ const Home = () => {
                 <div className="grid md:grid-cols-12 gap-12 items-center">
                     {/* Left: Tushar Monogram Card & Interactive Terminal Mockup */}
                     <div className="md:col-span-5 flex flex-col gap-6">
-                        <div 
-                            className="p-8 flex flex-col items-center text-center transition-all duration-300"
-                            style={currentTheme.aboutCardStyle}
-                        >
-                            <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#7c3aed] to-[#39d353] p-1 shadow-lg mb-4">
-                                <div className="w-full h-full rounded-full bg-white dark:bg-dark-900 flex items-center justify-center text-2xl font-extrabold tracking-tight">
-                                    TS
+                        <FadeInUp>
+                            <div 
+                                className="p-8 flex flex-col items-center text-center transition-all duration-300"
+                                style={currentTheme.aboutCardStyle}
+                            >
+                                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#7c3aed] to-[#39d353] p-1 shadow-lg mb-4">
+                                    <div className="w-full h-full rounded-full bg-white dark:bg-dark-900 flex items-center justify-center text-2xl font-extrabold tracking-tight">
+                                        TS
+                                    </div>
                                 </div>
+                                <h3 className="text-xl font-bold tracking-tight">Tushar Seth</h3>
+                                <p className="text-xs font-bold uppercase tracking-wider opacity-65 mb-3" style={{ color: currentTheme.accent }}>Founder & Creator</p>
+                                <p className="text-xs opacity-75 max-w-xs leading-relaxed">
+                                    Full Stack Engineer passionate about optimizing technical preparation and structuring developer workflows.
+                                </p>
                             </div>
-                            <h3 className="text-xl font-bold tracking-tight">Tushar Seth</h3>
-                            <p className="text-xs font-bold uppercase tracking-wider opacity-65 mb-3" style={{ color: currentTheme.accent }}>Founder & Creator</p>
-                            <p className="text-xs opacity-75 max-w-xs leading-relaxed">
-                                Full Stack Engineer passionate about optimizing technical preparation and structuring developer workflows.
-                            </p>
-                        </div>
+                        </FadeInUp>
 
-                        {/* Interactive Console Screen */}
-                        <div className="rounded-xl border border-dark-200/60 dark:border-dark-800 bg-dark-900 text-dark-100 p-4 font-mono text-[10px] shadow-2xl relative overflow-hidden">
-                            <div className="flex gap-1.5 mb-3.5 pb-2 border-b border-dark-800">
-                                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                                <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                            </div>
-                            <p className="text-dark-500 mb-1.5">// Querying unique features...</p>
-                            <p className="mb-1 text-primary-400">codeforge --motivation</p>
-                            <p className="text-dark-400 mb-2 leading-relaxed">&gt; Build structured pattern systems instead of random practice lists.</p>
-                            <p className="mb-1 text-primary-400">codeforge --difference</p>
-                            <p className="text-dark-400 mb-2 leading-relaxed">&gt; Fully interactive code compilers coupled with LaTeX template compilers.</p>
-                            <p className="mb-0 text-primary-400">codeforge --status <span className="text-[#39d353] animate-pulse">● online</span></p>
-                        </div>
+                        <FadeInUp delay={150}>
+                            {/* Interactive Console Screen */}
+                            <TerminalConsole accent={currentTheme.accent} />
+                        </FadeInUp>
                     </div>
 
                     {/* Right: Story Details */}
                     <div className="md:col-span-7 flex flex-col justify-center text-left">
-                        <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border bg-primary-500/10 border-primary-500/25 text-primary-500 mb-4 self-start">
-                            Behind the Project
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display mb-6">
-                            Structured by a developer, for developers.
-                        </h2>
-                        
-                        <div className="space-y-6">
-                            <div>
-                                <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
-                                    The Motivation
-                                </h4>
-                                <p className="text-xs leading-relaxed opacity-80">
-                                    I built CodeForge because I was tired of the fragmented learning landscape. Developers spend countless hours jumping between LeetCode tabs, static architecture wikis, and local LaTeX compilers just to prepare for interviews. There was no single hub that mapped engineering structures to live code compilers. CodeForge solves that by bringing preparation under one interactive terminal.
-                                </p>
-                            </div>
+                        <FadeInUp delay={300}>
+                            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border bg-primary-500/10 border-primary-500/25 text-primary-500 mb-4 self-start">
+                                Behind the Project
+                            </span>
+                            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display mb-6">
+                                Structured by a developer, for developers.
+                            </h2>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
+                                        The Motivation
+                                    </h4>
+                                    <p className="text-xs leading-relaxed opacity-80">
+                                        I built CodeForge because I was tired of the fragmented learning landscape. Developers spend countless hours jumping between LeetCode tabs, static architecture wikis, and local LaTeX compilers just to prepare for interviews. There was no single hub that mapped engineering structures to live code compilers. CodeForge solves that by bringing preparation under one interactive terminal.
+                                    </p>
+                                </div>
 
-                            <div>
-                                <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
-                                    How It's Different
-                                </h4>
-                                <p className="text-xs leading-relaxed opacity-80">
-                                    Instead of feeding users 500+ LeetCode problems blindly, we specialize in **pattern-based learning**. If you master the "Two Pointer" or "Sliding Window" pattern, you can solve 90% of dynamic data problems. Furthermore, we tie algorithmic knowledge directly to **system design blueprints** and **LaTeX resume compilation** — making it a holistic developer workstation.
-                                </p>
-                            </div>
+                                <div>
+                                    <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
+                                        How It's Different
+                                    </h4>
+                                    <p className="text-xs leading-relaxed opacity-80">
+                                        Instead of feeding users 500+ LeetCode problems blindly, we specialize in **pattern-based learning**. If you master the "Two Pointer" or "Sliding Window" pattern, you can solve 90% of dynamic data problems. Furthermore, we tie algorithmic knowledge directly to **system design blueprints** and **LaTeX resume compilation** — making it a holistic developer workstation.
+                                    </p>
+                                </div>
 
-                            <div>
-                                <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
-                                    What Makes It Unique
-                                </h4>
-                                <p className="text-xs leading-relaxed opacity-80">
-                                    We support active state-synchronization across light (Soft Purple) and dark (Terminal Green) themes, dynamic animated SVG compilers built into the visual widgets, and high-performance client compilers. This is a platform engineered to feel fast, secure, and visually premium.
-                                </p>
+                                <div>
+                                    <h4 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: currentTheme.accent }}>
+                                        What Makes It Unique
+                                    </h4>
+                                    <p className="text-xs leading-relaxed opacity-80">
+                                        We support active state-synchronization across light (Soft Purple) and dark (Terminal Green) themes, dynamic animated SVG compilers built into the visual widgets, and high-performance client compilers. This is a platform engineered to feel fast, secure, and visually premium.
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        </FadeInUp>
                     </div>
                 </div>
             </section>
@@ -665,104 +814,108 @@ const Home = () => {
             {/* Testimonials Section */}
             <section className="relative z-10 w-full py-16 px-6 md:px-12 bg-dark-50/20 dark:bg-dark-950/10 border-t border-dark-200/30 dark:border-dark-900/55">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
-                        <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border bg-purple-500/10 border-purple-500/25 text-purple-500 mb-3 inline-block">
-                            Developer Reviews
-                        </span>
-                        <h2 className="text-3xl font-extrabold tracking-tight font-display mb-4">
-                            Loved by engineers worldwide
-                        </h2>
-                        <p className="text-xs max-w-xl mx-auto opacity-75 leading-relaxed">
-                            Read how developers use CodeForge to clear interviews, design scalable systems, and optimize resumes.
-                        </p>
-                    </div>
+                    <FadeInUp>
+                        <div className="text-center mb-16">
+                            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border bg-purple-500/10 border-purple-500/25 text-purple-500 mb-3 inline-block">
+                                Developer Reviews
+                            </span>
+                            <h2 className="text-3xl font-extrabold tracking-tight font-display mb-4">
+                                Loved by engineers worldwide
+                            </h2>
+                            <p className="text-xs max-w-xl mx-auto opacity-75 leading-relaxed">
+                                Read how developers use CodeForge to clear interviews, design scalable systems, and optimize resumes.
+                            </p>
+                        </div>
+                    </FadeInUp>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {(() => {
-                            const getInitials = (n) => {
-                                if (!n) return 'U';
-                                const parts = n.split(' ');
-                                if (parts.length > 1) {
-                                    return (parts[0][0] + parts[1][0]).toUpperCase();
-                                }
-                                return n.substring(0, 2).toUpperCase();
-                            };
+                    <FadeInUp delay={200}>
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {(() => {
+                                const getInitials = (n) => {
+                                    if (!n) return 'U';
+                                    const parts = n.split(' ');
+                                    if (parts.length > 1) {
+                                        return (parts[0][0] + parts[1][0]).toUpperCase();
+                                    }
+                                    return n.substring(0, 2).toUpperCase();
+                                };
 
-                            const getColorClass = (n) => {
-                                const colors = [
-                                    'bg-red-500/10 text-red-500',
-                                    'bg-purple-500/10 text-purple-500',
-                                    'bg-green-500/10 text-green-500',
-                                    'bg-blue-500/10 text-blue-500',
-                                    'bg-yellow-500/10 text-yellow-500',
-                                    'bg-pink-500/10 text-pink-500'
+                                const getColorClass = (n) => {
+                                    const colors = [
+                                        'bg-red-500/10 text-red-500',
+                                        'bg-purple-500/10 text-purple-500',
+                                        'bg-green-500/10 text-green-500',
+                                        'bg-blue-500/10 text-blue-500',
+                                        'bg-yellow-500/10 text-yellow-500',
+                                        'bg-pink-500/10 text-pink-500'
+                                    ];
+                                    let hash = 0;
+                                    for (let i = 0; i < n.length; i++) {
+                                        hash = n.charCodeAt(i) + ((hash << 5) - hash);
+                                    }
+                                    const index = Math.abs(hash) % colors.length;
+                                    return colors[index];
+                                };
+
+                                const defaultTestimonials = [
+                                    {
+                                        quote: "CodeForge's pattern hub helped me classify LeetCode patterns instead of trying to memorize hundreds of individual problems. It was instrumental in my prep!",
+                                        name: "Alex Mercer",
+                                        role: "Software Engineer @ Google",
+                                        initials: "AM",
+                                        color: "bg-red-500/10 text-red-500"
+                                    },
+                                    {
+                                        quote: "The built-in LaTeX compiler works seamlessly. I wrote my resume in 10 minutes, checked the formatting score using the ATS reviewer, and landed my Stripe callback.",
+                                        name: "Sarah Jenkins",
+                                        role: "Senior Dev @ Stripe",
+                                        initials: "SJ",
+                                        color: "bg-purple-500/10 text-purple-500"
+                                    },
+                                    {
+                                        quote: "The visual system design components are simply stunning. Dynamic flow diagrams help clarify concepts much faster than standard text books.",
+                                        name: "Vikram Malhotra",
+                                        role: "DevOps Engineer @ AWS",
+                                        initials: "VM",
+                                        color: "bg-green-500/10 text-green-500"
+                                    }
                                 ];
-                                let hash = 0;
-                                for (let i = 0; i < n.length; i++) {
-                                    hash = n.charCodeAt(i) + ((hash << 5) - hash);
-                                }
-                                const index = Math.abs(hash) % colors.length;
-                                return colors[index];
-                            };
 
-                            const defaultTestimonials = [
-                                {
-                                    quote: "CodeForge's pattern hub helped me classify LeetCode patterns instead of trying to memorize hundreds of individual problems. It was instrumental in my prep!",
-                                    name: "Alex Mercer",
-                                    role: "Software Engineer @ Google",
-                                    initials: "AM",
-                                    color: "bg-red-500/10 text-red-500"
-                                },
-                                {
-                                    quote: "The built-in LaTeX compiler works seamlessly. I wrote my resume in 10 minutes, checked the formatting score using the ATS reviewer, and landed my Stripe callback.",
-                                    name: "Sarah Jenkins",
-                                    role: "Senior Dev @ Stripe",
-                                    initials: "SJ",
-                                    color: "bg-purple-500/10 text-purple-500"
-                                },
-                                {
-                                    quote: "The visual system design components are simply stunning. Dynamic flow diagrams help clarify concepts much faster than standard text books.",
-                                    name: "Vikram Malhotra",
-                                    role: "DevOps Engineer @ AWS",
-                                    initials: "VM",
-                                    color: "bg-green-500/10 text-green-500"
-                                }
-                            ];
+                                const displayTestimonials = [
+                                    ...reviews.map(r => ({
+                                        quote: r.quote,
+                                        name: r.name,
+                                        role: r.role,
+                                        initials: getInitials(r.name),
+                                        color: getColorClass(r.name)
+                                    })),
+                                    ...defaultTestimonials
+                                ].slice(0, Math.max(3, reviews.length));
 
-                            const displayTestimonials = [
-                                ...reviews.map(r => ({
-                                    quote: r.quote,
-                                    name: r.name,
-                                    role: r.role,
-                                    initials: getInitials(r.name),
-                                    color: getColorClass(r.name)
-                                })),
-                                ...defaultTestimonials
-                            ].slice(0, Math.max(3, reviews.length));
-
-                            return displayTestimonials.map((test, idx) => (
-                                <div 
-                                    key={idx}
-                                    className="p-6 md:p-8 flex flex-col justify-between border border-dark-250/20 dark:border-dark-850/20 transition-all duration-300 hover:scale-102 hover:shadow-xl relative"
-                                    style={currentTheme.testimonialCardStyle}
-                                >
-                                    <div className="absolute -top-3.5 left-6 text-3xl font-serif text-primary-500/40 select-none">“</div>
-                                    <p className="text-xs leading-relaxed opacity-85 italic mb-6">
-                                        {test.quote}
-                                    </p>
-                                    <div className="flex items-center gap-3 pt-4 border-t border-dark-200/40 dark:border-dark-800/40">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${test.color}`}>
-                                            {test.initials}
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-bold leading-tight">{test.name}</h4>
-                                            <p className="text-[10px] opacity-65 mt-0.5">{test.role}</p>
+                                return displayTestimonials.map((test, idx) => (
+                                    <div 
+                                        key={idx}
+                                        className="p-6 md:p-8 flex flex-col justify-between border border-dark-250/20 dark:border-dark-850/20 transition-all duration-300 hover:scale-102 hover:shadow-xl relative"
+                                        style={currentTheme.testimonialCardStyle}
+                                    >
+                                        <div className="absolute -top-3.5 left-6 text-3xl font-serif text-primary-500/40 select-none">“</div>
+                                        <p className="text-xs leading-relaxed opacity-85 italic mb-6">
+                                            {test.quote}
+                                        </p>
+                                        <div className="flex items-center gap-3 pt-4 border-t border-dark-200/40 dark:border-dark-800/40">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${test.color}`}>
+                                                {test.initials}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xs font-bold leading-tight">{test.name}</h4>
+                                                <p className="text-[10px] opacity-65 mt-0.5">{test.role}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ));
-                        })()}
-                    </div>
+                                ));
+                            })()}
+                        </div>
+                    </FadeInUp>
                 </div>
             </section>
         </div>

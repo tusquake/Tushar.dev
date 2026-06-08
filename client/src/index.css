@@ -660,3 +660,16 @@ html.dark .markdown-body tr:hover {
 .animate-tab-switch {
   animation: tabSwitch 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Developer grid pattern background */
+.grid-bg {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+}
+html.dark .grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(57, 211, 83, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(57, 211, 83, 0.02) 1px, transparent 1px);
+}
