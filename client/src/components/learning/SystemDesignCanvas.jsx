@@ -414,9 +414,9 @@ const SystemDesignCanvas = () => {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 animate-tab-switch pb-4 w-full">
+        <div className="flex flex-col xl:flex-row gap-6 animate-tab-switch pb-4 w-full">
             {/* Left Column: Toolbox and Templates */}
-            <div className="w-full lg:w-72 flex flex-col gap-4 flex-shrink-0">
+            <div className="w-full xl:w-72 flex flex-col gap-4 flex-shrink-0">
                 {/* 1. Component Templates */}
                 <Card className="p-4">
                     <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3">
@@ -465,7 +465,7 @@ const SystemDesignCanvas = () => {
 
             {/* Middle Column: The Canvas Playground */}
             <div className="flex-grow flex flex-col min-w-0">
-                <Card className="p-4 flex flex-col h-[70vh] min-h-[550px] shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden relative select-none">
+                <Card className="p-4 flex flex-col h-[70vh] min-h-[580px] shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden relative select-none">
                     {/* Canvas Controls Toolbar */}
                     <div className="flex items-center justify-between border-b border-dark-200 dark:border-dark-800 pb-3 mb-3 flex-shrink-0">
                         <div className="flex items-center gap-2">
@@ -526,170 +526,176 @@ const SystemDesignCanvas = () => {
                         </button>
                     </div>
 
-                    {/* Infinite Grid Workspace container */}
-                    <div
-                        ref={canvasRef}
-                        onClick={handleCanvasClick}
-                        onMouseMove={handleCanvasMouseMove}
-                        onMouseUp={handleCanvasMouseUp}
-                        className="flex-grow rounded-2xl bg-dark-50 dark:bg-dark-950/40 border border-dark-100 dark:border-dark-900 relative overflow-hidden cursor-crosshair"
-                        style={{
-                            backgroundImage: 'radial-gradient(#94a3b8 1px, transparent 1px)',
-                            backgroundSize: `${gridSize}px ${gridSize}px`
-                        }}
-                    >
-                        {/* SVGs rendering the Flow Links / Arrows */}
-                        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                            <defs>
-                                <marker
-                                    id="arrowhead"
-                                    viewBox="0 0 10 10"
-                                    refX="6"
-                                    refY="5"
-                                    markerWidth="6"
-                                    markerHeight="6"
-                                    orient="auto-start-reverse"
-                                >
-                                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6366f1" />
-                                </marker>
-                                <marker
-                                    id="arrowhead-active"
-                                    viewBox="0 0 10 10"
-                                    refX="6"
-                                    refY="5"
-                                    markerWidth="7"
-                                    markerHeight="7"
-                                    orient="auto-start-reverse"
-                                >
-                                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b" />
-                                </marker>
-                            </defs>
+                    {/* Scrollable Viewport Wrapper for Canvas */}
+                    <div className="flex-grow overflow-auto border border-dark-100 dark:border-dark-900 rounded-2xl scrollbar-thin">
+                        {/* Fixed wide canvas playground area */}
+                        <div
+                            ref={canvasRef}
+                            onClick={handleCanvasClick}
+                            onMouseMove={handleCanvasMouseMove}
+                            onMouseUp={handleCanvasMouseUp}
+                            className="h-[65vh] min-h-[500px] w-full min-w-[950px] relative overflow-hidden bg-dark-50 dark:bg-dark-950/20 cursor-crosshair"
+                            style={{
+                                backgroundImage: `
+                                    linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+                                    linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px)
+                                `,
+                                backgroundSize: `${gridSize}px ${gridSize}px`
+                            }}
+                        >
+                            {/* SVGs rendering the Flow Links / Arrows */}
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                                <defs>
+                                    <marker
+                                        id="arrowhead"
+                                        viewBox="0 0 10 10"
+                                        refX="6"
+                                        refY="5"
+                                        markerWidth="6"
+                                        markerHeight="6"
+                                        orient="auto-start-reverse"
+                                    >
+                                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6366f1" />
+                                    </marker>
+                                    <marker
+                                        id="arrowhead-active"
+                                        viewBox="0 0 10 10"
+                                        refX="6"
+                                        refY="5"
+                                        markerWidth="7"
+                                        markerHeight="7"
+                                        orient="auto-start-reverse"
+                                    >
+                                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b" />
+                                    </marker>
+                                </defs>
 
+                                {connections.map((conn) => {
+                                    const fromCenter = getNodeCenter(conn.from);
+                                    const toCenter = getNodeCenter(conn.to);
+                                    const isActive = selectedConnectionId === conn.id;
+
+                                    // Simple direct line connection with offset bounds
+                                    return (
+                                        <g key={conn.id} className="pointer-events-auto cursor-pointer">
+                                            <line
+                                                x1={fromCenter.x}
+                                                y1={fromCenter.y}
+                                                x2={toCenter.x}
+                                                y2={toCenter.y}
+                                                stroke={isActive ? '#f59e0b' : '#6366f1'}
+                                                strokeWidth={isActive ? 3 : 2}
+                                                strokeDasharray={conn.label?.toLowerCase().includes('async') ? '5,5' : '0'}
+                                                markerEnd={isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)'}
+                                                className="transition-all"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedConnectionId(conn.id);
+                                                }}
+                                            />
+                                            {/* Hover helper for thicker hit targets */}
+                                            <line
+                                                x1={fromCenter.x}
+                                                y1={fromCenter.y}
+                                                x2={toCenter.x}
+                                                y2={toCenter.y}
+                                                stroke="transparent"
+                                                strokeWidth={15}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedConnectionId(conn.id);
+                                                }}
+                                            />
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+
+                            {/* Interactive flow connection names/labels in the middle of arrows */}
                             {connections.map((conn) => {
                                 const fromCenter = getNodeCenter(conn.from);
                                 const toCenter = getNodeCenter(conn.to);
-                                const isActive = selectedConnectionId === conn.id;
+                                const midX = (fromCenter.x + toCenter.x) / 2;
+                                const midY = (fromCenter.y + toCenter.y) / 2;
 
-                                // Simple direct line connection with offset bounds
                                 return (
-                                    <g key={conn.id} className="pointer-events-auto cursor-pointer">
-                                        <line
-                                            x1={fromCenter.x}
-                                            y1={fromCenter.y}
-                                            x2={toCenter.x}
-                                            y2={toCenter.y}
-                                            stroke={isActive ? '#f59e0b' : '#6366f1'}
-                                            strokeWidth={isActive ? 3 : 2}
-                                            strokeDasharray={conn.label?.toLowerCase().includes('async') ? '5,5' : '0'}
-                                            markerEnd={isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)'}
-                                            className="transition-all"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedConnectionId(conn.id);
-                                            }}
-                                        />
-                                        {/* Hover helper for thicker hit targets */}
-                                        <line
-                                            x1={fromCenter.x}
-                                            y1={fromCenter.y}
-                                            x2={toCenter.x}
-                                            y2={toCenter.y}
-                                            stroke="transparent"
-                                            strokeWidth={15}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedConnectionId(conn.id);
-                                            }}
-                                        />
-                                    </g>
+                                    <div
+                                        key={`label-${conn.id}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedConnectionId(conn.id);
+                                        }}
+                                        className={`absolute px-2 py-0.5 rounded text-[10px] font-mono font-bold border transform -translate-x-1/2 -translate-y-1/2 cursor-pointer shadow-sm z-10 transition-all ${selectedConnectionId === conn.id
+                                            ? 'bg-amber-500 border-amber-550 text-white'
+                                            : 'bg-white dark:bg-dark-900 border-dark-200 dark:border-dark-800 text-dark-700 dark:text-dark-350 hover:border-primary-500'
+                                            }`}
+                                        style={{ left: midX, top: midY }}
+                                    >
+                                        {conn.label}
+                                    </div>
                                 );
                             })}
-                        </svg>
 
-                        {/* Interactive flow connection names/labels in the middle of arrows */}
-                        {connections.map((conn) => {
-                            const fromCenter = getNodeCenter(conn.from);
-                            const toCenter = getNodeCenter(conn.to);
-                            const midX = (fromCenter.x + toCenter.x) / 2;
-                            const midY = (fromCenter.y + toCenter.y) / 2;
+                            {/* Nodes / Component Cards rendering */}
+                            {nodes.map((node) => {
+                                const isSelected = selectedNodeId === node.id;
+                                const typeMeta = COMPONENT_TYPES[node.type];
+                                const isSource = connectionSource === node.id;
 
-                            return (
-                                <div
-                                    key={`label-${conn.id}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedConnectionId(conn.id);
-                                    }}
-                                    className={`absolute px-2 py-0.5 rounded text-[10px] font-mono font-bold border transform -translate-x-1/2 -translate-y-1/2 cursor-pointer shadow-sm z-10 transition-all ${selectedConnectionId === conn.id
-                                        ? 'bg-amber-500 border-amber-550 text-white'
-                                        : 'bg-white dark:bg-dark-900 border-dark-200 dark:border-dark-800 text-dark-700 dark:text-dark-350 hover:border-primary-500'
-                                        }`}
-                                    style={{ left: midX, top: midY }}
-                                >
-                                    {conn.label}
-                                </div>
-                            );
-                        })}
-
-                        {/* Nodes / Component Cards rendering */}
-                        {nodes.map((node) => {
-                            const isSelected = selectedNodeId === node.id;
-                            const typeMeta = COMPONENT_TYPES[node.type];
-                            const isSource = connectionSource === node.id;
-
-                            return (
-                                <div
-                                    key={node.id}
-                                    onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
-                                    className={`absolute w-40 h-[70px] rounded-xl border p-2.5 flex flex-col justify-between cursor-grab active:cursor-grabbing shadow-sm transition-all z-20 ${isSelected
-                                        ? 'border-primary-500 ring-2 ring-primary-500/20'
-                                        : isSource
-                                            ? 'border-amber-500 ring-2 ring-amber-500/20 animate-pulse'
-                                            : 'border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900/90'
-                                        }`}
-                                    style={{ left: node.x, top: node.y }}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <div className={`p-1.5 rounded-lg bg-gradient-to-br ${node.color || typeMeta?.color} text-white flex-shrink-0`}>
-                                            {typeMeta?.icon}
+                                return (
+                                    <div
+                                        key={node.id}
+                                        onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                                        className={`absolute w-40 h-[70px] rounded-xl border p-2.5 flex flex-col justify-between cursor-grab active:cursor-grabbing shadow-sm transition-all z-20 ${isSelected
+                                            ? 'border-primary-500 ring-2 ring-primary-500/20'
+                                            : isSource
+                                                ? 'border-amber-500 ring-2 ring-amber-500/20 animate-pulse'
+                                                : 'border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900/90'
+                                            }`}
+                                        style={{ left: node.x, top: node.y }}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className={`p-1.5 rounded-lg bg-gradient-to-br ${node.color || typeMeta?.color} text-white flex-shrink-0`}>
+                                                {typeMeta?.icon}
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-xs font-bold text-dark-950 dark:text-white truncate">
+                                                    {node.label}
+                                                </span>
+                                                <span className="text-[9px] text-dark-500 dark:text-dark-400 capitalize truncate">
+                                                    {typeMeta?.label}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-xs font-bold text-dark-950 dark:text-white truncate">
-                                                {node.label}
+
+                                        {/* Action button to delete node */}
+                                        <div className="flex items-center justify-between mt-1 text-[9px] text-dark-400 dark:text-dark-550 border-t border-dark-100 dark:border-dark-850 pt-1">
+                                            <span className="truncate max-w-[100px]" title={node.description}>
+                                                {node.description}
                                             </span>
-                                            <span className="text-[9px] text-dark-500 dark:text-dark-400 capitalize truncate">
-                                                {typeMeta?.label}
-                                            </span>
+                                            <button
+                                                onMouseDown={(e) => e.stopPropagation()} // stop drag triggering
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteNode(node.id);
+                                                }}
+                                                className="text-dark-400 hover:text-rose-500 transition-colors p-0.5 cursor-pointer"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
                                         </div>
                                     </div>
-
-                                    {/* Action button to delete node */}
-                                    <div className="flex items-center justify-between mt-1 text-[9px] text-dark-400 dark:text-dark-550 border-t border-dark-100 dark:border-dark-850 pt-1">
-                                        <span className="truncate max-w-[100px]" title={node.description}>
-                                            {node.description}
-                                        </span>
-                                        <button
-                                            onMouseDown={(e) => e.stopPropagation()} // stop drag triggering
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteNode(node.id);
-                                            }}
-                                            className="text-dark-400 hover:text-rose-500 transition-colors p-0.5 cursor-pointer"
-                                        >
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </Card>
             </div>
 
             {/* Right Column: Component Details & Flow Properties Editor */}
-            <div className="w-full lg:w-72 flex flex-col gap-4 flex-shrink-0">
+            <div className="w-full xl:w-72 flex flex-col gap-4 flex-shrink-0">
                 {/* 1. Component Node Editor */}
                 {selectedNodeId && (
                     <Card className="p-4 border-l-4 border-l-primary-500 animate-slide-in">
