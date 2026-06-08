@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Card from '../components/common/Card';
 import { callLlm, parseJsonResponse } from '../utils/ai';
 import { useAuth } from '../context/AuthContext';
@@ -19,10 +19,31 @@ const AIInterview = () => {
     const [error, setError] = useState('');
     const [toast, setToast] = useState('');
 
+    const recognitionRef = useRef(null);
+    const idleTimerRef = useRef(null);
+    const accumulatedTranscriptRef = useRef('');
+
     const showToast = (msg) => {
         setToast(msg);
         setTimeout(() => setToast(''), 3000);
     };
+
+    // Clean up speech synthesis & recognition on unmount
+    useEffect(() => {
+        return () => {
+            window.speechSynthesis.cancel();
+            if (idleTimerRef.current) {
+                clearTimeout(idleTimerRef.current);
+            }
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (e) {
+                    // Ignore
+                }
+            }
+        };
+    }, []);
 
     // Load pdf.js CDN
     const loadPdfJs = async () => {
@@ -124,40 +145,140 @@ const AIInterview = () => {
         }
     };
 
-    // Speech synthesis helper
+    // Speech synthesis helper with a more natural interviewer-like voice configuration
     const speak = (text) => {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = 'en-US';
+
+        const voices = window.speechSynthesis.getVoices();
+        // Look for premium, natural sounding English voices
+        const preferredVoice = voices.find(v => 
+            v.lang.startsWith('en-') && 
+            (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft') || v.name.includes('Samantha') || v.name.includes('Daniel'))
+        ) || voices.find(v => v.lang.startsWith('en-'));
+
+        if (preferredVoice) {
+            utter.voice = preferredVoice;
+        }
+        utter.pitch = 1.0;
+        utter.rate = 0.92; // Slightly slower, more professional, interviewer-like cadence
         window.speechSynthesis.speak(utter);
     };
 
-    // Speech recognition helper (Web Speech API)
+    // Handle idle timer for auto-stopping after 5 seconds of silence
+    const resetIdleTimer = () => {
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+        }
+        idleTimerRef.current = setTimeout(() => {
+            handleStopRecording();
+        }, 5000);
+    };
+
+    // Speech recognition helper
     const startListening = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert('Speech recognition not supported in this browser. Please use Chrome or Safari.');
+            alert('Speech recognition not supported in this browser. Please use Google Chrome or Safari.');
             return;
         }
+        
+        window.speechSynthesis.cancel(); // Stop interviewer speech
+
+        accumulatedTranscriptRef.current = '';
+        setAnswer('');
+        setError('');
+
         const recognizer = new SpeechRecognition();
         recognizer.lang = 'en-US';
-        recognizer.interimResults = false;
-        recognizer.maxAlternatives = 1;
-        
+        recognizer.continuous = true;
+        recognizer.interimResults = true;
+
         recognizer.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            setAnswer(transcript);
-            setStage('evaluating');
+            let finalTranscript = '';
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript + ' ';
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+
+            if (finalTranscript) {
+                accumulatedTranscriptRef.current += finalTranscript;
+            }
+
+            // Real-time update to state
+            setAnswer(accumulatedTranscriptRef.current + interimTranscript);
+            
+            // User is speaking, reset the 5s idle timer
+            resetIdleTimer();
         };
-        
+
         recognizer.onerror = (e) => {
-            console.error('Speech recognition error', e);
-            setError('Microphone access was denied or timed out. Please try again.');
-            setStage('asking');
+            if (e.error !== 'no-speech') {
+                console.error('Speech recognition error', e);
+                setError('Microphone access issue or timeout. Please check microphone settings.');
+                setStage('asking');
+            }
         };
-        
+
+        recognitionRef.current = recognizer;
         recognizer.start();
         setStage('listening');
+
+        // Start the initial 5 seconds idle timer
+        resetIdleTimer();
+    };
+
+    const handleStopRecording = () => {
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+            idleTimerRef.current = null;
+        }
+
+        if (recognitionRef.current) {
+            recognitionRef.current.onresult = null;
+            recognitionRef.current.onerror = null;
+            try {
+                recognitionRef.current.stop();
+            } catch (e) {
+                console.error(e);
+            }
+            recognitionRef.current = null;
+        }
+
+        const finalAnswer = accumulatedTranscriptRef.current.trim();
+        if (!finalAnswer) {
+            setError('No answer detected. Please click start speaking and try again.');
+            setStage('asking');
+        } else {
+            setAnswer(finalAnswer);
+            setStage('evaluating');
+        }
+    };
+
+    const handleExitSession = () => {
+        window.speechSynthesis.cancel();
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+            idleTimerRef.current = null;
+        }
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.stop();
+            } catch (e) {
+                console.error(e);
+            }
+            recognitionRef.current = null;
+        }
+        setStage('idle');
+        setQuestion('');
+        setAnswer('');
+        setFeedback(null);
     };
 
     const generateQuestion = async () => {
@@ -207,7 +328,7 @@ JSON Evaluation:`;
         }
     };
 
-    // Trigger evaluation when answer is set
+    // Trigger evaluation when answer is set via useEffect
     useEffect(() => {
         if (stage === 'evaluating' && answer) {
             evaluateAnswer();
@@ -243,7 +364,7 @@ JSON Evaluation:`;
     }
 
     return (
-        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-dark-50 dark:bg-dark-950/20 mt-16">
+        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-dark-50 dark:bg-dark-950/20 mt-16 animate-fade-in">
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="mb-4">
                     <h1 className="text-3xl font-display font-bold text-dark-900 dark:text-white">AI Interview Prep</h1>
@@ -435,19 +556,27 @@ JSON Evaluation:`;
                                     <h4 className="font-bold text-dark-900 dark:text-white">Record Your Answer</h4>
                                     <p className="text-xs text-dark-500 dark:text-dark-400 mt-1 max-w-sm">Click the button below and speak clearly into your microphone to record your response.</p>
                                 </div>
-                                <button
-                                    onClick={startListening}
-                                    className="btn-primary px-6 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer"
-                                >
-                                    🎙️ Start Speaking
-                                </button>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={startListening}
+                                        className="btn-primary px-6 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                                    >
+                                        🎙️ Start Speaking
+                                    </button>
+                                    <button
+                                        onClick={handleExitSession}
+                                        className="px-6 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl cursor-pointer"
+                                    >
+                                        Exit Session
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {/* Speech Recognition Active State */}
                     {stage === 'listening' && (
-                        <div className="flex flex-col items-center justify-center py-12 space-y-4 animate-pulse">
+                        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-fade-in">
                             <div className="relative flex items-center justify-center">
                                 <div className="absolute w-20 h-20 bg-rose-500/25 rounded-full animate-ping"></div>
                                 <div className="relative w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20">
@@ -458,7 +587,29 @@ JSON Evaluation:`;
                             </div>
                             <div className="text-center">
                                 <p className="text-base font-bold text-dark-900 dark:text-white">Listening to your answer...</p>
-                                <p className="text-xs text-dark-500 dark:text-dark-400 mt-1">Speak clearly now. We will capture your response automatically.</p>
+                                <p className="text-xs text-dark-500 dark:text-dark-400 mt-1">Speak clearly now. Evaluation begins if you are silent for 5 seconds.</p>
+                            </div>
+
+                            {answer && (
+                                <div className="w-full max-w-lg p-4 bg-dark-100 dark:bg-dark-850 border border-dark-200/50 dark:border-dark-800 rounded-xl text-sm italic text-dark-750 dark:text-dark-300">
+                                    <span className="font-semibold not-italic block text-[10px] text-dark-400 uppercase tracking-wider mb-1">Live Transcript:</span>
+                                    "{answer}"
+                                </div>
+                            )}
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={handleStopRecording}
+                                    className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 text-xs font-semibold rounded-xl flex items-center gap-2 cursor-pointer transition-all border-none"
+                                >
+                                    🛑 Stop & Submit
+                                </button>
+                                <button
+                                    onClick={handleExitSession}
+                                    className="px-6 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl cursor-pointer"
+                                >
+                                    Exit Session
+                                </button>
                             </div>
                         </div>
                     )}
@@ -510,12 +661,7 @@ JSON Evaluation:`;
 
                             <div className="flex gap-4">
                                 <button
-                                    onClick={() => {
-                                        setStage('idle');
-                                        setQuestion('');
-                                        setAnswer('');
-                                        setFeedback(null);
-                                    }}
+                                    onClick={handleExitSession}
                                     className="px-4 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl transition-all cursor-pointer flex-1 text-center"
                                 >
                                     Exit Session
