@@ -1507,6 +1507,7 @@ const Learning = () => {
                                     </div>
                                 );
                             })}
+                        </div>
                     </div>
                 )}
 

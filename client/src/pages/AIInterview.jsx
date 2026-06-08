@@ -21,6 +21,8 @@ const AIInterview = () => {
     const [toast, setToast] = useState('');
     const [history, setHistory] = useState([]);
     const [expandedItem, setExpandedItem] = useState(null);
+    const [sessionLogs, setSessionLogs] = useState([]);
+    const [inputMode, setInputMode] = useState('voice'); // 'voice', 'code'
 
     const recognitionRef = useRef(null);
     const idleTimerRef = useRef(null);
@@ -298,11 +300,20 @@ const AIInterview = () => {
         setQuestion('');
         setAnswer('');
         setFeedback(null);
+        setSessionLogs([]);
     };
 
     const generateQuestion = async () => {
+        setFeedback(null);
+        setAnswer('');
         setLoading(true);
         setError('');
+        
+        // If this is the start of a session, reset session logs
+        if (stage === 'idle') {
+            setSessionLogs([]);
+        }
+
         const prompt = `You are an expert technical interviewer conducting a mock interview.
 The candidate has selected the topic: "${topic}".
 Generate ONE highly relevant, specific, and challenging interview question strictly about "${topic}".
@@ -316,8 +327,15 @@ ${resumeText}
 Question:`;
         try {
             const response = await callLlm(prompt);
-            setQuestion(response.trim());
-            speak(response.trim());
+            const trimmedQ = response.trim();
+            setQuestion(trimmedQ);
+            speak(trimmedQ);
+            
+            // Detect if question involves coding/implementation
+            const keywords = ['code', 'write a', 'implement', 'function', 'complexity', 'algorithm', 'treenode', 'class ', 'signature', 'method'];
+            const isCoding = keywords.some(kw => trimmedQ.toLowerCase().includes(kw));
+            setInputMode(isCoding ? 'code' : 'voice');
+            
             setStage('asking');
         } catch (e) {
             console.error('Failed to generate question', e);
@@ -330,12 +348,22 @@ Question:`;
     const evaluateAnswer = async () => {
         setLoading(true);
         setError('');
-        const prompt = `You are an AI Interviewer. Please evaluate the candidate's response to your question.
+        const prompt = `You are a professional, supportive, and constructive technical interviewer.
+Please evaluate the candidate's response to your question.
+
 Question: "${question}"
 Candidate Answer: "${answer}"
 
-Provide feedback on whether the answer is correct/satisfactory, what they got right, and how they can improve.
-Return ONLY a JSON object of shape { "correct": boolean, "feedback": "string" } with no additional styling, markdown backticks, or text.
+Instructions:
+1. Act like a professional interviewer: be polite, encouraging, and supportive. Do not use scary or overly critical language. Make the candidate feel motivated.
+2. If the candidate missed key parts, made mistake(s), or said they don't know: politely correct them and explicitly provide the correct answer, recommended coding logic, or best-practice solution in your feedback.
+3. Keep the feedback structured, clear, and educational.
+4. Return ONLY a JSON object of shape:
+{
+  "correct": boolean,
+  "feedback": "constructive feedback text containing corrections and correct answers/solutions"
+}
+Do not include any markdown backticks, introductory text, or styling in your raw output.
 
 JSON Evaluation:`;
         try {
@@ -343,8 +371,41 @@ JSON Evaluation:`;
             const parsed = parseJsonResponse(raw);
             setFeedback(parsed);
             speak(parsed.feedback);
+            setStage('feedback');
 
-            // Log this session in history
+            // Record in current session log
+            const sessionItem = {
+                question,
+                answer,
+                correct: parsed.correct,
+                feedback: parsed.feedback
+            };
+            setSessionLogs(prev => [...prev, sessionItem]);
+
+            // If candidate indicated lack of knowledge, pivot topic
+            const lowerAnswer = answer.toLowerCase();
+            const didNotKnow = lowerAnswer.includes("don't know") || 
+                               lowerAnswer.includes("no idea") || 
+                               lowerAnswer.includes("don't understand") || 
+                               lowerAnswer.includes("skip") || 
+                               lowerAnswer.includes("unsure") || 
+                               answer.trim().length < 5;
+
+            if (didNotKnow) {
+                const topicsList = [
+                    'Data Structures & Algorithms',
+                    'System Design',
+                    'Backend Development (NodeJS/Database)',
+                    'Frontend Development (React/JS/CSS)',
+                    'General Technical & Behavioral'
+                ];
+                const otherTopics = topicsList.filter(t => t !== topic);
+                const newTopic = otherTopics[Math.floor(Math.random() * otherTopics.length)];
+                setTopic(newTopic);
+                showToast(`Pivoting next question topic to: ${newTopic}`);
+            }
+
+            // Log this session in database history
             const payload = {
                 topic,
                 question,
@@ -370,9 +431,99 @@ JSON Evaluation:`;
         } catch (e) {
             console.error('Evaluation failed', e);
             setFeedback({ correct: false, feedback: 'Could not evaluate the answer successfully due to an API timeout. Please try again.' });
+            setStage('feedback');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDownloadSessionReport = () => {
+        const printWindow = window.open('', '_blank');
+        
+        let logsHtml = '';
+        sessionLogs.forEach((log, idx) => {
+            logsHtml += `
+                <div class="card">
+                    <h3 class="q-title">Question ${idx + 1}</h3>
+                    <p class="question-text">${log.question}</p>
+                    <div class="ans-grid">
+                        <div>
+                            <span class="label">Your Response:</span>
+                            <span class="value ${log.correct ? 'correct-text' : 'incorrect-text'}">${log.answer || '(No Answer Provided)'}</span>
+                        </div>
+                        <div>
+                            <span class="label">AI Evaluation & Corrections:</span>
+                            <p class="value-text">${log.feedback}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        const correctCount = sessionLogs.filter(l => l.correct).length;
+        const totalCount = sessionLogs.length;
+        const scorePercentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>CodeForge Mock Interview Performance Report</title>
+                    <style>
+                        body {
+                            font-family: 'Inter', Arial, sans-serif;
+                            color: #111827;
+                            line-height: 1.5;
+                            padding: 40px;
+                            max-width: 800px;
+                            margin: 0 auto;
+                        }
+                        .header { text-align: center; border-bottom: 2px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 30px; }
+                        .title { font-size: 24pt; font-weight: 800; margin-bottom: 5px; color: #10B981; }
+                        .meta-info { font-size: 10pt; color: #6B7280; }
+                        .score-container { display: flex; align-items: center; gap: 40px; margin: 25px 0; }
+                        .score-badge { font-size: 48pt; font-weight: 900; color: #10B981; border: 5px solid #10B981; border-radius: 50%; width: 120px; height: 120px; display: flex; justify-content: center; align-items: center; }
+                        .section-title { font-size: 14pt; font-weight: 700; color: #1F2937; border-bottom: 1px solid #E5E7EB; padding-bottom: 5px; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; }
+                        .card { border: 1px solid #E5E7EB; border-radius: 12px; padding: 18px; margin-bottom: 20px; background-color: #F9FAFB; }
+                        .q-title { font-size: 11pt; font-weight: bold; margin: 0 0 5px 0; color: #374151; }
+                        .question-text { font-size: 11pt; margin-bottom: 12px; color: #111827; font-weight: 500; }
+                        .ans-grid { border-top: 1px dashed #E5E7EB; padding-top: 10px; }
+                        .label { font-size: 9pt; font-weight: bold; color: #6B7280; text-transform: uppercase; display: block; margin-top: 10px; }
+                        .value { font-size: 10pt; font-weight: 600; display: block; margin-top: 2px; }
+                        .correct-text { color: #059669; }
+                        .incorrect-text { color: #DC2626; }
+                        .value-text { font-size: 10pt; color: #4B5563; margin: 4px 0 0 0; }
+                        @media print {
+                            body { padding: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="title">MOCK INTERVIEW REPORT</div>
+                        <div class="meta-info">CodeForge AI Interview Simulator | Date: ${new Date().toLocaleDateString()}</div>
+                    </div>
+                    
+                    <div class="score-container">
+                        <div class="score-badge">${scorePercentage}%</div>
+                        <div>
+                            <h2 style="margin: 0; font-size: 16pt; color: #1F2937;">Topic Focus: ${topic}</h2>
+                            <p class="meta-info" style="margin: 5px 0 0 0;">Questions Attempted: ${totalCount} | Correct: ${correctCount}</p>
+                        </div>
+                    </div>
+
+                    <div class="section-title">Interview Question & Evaluation Log</div>
+                    ${logsHtml}
+
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            window.close();
+                        }
+                    </script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
     };
 
     const clearHistory = async () => {
@@ -582,9 +733,7 @@ JSON Evaluation:`;
                                 )}
                             </button>
                         </div>
-                    )}
-
-                    {/* Active Question & Voice Q&A Screen */}
+                    )}                    {/* Active Question & Voice Q&A Screen */}
                     {stage === 'asking' && (
                         <div className="space-y-6 animate-fade-in">
                             <div className="flex items-center justify-between">
@@ -607,31 +756,88 @@ JSON Evaluation:`;
                                 </button>
                             </div>
 
-                            <div className="flex flex-col items-center justify-center p-6 border border-dashed border-dark-200/50 dark:border-dark-800 rounded-2xl space-y-4 bg-dark-50/25 dark:bg-dark-950/10">
-                                <div className="w-16 h-16 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center border border-primary-500/20">
-                                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                    </svg>
-                                </div>
-                                <div className="text-center">
-                                    <h4 className="font-bold text-dark-900 dark:text-white">Record Your Answer</h4>
-                                    <p className="text-xs text-dark-500 dark:text-dark-400 mt-1 max-w-sm">Click the button below and speak clearly into your microphone to record your response.</p>
-                                </div>
-                                <div className="flex gap-4">
+                            {/* Input Mode Selector */}
+                            <div className="flex justify-center">
+                                <div className="inline-flex p-1 bg-dark-100 dark:bg-dark-850 rounded-xl border border-dark-200/50 dark:border-dark-800">
                                     <button
-                                        onClick={startListening}
-                                        className="btn-primary px-6 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                                        onClick={() => setInputMode('voice')}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                                            inputMode === 'voice' ? 'bg-white dark:bg-dark-900 text-primary-500 shadow-sm' : 'text-dark-500 dark:text-dark-400'
+                                        }`}
                                     >
-                                        🎙️ Start Speaking
+                                        🎙️ Voice Mode
                                     </button>
                                     <button
-                                        onClick={handleExitSession}
-                                        className="px-6 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl cursor-pointer"
+                                        onClick={() => setInputMode('code')}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                                            inputMode === 'code' ? 'bg-white dark:bg-dark-900 text-primary-500 shadow-sm' : 'text-dark-500 dark:text-dark-400'
+                                        }`}
                                     >
-                                        Exit Session
+                                        💻 Code Editor
                                     </button>
                                 </div>
                             </div>
+
+                            {inputMode === 'voice' ? (
+                                <div className="flex flex-col items-center justify-center p-6 border border-dashed border-dark-200/50 dark:border-dark-800 rounded-2xl space-y-4 bg-dark-50/25 dark:bg-dark-950/10">
+                                    <div className="w-16 h-16 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center border border-primary-500/20">
+                                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                        </svg>
+                                    </div>
+                                    <div className="text-center">
+                                        <h4 className="font-bold text-dark-900 dark:text-white">Record Your Answer</h4>
+                                        <p className="text-xs text-dark-500 dark:text-dark-400 mt-1 max-w-sm">Click the button below and speak clearly into your microphone to record your response.</p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <button
+                                            onClick={startListening}
+                                            className="btn-primary px-6 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                                        >
+                                            🎙️ Start Speaking
+                                        </button>
+                                        <button
+                                            onClick={handleExitSession}
+                                            className="px-6 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl cursor-pointer"
+                                        >
+                                            Exit Session
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 w-full">
+                                    <div className="p-4 rounded-xl bg-primary-500/5 border border-primary-500/10 text-xs text-primary-600 dark:text-primary-400">
+                                        💻 <strong>Code Editor Active:</strong> Write your logic or pseudo-code below. Complete syntax compiling is not required, just explain your algorithms and logic.
+                                    </div>
+                                    <textarea
+                                        className="input font-mono text-sm min-h-[220px] p-4 leading-relaxed"
+                                        placeholder="// Write your code or step-by-step logic here..."
+                                        value={answer}
+                                        onChange={(e) => setAnswer(e.target.value)}
+                                    />
+                                    <div className="flex gap-4">
+                                        <button
+                                            onClick={() => {
+                                                if (!answer.trim()) {
+                                                    setError('Please enter your code response before submitting.');
+                                                    return;
+                                                }
+                                                setStage('evaluating');
+                                                evaluateAnswer();
+                                            }}
+                                            className="btn-primary px-6 py-2.5 text-xs font-semibold flex-1 cursor-pointer"
+                                        >
+                                            🚀 Submit Code Response
+                                        </button>
+                                        <button
+                                            onClick={handleExitSession}
+                                            className="px-6 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl cursor-pointer"
+                                        >
+                                            Exit Session
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -687,7 +893,7 @@ JSON Evaluation:`;
                     )}
 
                     {/* Feedback Output & Correctness Assessment */}
-                    {feedback && (
+                    {stage === 'feedback' && feedback && (
                         <div className="space-y-6 animate-fade-in">
                             <div className={`p-6 rounded-2xl border ${
                                 feedback.correct 
@@ -702,7 +908,7 @@ JSON Evaluation:`;
                                     </div>
                                     <div>
                                         <h3 className="font-extrabold text-lg">
-                                            {feedback.correct ? 'Correct Answer!' : 'Needs Improvement'}
+                                            {feedback.correct ? 'Satisfactory Response' : 'Needs Improvement'}
                                         </h3>
                                         <p className="text-xs opacity-75">AI Evaluation Report</p>
                                     </div>
@@ -710,28 +916,98 @@ JSON Evaluation:`;
 
                                 <div className="space-y-4">
                                     <div>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Your Answer</h4>
-                                        <p className="text-sm italic mt-1 font-medium text-dark-700 dark:text-dark-300">"{answer}"</p>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Your Response</h4>
+                                        <p className="text-sm italic mt-1 font-medium text-dark-700 dark:text-dark-300 whitespace-pre-wrap">"{answer || '(No response provided)'}"</p>
                                     </div>
                                     <div className="pt-4 border-t border-dark-200/10 dark:border-dark-800/20">
-                                        <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Evaluator Verdict</h4>
-                                        <p className="text-sm mt-1 leading-relaxed text-dark-800 dark:text-dark-200">{feedback.feedback}</p>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Evaluator Feedback & Corrections</h4>
+                                        <p className="text-sm mt-1 leading-relaxed text-dark-800 dark:text-dark-200 whitespace-pre-wrap">{feedback.feedback}</p>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-4">
+                                <button
+                                    onClick={handleExitSession}
+                                    className="px-4 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl transition-all cursor-pointer flex-1 min-w-[120px] text-center"
+                                >
+                                    Exit Session
+                                </button>
+                                {sessionLogs.length > 0 && (
+                                    <button
+                                        onClick={() => setStage('session_summary')}
+                                        className="px-4 py-2.5 border border-emerald-500/30 dark:border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl transition-all cursor-pointer flex-1 min-w-[120px] text-center"
+                                    >
+                                        🏁 Finish Interview
+                                    </button>
+                                )}
+                                <button
+                                    onClick={generateQuestion}
+                                    className="btn-primary text-xs py-2.5 flex-1 min-w-[120px] cursor-pointer"
+                                >
+                                    Next Question →
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Overall Session Summary Scorecard */}
+                    {stage === 'session_summary' && (
+                        <div className="space-y-6 animate-fade-in">
+                            <div className="text-center space-y-2">
+                                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 rounded-lg text-xs font-bold uppercase tracking-wider">
+                                    Mock Interview Session Completed
+                                </span>
+                                <h2 className="text-2xl font-bold text-dark-900 dark:text-white font-display">Performance Scorecard</h2>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 p-6 bg-dark-100/40 dark:bg-dark-900/40 border border-dark-200/50 dark:border-dark-800 rounded-2xl">
+                                {/* Circular score badge */}
+                                <div className="relative w-28 h-28 flex items-center justify-center rounded-full border-4 border-emerald-500 shadow-lg shadow-emerald-500/10 flex-shrink-0">
+                                    <div className="text-center">
+                                        <span className="text-3xl font-extrabold text-dark-900 dark:text-white">
+                                            {Math.round((sessionLogs.filter(l => l.correct).length / Math.max(1, sessionLogs.length)) * 100)}%
+                                        </span>
+                                        <span className="block text-[10px] text-dark-500 dark:text-dark-400 font-bold uppercase tracking-wider mt-0.5">Success</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1 text-center sm:text-left">
+                                    <h3 className="font-bold text-dark-950 dark:text-white">Focus Topic: {topic}</h3>
+                                    <p className="text-sm text-dark-500 dark:text-dark-400">Total Questions Answered: {sessionLogs.length}</p>
+                                    <p className="text-sm text-dark-500 dark:text-dark-400">Correct Answers: {sessionLogs.filter(l => l.correct).length} | Needs Improvement: {sessionLogs.filter(l => !l.correct).length}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="font-bold text-dark-800 dark:text-dark-200 text-sm uppercase tracking-wider">Session Transcript & Corrections</h3>
+                                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                                    {sessionLogs.map((log, idx) => (
+                                        <div key={idx} className="p-4 bg-white dark:bg-dark-900/50 border border-dark-200/50 dark:border-dark-800 rounded-xl space-y-2 text-xs text-left">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-bold text-dark-900 dark:text-white">Q{idx + 1}: {log.question}</span>
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${log.correct ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                                                    {log.correct ? 'Satisfactory' : 'Needs Improvement'}
+                                                </span>
+                                            </div>
+                                            <p className="text-dark-600 dark:text-dark-400 italic font-mono mt-1">"{log.answer || '(No Answer)'}"</p>
+                                            <p className="text-dark-750 dark:text-dark-300 mt-2 bg-dark-100/50 dark:bg-dark-850 p-2.5 rounded-lg border border-dark-200/30 dark:border-dark-800/40 leading-relaxed whitespace-pre-wrap">{log.feedback}</p>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
                             <div className="flex gap-4">
                                 <button
+                                    onClick={handleDownloadSessionReport}
+                                    className="btn-primary text-xs py-2.5 flex-1 cursor-pointer flex items-center justify-center gap-2"
+                                >
+                                    📥 Download Report PDF
+                                </button>
+                                <button
                                     onClick={handleExitSession}
                                     className="px-4 py-2.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold rounded-xl transition-all cursor-pointer flex-1 text-center"
                                 >
-                                    Exit Session
-                                </button>
-                                <button
-                                    onClick={generateQuestion}
-                                    className="btn-primary text-xs py-2.5 flex-1 cursor-pointer"
-                                >
-                                    Next Question →
+                                    Start New Session
                                 </button>
                             </div>
                         </div>
