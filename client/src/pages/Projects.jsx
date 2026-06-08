@@ -11,6 +11,15 @@ const Projects = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
 
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return '';
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+        if (imagePath.startsWith('/projects/') || imagePath.startsWith('/images/')) {
+            return imagePath;
+        }
+        return `${SERVER_URL}${imagePath}`;
+    };
+
     // Sample projects data (will be replaced by API data)
     const sampleProjects = [
         {
@@ -20,6 +29,7 @@ const Projects = () => {
             techStack: ['Spring Boot', 'Microservices', 'React', 'Tailwind CSS', 'FastAPI', 'PostgreSQL', 'AWS S3', 'Gemini API'],
             githubLink: 'https://github.com/tusquake/HomeGenie',
             liveDemo: 'https://homegenie-ucu3.onrender.com/',
+            image: '/projects/homegenie.png',
             featured: true,
         },
         {
@@ -29,6 +39,7 @@ const Projects = () => {
             techStack: ['Spring Boot', 'OAuth 2.0', 'Spring Security', 'React', 'PostgreSQL', 'Tailwind CSS', 'Gemini API'],
             githubLink: 'https://github.com/tusquake/SpendWise',
             liveDemo: 'https://spendwise-1-bcdd.onrender.com/',
+            image: '/projects/spendwise.png',
             featured: true,
         },
     ];
@@ -108,7 +119,7 @@ const Projects = () => {
                             <div className="h-48 bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center relative overflow-hidden">
                                 {project.image ? (
                                     <img
-                                        src={`${SERVER_URL}${project.image}`}
+                                        src={getImageUrl(project.image)}
                                         alt={project.title}
                                         className="w-full h-full object-cover"
                                     />
