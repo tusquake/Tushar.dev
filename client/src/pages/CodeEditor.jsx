@@ -329,42 +329,42 @@ Provide instructions and modified code structure to achieve this request.`;
         switch (theme) {
             case 'cyberpunk':
                 return {
-                    container: 'bg-[#000511] text-[#00ff66] border-[#ff0055]/30',
-                    editorBg: 'bg-[#050b1a] text-[#00ffaa]',
-                    textarea: 'text-[#00ffaa] caret-[#ff0055]',
-                    lineNo: 'text-[#ff0055]/50 border-[#ff0055]/20',
-                    glow: 'shadow-[0_0_20px_rgba(255,0,85,0.15)]',
+                    container: 'bg-[#fcf8e3] dark:bg-[#000511] text-[#91003c] dark:text-[#00ff66] border-[#ff0055]/20 dark:border-[#ff0055]/30',
+                    editorBg: 'bg-[#fffdf5] dark:bg-[#050b1a] text-black dark:text-[#00ffaa]',
+                    textarea: 'text-black dark:text-[#00ffaa] caret-[#ff0055]',
+                    lineNo: 'text-[#ff0055]/40 dark:text-[#ff0055]/50 border-[#ff0055]/10 dark:border-[#ff0055]/20',
+                    glow: 'shadow-[0_0_20px_rgba(255,0,85,0.05)] dark:shadow-[0_0_20px_rgba(255,0,85,0.15)]',
                     accent: '#ff0055',
                     button: 'bg-[#ff0055] hover:bg-[#ff0055]/80 text-white'
                 };
             case 'obsidian':
                 return {
-                    container: 'bg-[#111] text-[#e0e0e0] border-neutral-800',
-                    editorBg: 'bg-[#181818] text-[#f8f8f2]',
-                    textarea: 'text-[#f8f8f2] caret-white',
-                    lineNo: 'text-neutral-600 border-neutral-800',
+                    container: 'bg-neutral-50 dark:bg-[#111] text-neutral-800 dark:text-[#e0e0e0] border-neutral-200 dark:border-neutral-800',
+                    editorBg: 'bg-white dark:bg-[#181818] text-neutral-900 dark:text-[#f8f8f2]',
+                    textarea: 'text-neutral-900 dark:text-[#f8f8f2] caret-neutral-900 dark:caret-white',
+                    lineNo: 'text-neutral-400 dark:text-neutral-600 border-neutral-200 dark:border-neutral-800',
                     glow: 'shadow-none',
                     accent: '#9061f9',
-                    button: 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700'
+                    button: 'bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-white border border-neutral-300 dark:border-neutral-700'
                 };
             case 'aurora':
                 return {
-                    container: 'bg-[#0d1e1c] text-[#00f5ff] border-teal-500/20',
-                    editorBg: 'bg-[#061211] text-[#64ffda]',
-                    textarea: 'text-[#64ffda] caret-teal-400',
-                    lineNo: 'text-teal-900 border-teal-900/30',
-                    glow: 'shadow-[0_0_20px_rgba(100,255,218,0.1)]',
+                    container: 'bg-[#f0fdfa] dark:bg-[#0d1e1c] text-[#0f766e] dark:text-[#00f5ff] border-teal-200 dark:border-teal-500/20',
+                    editorBg: 'bg-white dark:bg-[#061211] text-teal-950 dark:text-[#64ffda]',
+                    textarea: 'text-teal-950 dark:text-[#64ffda] caret-teal-600 dark:caret-teal-400',
+                    lineNo: 'text-teal-400 dark:text-teal-900 border-teal-100 dark:border-teal-900/30',
+                    glow: 'shadow-[0_0_20px_rgba(20,184,166,0.05)] dark:shadow-[0_0_20px_rgba(100,255,218,0.1)]',
                     accent: '#0d9488',
                     button: 'bg-teal-600 hover:bg-teal-500 text-white'
                 };
             case 'neon-horizon':
             default:
                 return {
-                    container: 'bg-dark-950/65 text-dark-100 border-dark-800/40 backdrop-blur-xl',
-                    editorBg: 'bg-dark-900/45 text-purple-100',
-                    textarea: 'text-purple-100 caret-primary-400',
-                    lineNo: 'text-dark-500 border-dark-800/30',
-                    glow: 'shadow-[0_0_30px_rgba(124,58,237,0.1)]',
+                    container: 'bg-purple-50/80 dark:bg-dark-950/65 text-purple-900 dark:text-dark-100 border-purple-200 dark:border-dark-800/40 backdrop-blur-xl',
+                    editorBg: 'bg-purple-50/30 dark:bg-dark-900/45 text-purple-950 dark:text-purple-100',
+                    textarea: 'text-purple-100 caret-primary-600 dark:caret-primary-400',
+                    lineNo: 'text-purple-400 dark:text-dark-500 border-purple-200/50 dark:border-dark-800/30',
+                    glow: 'shadow-[0_0_30px_rgba(124,58,237,0.05)] dark:shadow-[0_0_30px_rgba(124,58,237,0.1)]',
                     accent: '#7c3aed',
                     button: 'bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white'
                 };
@@ -452,8 +452,8 @@ Provide instructions and modified code structure to achieve this request.`;
                 {/* Main Workspace Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     
-                    {/* Left Code Area Column */}
-                    <div className={`${aiIntellisense ? 'lg:col-span-8' : 'lg:col-span-12'} flex flex-col gap-5`}>
+                    {/* Left Code Area Column (Editor) */}
+                    <div className="lg:col-span-8 flex flex-col gap-5">
                         
                         {/* Editor Block */}
                         <div className={`rounded-2xl border ${styles.container} overflow-hidden transition-all duration-300`}>
@@ -532,56 +532,14 @@ Provide instructions and modified code structure to achieve this request.`;
                                 </div>
                             </div>
                         </div>
-
-                        {/* Interactive Console Terminal */}
-                        <div className="rounded-2xl border border-dark-850 bg-[#070b14] shadow-2xl overflow-hidden font-mono">
-                            {/* Terminal Header */}
-                            <div className="px-4 py-3 bg-[#0a0f1d] border-b border-dark-950 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-3 h-3 rounded-full bg-red-500/80" />
-                                    <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                                    <span className="w-3 h-3 rounded-full bg-green-500/80" />
-                                    <span className="text-xs text-dark-400 font-bold ml-2">UNIX TERMINAL CONSOLE</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    {performanceMetrics.time > 0 && (
-                                        <div className="flex items-center gap-3 text-[10px] text-emerald-400 uppercase tracking-widest font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                            <span>Time: {performanceMetrics.time} ms</span>
-                                            <span>Memory: {performanceMetrics.memory} KB</span>
-                                        </div>
-                                    )}
-                                    <button
-                                        onClick={handleClearTerminal}
-                                        className="text-xs text-dark-400 hover:text-dark-200 transition"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Terminal output viewport */}
-                            <div className="p-5 min-h-[160px] max-h-[260px] overflow-y-auto text-xs leading-5 flex flex-col gap-1.5 scrollbar-thin">
-                                {terminalOutput.map((log, index) => {
-                                    let color = 'text-[#00ffaa]'; // stdout default green
-                                    if (log.type === 'system') color = 'text-purple-400 font-bold';
-                                    if (log.type === 'info') color = 'text-cyan-400 font-semibold';
-                                    if (log.type === 'stderr') color = 'text-red-400 font-semibold bg-red-950/20 px-2 py-0.5 rounded border border-red-500/10';
-
-                                    return (
-                                        <div key={index} className={`whitespace-pre-wrap ${color}`}>
-                                            {log.text}
-                                        </div>
-                                    );
-                                })}
-                                <div ref={terminalEndRef} />
-                            </div>
-                        </div>
                     </div>
 
-                    {/* Right AI Intellisense Drawer Column */}
-                    {aiIntellisense && (
-                        <div className="lg:col-span-4 flex flex-col gap-5">
-                            <div className="p-5 rounded-2xl border border-dark-250 dark:border-dark-850 bg-white dark:bg-dark-900/50 backdrop-blur-xl shadow-xl">
+                    {/* Right Sidebar Column (AI Copilot & Terminal) */}
+                    <div className="lg:col-span-4 flex flex-col gap-5">
+                        
+                        {/* Right AI Intellisense Drawer Card */}
+                        {aiIntellisense && (
+                            <div className="p-5 rounded-2xl border border-dark-250 dark:border-dark-850 bg-white dark:bg-dark-900/50 backdrop-blur-xl shadow-xl flex flex-col justify-between flex-shrink-0">
                                 <div className="flex items-center justify-between mb-4 border-b border-dark-100 dark:border-dark-800/80 pb-3">
                                     <h2 className="font-bold text-dark-900 dark:text-white flex items-center gap-1.5">
                                         <svg className="w-4 h-4 text-primary-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -599,14 +557,14 @@ Provide instructions and modified code structure to achieve this request.`;
                                         disabled={aiLoading}
                                         className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
                                     >
-                                        Explain Code
+                                        Explain
                                     </button>
                                     <button
                                         onClick={() => handleCopilotAction('optimize')}
                                         disabled={aiLoading}
                                         className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
                                     >
-                                        Optimize Logic
+                                        Optimize
                                     </button>
                                     <button
                                         onClick={() => handleCopilotAction('fix_bugs')}
@@ -620,7 +578,7 @@ Provide instructions and modified code structure to achieve this request.`;
                                         disabled={aiLoading || !aiQuery.trim()}
                                         className="py-2.5 px-2 text-xs font-semibold rounded-xl bg-primary-500/10 hover:bg-primary-500/20 text-primary-500 border border-primary-500/20 transition cursor-pointer text-center disabled:opacity-50"
                                     >
-                                        Submit Prompt
+                                        Submit
                                     </button>
                                 </div>
 
@@ -629,44 +587,91 @@ Provide instructions and modified code structure to achieve this request.`;
                                     <textarea
                                         value={aiQuery}
                                         onChange={(e) => setAiQuery(e.target.value)}
-                                        placeholder="Ask AI to complete, edit, or customize: e.g. 'write a binary search helper' or 'refactor to recursion'..."
-                                        className="w-full p-3 text-xs rounded-xl bg-dark-50 dark:bg-dark-900 border border-dark-250 dark:border-dark-800 text-dark-750 dark:text-dark-200 focus:outline-none focus:border-primary-500 min-h-[70px] resize-none"
+                                        placeholder="Ask AI to complete, edit, or customize..."
+                                        className="w-full p-3 text-xs rounded-xl bg-dark-50 dark:bg-dark-900 border border-dark-250 dark:border-dark-800 text-dark-750 dark:text-dark-200 focus:outline-none focus:border-primary-500 min-h-[60px] resize-none"
                                     />
                                 </div>
 
                                 {/* AI suggestions output panel */}
-                                <div className="flex flex-col gap-2.5 border-t border-dark-100 dark:border-dark-800/80 pt-4 font-mono text-xs">
+                                <div className="flex flex-col gap-2 border-t border-dark-100 dark:border-dark-800/80 pt-3 font-mono text-xs">
                                     <div className="flex items-center justify-between text-dark-400 dark:text-dark-500 mb-1">
                                         <span>Output Analysis:</span>
                                         {aiResponse.includes('```') && (
                                             <button
                                                 onClick={applyAiSuggestion}
-                                                className="text-[10px] text-primary-500 hover:text-primary-400 uppercase tracking-wider font-bold"
+                                                className="text-[10px] text-primary-500 hover:text-primary-400 uppercase tracking-wider font-bold cursor-pointer"
                                             >
                                                 Apply to Editor
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="rounded-xl p-4 bg-[#0a0f1d] border border-dark-850/80 min-h-[180px] max-h-[300px] overflow-y-auto text-dark-200 leading-5 whitespace-pre-wrap select-text scrollbar-thin">
+                                    <div className="rounded-xl p-4 bg-[#0a0f1d] border border-dark-850/80 max-h-[140px] overflow-y-auto text-dark-200 leading-5 whitespace-pre-wrap select-text scrollbar-thin">
                                         {aiLoading ? (
-                                            <div className="flex flex-col gap-2 items-center justify-center min-h-[120px] text-dark-400">
+                                            <div className="flex flex-col gap-2 items-center justify-center min-h-[80px] text-dark-400">
                                                 <svg className="animate-spin h-6 w-6 text-primary-500" fill="none" viewBox="0 0 24 24">
                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                                 </svg>
-                                                <span className="text-[10px] uppercase tracking-widest animate-pulse font-bold mt-1 text-primary-450">AI Coprocessor Processing...</span>
+                                                <span className="text-[10px] uppercase tracking-widest animate-pulse font-bold mt-1 text-primary-450">Processing...</span>
                                             </div>
                                         ) : aiResponse ? (
                                             aiResponse
                                         ) : (
-                                            <span className="text-dark-500">Intellisense ready. Click one of the buttons or submit a custom prompt to begin.</span>
+                                            <span className="text-dark-500">Intellisense ready. Click a button to begin.</span>
                                         )}
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {/* Interactive Console Terminal */}
+                        <div className={`rounded-2xl border border-dark-250 dark:border-dark-850 bg-[#070b14] shadow-2xl overflow-hidden font-mono flex flex-col transition-all duration-300 ${
+                            aiIntellisense ? 'h-[250px]' : 'h-[500px] lg:h-[570px]'
+                        }`}>
+                            {/* Terminal Header */}
+                            <div className="px-4 py-3 bg-[#0a0f1d] border-b border-dark-950 flex items-center justify-between flex-shrink-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3 h-3 rounded-full bg-red-500/80" />
+                                    <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                                    <span className="w-3 h-3 rounded-full bg-green-500/80" />
+                                    <span className="text-xs text-dark-400 font-bold ml-2">UNIX TERMINAL CONSOLE</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {performanceMetrics.time > 0 && (
+                                        <div className="flex items-center gap-3 text-[10px] text-emerald-400 uppercase tracking-widest font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                                            <span>Time: {performanceMetrics.time} ms</span>
+                                            <span>Memory: {performanceMetrics.memory} KB</span>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={handleClearTerminal}
+                                        className="text-xs text-dark-400 hover:text-dark-200 transition cursor-pointer"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Terminal output viewport */}
+                            <div className="p-5 flex-1 overflow-y-auto text-xs leading-5 flex flex-col gap-1.5 scrollbar-thin">
+                                {terminalOutput.map((log, index) => {
+                                    let color = 'text-[#00ffaa]'; // stdout default green
+                                    if (log.type === 'system') color = 'text-purple-400 font-bold';
+                                    if (log.type === 'info') color = 'text-cyan-400 font-semibold';
+                                    if (log.type === 'stderr') color = 'text-red-400 font-semibold bg-red-950/20 px-2 py-0.5 rounded border border-red-500/10';
+
+                                    return (
+                                        <div key={index} className={`whitespace-pre-wrap ${color}`}>
+                                            {log.text}
+                                        </div>
+                                    );
+                                })}
+                                <div ref={terminalEndRef} />
+                            </div>
                         </div>
-                    )}
+
+                    </div>
                 </div>
 
             </div>
