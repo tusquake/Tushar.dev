@@ -30,3 +30,7 @@ coverage/
 
 # Misc
 *.local
+
+# GCP credentials
+gcp-credentials-key.json
+
