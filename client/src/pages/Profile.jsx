@@ -117,7 +117,7 @@ const Profile = () => {
     const [newSkillLevel, setNewSkillLevel] = useState(50);
 
     useEffect(() => {
-        if (user) {
+        if (user && !isInitialized) {
             setFormData({
                 title: user.title || 'Software Explorer',
                 bio: user.bio || 'Learning, coding, and building cool things.',
@@ -134,21 +134,28 @@ const Profile = () => {
                 avatar: user.avatar || PRESET_AVATARS[0].url,
                 widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
             });
+            setIsInitialized(true);
             fetchData();
         }
-    }, [user]);
+    }, [user, isInitialized]);
 
     const fetchData = async () => {
         setLoading(true);
+        // Safety timeout to prevent the loader from hanging forever
+        const safetyTimeout = setTimeout(() => {
+            setLoading(false);
+        }, 4000);
+
         try {
-            // Fetch stats from various endpoints
-            const [topicsRes, dsaRes, activitiesRes, interviewRes, resumeRes, leaderboardRes] = await Promise.all([
+            // Fetch stats from various endpoints and refresh the user context to grab latest level/XP
+            const [topicsRes, dsaRes, activitiesRes, interviewRes, resumeRes, leaderboardRes, updatedUser] = await Promise.all([
                 learningAPI.getAll(),
                 dsaProgressAPI.getProgress(),
                 learningAPI.getActivityHistory(),
                 interviewAPI.getAll(),
                 resumeAPI.get(),
                 authAPI.getLeaderboard(),
+                refreshUser()
             ]);
 
             const topics = topicsRes.data.data || [];
@@ -169,8 +176,16 @@ const Profile = () => {
         } catch (error) {
             console.error('Failed to load profile statistics:', error);
         } finally {
+            clearTimeout(safetyTimeout);
             setLoading(false);
         }
+    };
+
+    const handleTabSwitch = async (tab, edit = false) => {
+        setActiveTab(tab);
+        setEditMode(edit);
+        // Refresh all profile API data when switching tabs
+        await fetchData();
     };
 
     const handleSaveProfile = async (e) => {
@@ -239,9 +254,11 @@ const Profile = () => {
     const currentTheme = getThemeStyles();
     
     // Level progress calculations
-    const xpNeeded = user.level * 200;
-    const baseXPForCurrentLevel = (user.level - 1) * 200;
-    const xpEarnedInLevel = user.xp - baseXPForCurrentLevel;
+    const userLevel = Number(user?.level) || 1;
+    const userXP = Number(user?.xp) || 0;
+    const xpNeeded = userLevel * 200;
+    const baseXPForCurrentLevel = (userLevel - 1) * 200;
+    const xpEarnedInLevel = Math.max(0, userXP - baseXPForCurrentLevel);
     const xpProgressPercent = Math.min(Math.round((xpEarnedInLevel / 200) * 100), 100);
 
     return (
@@ -333,7 +350,7 @@ const Profile = () => {
                 {/* Sub Navigation Tabs */}
                 <div className="flex flex-wrap gap-2 mb-8 border-b border-dark-200 dark:border-dark-800 pb-px">
                     <button
-                        onClick={() => { setActiveTab('overview'); setEditMode(false); }}
+                        onClick={() => handleTabSwitch('overview', false)}
                         className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'overview' && !editMode
                             ? 'text-primary-500 font-bold border-b-2 border-primary-500'
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
@@ -347,7 +364,7 @@ const Profile = () => {
                         </span>
                     </button>
                     <button
-                        onClick={() => { setActiveTab('overview'); setEditMode(true); }}
+                        onClick={() => handleTabSwitch('overview', true)}
                         className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${editMode
                             ? 'text-primary-500 font-bold border-b-2 border-primary-500'
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
@@ -362,7 +379,7 @@ const Profile = () => {
                         </span>
                     </button>
                     <button
-                        onClick={() => { setActiveTab('achievements'); setEditMode(false); }}
+                        onClick={() => handleTabSwitch('achievements', false)}
                         className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'achievements'
                             ? 'text-primary-500 font-bold border-b-2 border-primary-500'
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
@@ -376,7 +393,7 @@ const Profile = () => {
                         </span>
                     </button>
                     <button
-                        onClick={() => { setActiveTab('leaderboard'); setEditMode(false); }}
+                        onClick={() => handleTabSwitch('leaderboard', false)}
                         className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'leaderboard'
                             ? 'text-primary-500 font-bold border-b-2 border-primary-500'
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'

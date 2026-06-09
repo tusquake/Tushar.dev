@@ -64,7 +64,18 @@ const register = async (req, res) => {
                     role: user.role,
                     subscriptionTier: user.subscriptionTier || 'none',
                     createdAt: user.createdAt,
-                    avatar: user.avatar
+                    title: user.title,
+                    bio: user.bio,
+                    location: user.location,
+                    targetRole: user.targetRole,
+                    skills: user.skills || [],
+                    socials: user.socials || {},
+                    themeColor: user.themeColor || 'purple',
+                    avatar: user.avatar,
+                    xp: user.xp || 0,
+                    level: user.level || 1,
+                    achievements: user.achievements || [],
+                    widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
                 },
                 accessToken
             }
@@ -131,7 +142,18 @@ const login = async (req, res) => {
                     role: user.role,
                     subscriptionTier: user.subscriptionTier || 'none',
                     createdAt: user.createdAt,
-                    avatar: user.avatar
+                    title: user.title,
+                    bio: user.bio,
+                    location: user.location,
+                    targetRole: user.targetRole,
+                    skills: user.skills || [],
+                    socials: user.socials || {},
+                    themeColor: user.themeColor || 'purple',
+                    avatar: user.avatar,
+                    xp: user.xp || 0,
+                    level: user.level || 1,
+                    achievements: user.achievements || [],
+                    widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
                 },
                 accessToken
             }
@@ -426,29 +448,32 @@ const updateProfile = async (req, res) => {
         const { awardXP } = require('../utils/gamification');
         const xpResult = await awardXP(req.user._id, 'PROFILE_CUSTOMIZED');
 
+        // Reload user to get updated gamification data (xp, level, etc.)
+        const freshUser = await User.findById(req.user._id);
+
         res.json({
             success: true,
             message: 'Profile updated successfully',
             data: {
                 user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    subscriptionTier: user.subscriptionTier || 'none',
-                    createdAt: user.createdAt,
-                    title: user.title,
-                    bio: user.bio,
-                    location: user.location,
-                    targetRole: user.targetRole,
-                    skills: user.skills || [],
-                    socials: user.socials || {},
-                    themeColor: user.themeColor || 'purple',
-                    avatar: user.avatar,
-                    xp: user.xp || 0,
-                    level: user.level || 1,
-                    achievements: user.achievements || [],
-                    widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
+                    id: freshUser._id,
+                    name: freshUser.name,
+                    email: freshUser.email,
+                    role: freshUser.role,
+                    subscriptionTier: freshUser.subscriptionTier || 'none',
+                    createdAt: freshUser.createdAt,
+                    title: freshUser.title,
+                    bio: freshUser.bio,
+                    location: freshUser.location,
+                    targetRole: freshUser.targetRole,
+                    skills: freshUser.skills || [],
+                    socials: freshUser.socials || {},
+                    themeColor: freshUser.themeColor || 'purple',
+                    avatar: freshUser.avatar,
+                    xp: freshUser.xp || 0,
+                    level: freshUser.level || 1,
+                    achievements: freshUser.achievements || [],
+                    widgets: freshUser.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
                 },
                 xpResult
             }

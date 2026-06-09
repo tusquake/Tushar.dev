@@ -10,19 +10,39 @@ export const AuthProvider = ({ children }) => {
 
     // Check for existing token on mount
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        const savedUser = localStorage.getItem('user');
+        const verifySession = async () => {
+            const token = localStorage.getItem('accessToken');
+            const savedUser = localStorage.getItem('user');
 
-        if (token && savedUser) {
-            try {
-                setUser(JSON.parse(savedUser));
-                setIsAuthenticated(true);
-            } catch (e) {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('user');
+            if (token) {
+                if (savedUser) {
+                    try {
+                        setUser(JSON.parse(savedUser));
+                        setIsAuthenticated(true);
+                    } catch (e) {
+                        localStorage.removeItem('user');
+                    }
+                }
+
+                // Verify session against backend and load complete user details (xp, level, etc.)
+                try {
+                    const response = await authAPI.getMe();
+                    const updatedUser = response.data.data.user;
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    setUser(updatedUser);
+                    setIsAuthenticated(true);
+                } catch (e) {
+                    console.error('Session verification failed:', e);
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                    setUser(null);
+                    setIsAuthenticated(false);
+                }
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+
+        verifySession();
     }, []);
 
     const login = async (email, password) => {
