@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../services/api';
 
 const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -169,7 +171,10 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                 
                 {/* Close Button */}
                 <button 
-                    onClick={onClose}
+                    onClick={() => {
+                        onClose();
+                        navigate('/');
+                    }}
                     className="absolute top-4 right-4 text-dark-400 hover:text-white transition-colors z-20 cursor-pointer p-1.5 hover:bg-dark-800 rounded-lg"
                 >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
