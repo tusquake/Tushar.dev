@@ -4,11 +4,42 @@ import axios from 'axios';
 export const getApiKeys = () => {
     const localGemini = localStorage.getItem('codeforge_gemini_api_key');
     const localGroq = localStorage.getItem('codeforge_groq_api_key');
+    const localCustomUrl = localStorage.getItem('codeforge_custom_api_url') || '';
+    const localCustomKey = localStorage.getItem('codeforge_custom_api_key') || '';
+    const localCustomModel = localStorage.getItem('codeforge_custom_api_model') || '';
     
     return {
         geminiKey: localGemini || import.meta.env.VITE_GEMINI_API_KEY || '',
-        groqKey: localGroq || import.meta.env.VITE_GROQ_API_KEY || ''
+        groqKey: localGroq || import.meta.env.VITE_GROQ_API_KEY || '',
+        customUrl: localCustomUrl,
+        customKey: localCustomKey,
+        customModel: localCustomModel
     };
+};
+
+// Call Custom OpenAI-compatible API
+const callCustomApi = async (prompt, baseUrl, key, model) => {
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+    const url = cleanBaseUrl.endsWith('/chat/completions') ? cleanBaseUrl : `${cleanBaseUrl}/chat/completions`;
+    const response = await axios.post(url, {
+        model: model || 'gpt-4o',
+        messages: [{
+            role: 'user',
+            content: prompt
+        }],
+        temperature: 0.15
+    }, {
+        headers: {
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    const text = response.data?.choices?.[0]?.message?.content;
+    if (!text) {
+        throw new Error('Empty response from Custom LLM API');
+    }
+    return text;
 };
 
 // Call Gemini API
@@ -57,7 +88,17 @@ const callGroq = async (prompt, key) => {
 
 // Orchestrate LLM call with fallback
 export const callLlm = async (prompt) => {
-    const { geminiKey, groqKey } = getApiKeys();
+    const { geminiKey, groqKey, customUrl, customKey, customModel } = getApiKeys();
+    
+    // First priority: User's generic custom OpenAI-compatible API
+    if (customKey && customUrl) {
+        try {
+            console.log('Attempting call with Custom generic LLM Provider...');
+            return await callCustomApi(prompt, customUrl, customKey, customModel);
+        } catch (customError) {
+            console.warn('Custom generic LLM Provider failed. Trying fallback defaults...', customError);
+        }
+    }
     
     try {
         if (!geminiKey) throw new Error('Gemini key is missing');

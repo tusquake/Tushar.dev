@@ -4,22 +4,34 @@ import Card from '../components/common/Card';
 const Settings = () => {
     const [geminiKey, setGeminiKey] = useState('');
     const [groqKey, setGroqKey] = useState('');
+    const [customUrl, setCustomUrl] = useState('');
+    const [customKey, setCustomKey] = useState('');
+    const [customModel, setCustomModel] = useState('');
     const [saveLocal, setSaveLocal] = useState(true);
     const [toast, setToast] = useState('');
 
     useEffect(() => {
         const savedGemini = localStorage.getItem('codeforge_gemini_api_key') || '';
         const savedGroq = localStorage.getItem('codeforge_groq_api_key') || '';
+        const savedCustomUrl = localStorage.getItem('codeforge_custom_api_url') || '';
+        const savedCustomKey = localStorage.getItem('codeforge_custom_api_key') || '';
+        const savedCustomModel = localStorage.getItem('codeforge_custom_api_model') || '';
         const savedSaveLocal = localStorage.getItem('codeforge_save_local') !== 'false';
         
         setGeminiKey(savedGemini);
         setGroqKey(savedGroq);
+        setCustomUrl(savedCustomUrl);
+        setCustomKey(savedCustomKey);
+        setCustomModel(savedCustomModel);
         setSaveLocal(savedSaveLocal);
     }, []);
 
     const handleSave = () => {
         localStorage.setItem('codeforge_gemini_api_key', geminiKey.trim());
         localStorage.setItem('codeforge_groq_api_key', groqKey.trim());
+        localStorage.setItem('codeforge_custom_api_url', customUrl.trim());
+        localStorage.setItem('codeforge_custom_api_key', customKey.trim());
+        localStorage.setItem('codeforge_custom_api_model', customModel.trim());
         localStorage.setItem('codeforge_save_local', saveLocal ? 'true' : 'false');
         
         showToast('Settings saved successfully!');
@@ -82,6 +94,46 @@ const Settings = () => {
                                 <p className="text-xs text-dark-400 dark:text-dark-500 mt-2">
                                     Used as an automatic fallback LLM service if Gemini requests experience rate limits or failures.
                                 </p>
+                            </div>
+
+                            <div className="pt-4 border-t border-dark-200 dark:border-dark-800 space-y-4">
+                                <h3 className="text-sm font-bold text-dark-900 dark:text-white">Generic Custom Provider (OpenAI-Compatible)</h3>
+                                <p className="text-xs text-dark-400 dark:text-dark-500">
+                                    Configure any third-party model host (OpenAI, OpenRouter, Together AI, Mistral, Ollama, DeepSeek) supporting the chat completions API standard. If set, this provider takes top priority.
+                                </p>
+
+                                <div>
+                                    <label className="label">API Base URL</label>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        placeholder="e.g. https://api.openai.com/v1 or https://openrouter.ai/api/v1"
+                                        value={customUrl}
+                                        onChange={(e) => setCustomUrl(e.target.value)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="label">API Authorization Key</label>
+                                    <input
+                                        type="password"
+                                        className="input"
+                                        placeholder="Enter your custom API bearer token"
+                                        value={customKey}
+                                        onChange={(e) => setCustomKey(e.target.value)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="label">Model Identifier</label>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        placeholder="e.g. gpt-4o or deepseek-chat or llama3"
+                                        value={customModel}
+                                        onChange={(e) => setCustomModel(e.target.value)}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </Card>
