@@ -104,6 +104,20 @@ const runMigration = async () => {
         }
         console.log(`Updated ${updatedProjectsCount} project image DB records.`);
 
+        // ==========================================
+        // 3. Migrate Creator Profile Image
+        // ==========================================
+        const creatorImagePath = path.join(__dirname, '..', '..', 'client', 'public', 'tushar-profile.png');
+        if (fs.existsSync(creatorImagePath)) {
+            console.log('Found tushar-profile.png in client public. Migrating creator profile image...');
+            try {
+                const gcsUrl = await uploadToGCS(creatorImagePath, 'tushar-profile.png');
+                console.log(`Uploaded creator profile image successfully! URL: ${gcsUrl}`);
+            } catch (err) {
+                console.error('Failed to upload creator profile image to GCS:', err.message);
+            }
+        }
+
         console.log('Migration completed successfully.');
         process.exit(0);
     } catch (err) {

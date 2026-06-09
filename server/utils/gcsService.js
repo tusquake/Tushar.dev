@@ -60,7 +60,6 @@ const uploadToGCS = async (localFilePath, destinationName) => {
 
     await bucket.upload(localFilePath, {
         destination: destinationName,
-        public: true,
         metadata: {
             cacheControl: 'public, max-age=31536000',
         },
