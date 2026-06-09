@@ -38,9 +38,12 @@ const register = async (req, res) => {
             trialStartedAt: new Date()
         });
 
-        // Generate tokens
-        const accessToken = generateAccessToken(user._id);
-        const refreshToken = generateRefreshToken(user._id);
+        // Generate tokens with new session ID
+        const sessionId = require('crypto').randomBytes(16).toString('hex');
+        user.currentSessionId = sessionId;
+
+        const accessToken = generateAccessToken(user._id, sessionId);
+        const refreshToken = generateRefreshToken(user._id, sessionId);
 
         // Save refresh token to user
         user.refreshToken = refreshToken;
@@ -119,9 +122,12 @@ const login = async (req, res) => {
             });
         }
 
-        // Generate tokens
-        const accessToken = generateAccessToken(user._id);
-        const refreshToken = generateRefreshToken(user._id);
+        // Generate tokens with new session ID
+        const sessionId = require('crypto').randomBytes(16).toString('hex');
+        user.currentSessionId = sessionId;
+
+        const accessToken = generateAccessToken(user._id, sessionId);
+        const refreshToken = generateRefreshToken(user._id, sessionId);
 
         // Handle trial session logic
         if (user.subscriptionTier === 'none') {
@@ -205,15 +211,16 @@ const refreshAccessToken = async (req, res) => {
 
         // Find user and check if refresh token matches
         const user = await User.findById(decoded.userId).select('+refreshToken');
-        if (!user || user.refreshToken !== refreshToken) {
+        if (!user || user.refreshToken !== refreshToken || user.currentSessionId !== decoded.sessionId) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid refresh token'
+                message: 'Session expired or invalid refresh token',
+                code: 'SESSION_EXPIRED'
             });
         }
 
         // Generate new access token
-        const accessToken = generateAccessToken(user._id);
+        const accessToken = generateAccessToken(user._id, user.currentSessionId);
 
         res.json({
             success: true,

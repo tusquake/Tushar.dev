@@ -115,8 +115,11 @@ router.get('/google/callback', (req, res, next) => {
             return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=NoUser&info=${encodeURIComponent(JSON.stringify(info || {}))}`);
         }
         try {
-            const accessToken = generateAccessToken(user._id);
-            const refreshToken = generateRefreshToken(user._id);
+            const sessionId = require('crypto').randomBytes(16).toString('hex');
+            user.currentSessionId = sessionId;
+
+            const accessToken = generateAccessToken(user._id, sessionId);
+            const refreshToken = generateRefreshToken(user._id, sessionId);
 
             user.refreshToken = refreshToken;
             await user.save();
@@ -158,8 +161,11 @@ router.get('/github/callback', (req, res, next) => {
             return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=NoUser&info=${encodeURIComponent(JSON.stringify(info || {}))}`);
         }
         try {
-            const accessToken = generateAccessToken(user._id);
-            const refreshToken = generateRefreshToken(user._id);
+            const sessionId = require('crypto').randomBytes(16).toString('hex');
+            user.currentSessionId = sessionId;
+
+            const accessToken = generateAccessToken(user._id, sessionId);
+            const refreshToken = generateRefreshToken(user._id, sessionId);
 
             user.refreshToken = refreshToken;
             await user.save();

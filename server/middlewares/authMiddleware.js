@@ -31,6 +31,21 @@ const protect = async (req, res, next) => {
             });
         }
 
+        // Single-session check (kick out concurrent logins)
+        if (decoded.sessionId && user.currentSessionId && decoded.sessionId !== user.currentSessionId) {
+            return res.status(401).json({
+                success: false,
+                message: 'Session expired. Your account has been logged in on another device.',
+                code: 'SESSION_EXPIRED'
+            });
+        }
+
+        // If DB doesn't have a session ID yet, associate it
+        if (decoded.sessionId && !user.currentSessionId) {
+            user.currentSessionId = decoded.sessionId;
+            await user.save();
+        }
+
         req.user = user;
         next();
     } catch (error) {

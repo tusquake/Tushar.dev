@@ -64,7 +64,7 @@ const AppContent = () => {
 
   // Track 5 minutes trial timer
   useEffect(() => {
-    if (!isAuthenticated || !user || user.subscriptionTier !== 'none') {
+    if (!isAuthenticated || !user || user.subscriptionTier !== 'none' || user.role === 'ADMIN') {
       setTimeLeft(null);
       setSubModalOpen(false);
       return;
@@ -101,7 +101,7 @@ const AppContent = () => {
   return (
     <>
       {/* Floating trial timer widget */}
-      {isAuthenticated && user && user.subscriptionTier === 'none' && timeLeft !== null && timeLeft > 0 && (
+      {isAuthenticated && user && user.role !== 'ADMIN' && user.subscriptionTier === 'none' && timeLeft !== null && timeLeft > 0 && (
         <div className="fixed bottom-4 right-4 z-[9999] bg-dark-900 border border-primary-500/30 text-white px-4 py-2.5 rounded-xl flex items-center gap-3 shadow-2xl font-mono text-[10px]">
           <span className="w-2 h-2 rounded-full bg-primary-500 animate-ping" />
           <span>Trial Access: <strong className="text-primary-400">{formatTime(timeLeft)}</strong> left</span>
@@ -118,7 +118,7 @@ const AppContent = () => {
       )}
 
       {/* trial expired blocker lock screen */}
-      {isAuthenticated && user && user.subscriptionTier === 'none' && timeLeft === 0 && (
+      {isAuthenticated && user && user.role !== 'ADMIN' && user.subscriptionTier === 'none' && timeLeft === 0 && (
         <div className="fixed inset-0 z-[9998] bg-dark-950/90 backdrop-blur-lg flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-dark-900 border border-dark-800 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden">
             {/* Design accents */}

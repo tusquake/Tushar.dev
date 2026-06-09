@@ -234,7 +234,11 @@ const Login = () => {
         const error = params.get('error');
 
         if (error) {
-            setApiError('Social login failed. Please try again.');
+            if (error === 'session_expired') {
+                setApiError('Your session has expired because your account was logged in on another device.');
+            } else {
+                setApiError('Social login failed. Please try again.');
+            }
         } else if (token && userStr) {
             try {
                 const parsedUser = JSON.parse(decodeURIComponent(userStr));

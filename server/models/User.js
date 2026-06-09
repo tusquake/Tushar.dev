@@ -106,6 +106,9 @@ const userSchema = new mongoose.Schema({
     subscriptionExpiresAt: {
         type: Date
     },
+    currentSessionId: {
+        type: String
+    },
     resetPasswordToken: {
         type: String,
         select: false

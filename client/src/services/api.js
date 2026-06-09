@@ -31,6 +31,13 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        // Handle concurrent session logout
+        if (error.response?.status === 401 && error.response?.data?.code === 'SESSION_EXPIRED') {
+            localStorage.removeItem('accessToken');
+            window.location.href = '/login?error=session_expired';
+            return Promise.reject(error);
+        }
+
         // Handle subscription required
         if (error.response?.status === 402) {
             window.dispatchEvent(new CustomEvent('subscription-required', { detail: error.response.data }));
