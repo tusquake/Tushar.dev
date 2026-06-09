@@ -22,6 +22,7 @@ import Settings from './pages/Settings';
 import AIInterview from './pages/AIInterview';
 import CodeEditor from './pages/CodeEditor';
 import Profile from './pages/Profile';
+import TermsOfService from './pages/TermsOfService';
 
 import { useState } from 'react';
 import SubscriptionModal from './components/common/SubscriptionModal';
@@ -171,6 +172,7 @@ const AppContent = () => {
           <Route path="register" element={<Register />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="reset-password/:token" element={<ResetPassword />} />
+          <Route path="terms" element={<TermsOfService />} />
           
           {/* Redirect legacy portfolio subpages to AboutCreator */}
           <Route path="experience" element={<Navigate to="/about" replace />} />

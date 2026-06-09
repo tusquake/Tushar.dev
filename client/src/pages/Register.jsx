@@ -214,6 +214,7 @@ const Register = () => {
     const [apiError, setApiError] = useState('');
     const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
     const [activeSlide, setActiveSlide] = useState(0);
+    const [agreeTerms, setAgreeTerms] = useState(false);
 
     const { register } = useAuth();
     const navigate = useNavigate();
@@ -284,6 +285,10 @@ const Register = () => {
 
         if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = 'Passwords do not match';
+        }
+
+        if (!agreeTerms) {
+            newErrors.agreeTerms = 'You must agree to the Terms of Service & AI API Policy';
         }
 
         setErrors(newErrors);
@@ -496,16 +501,31 @@ const Register = () => {
                                 required
                             />
 
-                            <div className="text-xs text-dark-500 dark:text-dark-400 leading-relaxed">
-                                By creating an account, you agree to our{' '}
-                                <Link to="/terms" className="text-primary-500 hover:text-primary-600 underline">
-                                    Terms of Service
-                                </Link>{' '}
-                                and{' '}
-                                <Link to="/privacy" className="text-primary-500 hover:text-primary-600 underline">
-                                    Privacy Policy
-                                </Link>
+                            <div className="flex items-start gap-2.5 mt-2">
+                                <input
+                                    type="checkbox"
+                                    id="agreeTerms"
+                                    checked={agreeTerms}
+                                    onChange={(e) => {
+                                        setAgreeTerms(e.target.checked);
+                                        setErrors(prev => ({ ...prev, agreeTerms: '' }));
+                                    }}
+                                    className="mt-0.5 w-4 h-4 rounded border-dark-300 dark:border-dark-750 text-primary-500 focus:ring-primary-500/20 bg-white dark:bg-dark-950 cursor-pointer"
+                                />
+                                <label htmlFor="agreeTerms" className="text-[11px] text-dark-500 dark:text-dark-400 leading-normal cursor-pointer select-none">
+                                    I agree to the{' '}
+                                    <Link to="/terms" className="text-primary-500 hover:text-primary-600 underline font-medium">
+                                        Terms of Service
+                                    </Link>{' '}
+                                    and understand the{' '}
+                                    <span className="text-dark-700 dark:text-dark-200 font-bold underline">AI API Policy</span> (I must provide my own keys, e.g. Gemini/OpenAI, to use AI tools).
+                                </label>
                             </div>
+                            {errors.agreeTerms && (
+                                <p className="text-[10px] text-red-500 font-medium mt-1">
+                                    {errors.agreeTerms}
+                                </p>
+                            )}
 
                             <Button
                                 type="submit"

@@ -294,6 +294,12 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                             </p>
                         </div>
 
+                        {/* AI Token Disclaimer Banner */}
+                        <div className="mx-6 md:mx-8 mt-2 p-4 rounded-xl border border-yellow-600/30 bg-yellow-600/5 text-left text-xs text-yellow-500/95 leading-relaxed flex-shrink-0">
+                            <strong className="text-yellow-400 font-bold block mb-1">Important AI API Policy:</strong>
+                            Subscription passes only unlock access to platform layouts, compilers, template tools, and tracking metrics. We do <strong>not</strong> provide AI API credits or models. To utilize AI features (such as ATS Resume Scans and AI Mock Interviews), you must obtain your own API key (such as Google Gemini, OpenAI, or Groq) and input it in your Profile Settings panel.
+                        </div>
+
                         {/* Plan Cards Container */}
                         <div className="flex-1 overflow-y-auto p-6 md:p-8 grid md:grid-cols-3 gap-6 items-stretch scrollbar-thin">
                             
