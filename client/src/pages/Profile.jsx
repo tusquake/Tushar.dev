@@ -460,6 +460,88 @@ const Profile = () => {
                             </div>
                         </Card>
 
+                        {/* Subscription Details Card */}
+                        <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 relative overflow-hidden" hover={false}>
+                            {/* Graphic background highlights */}
+                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary-500/5 rounded-full blur-xl pointer-events-none" />
+                            
+                            <h3 className="font-bold text-dark-900 dark:text-white font-display mb-4 flex items-center gap-2 text-sm sm:text-base">
+                                <svg className="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z" />
+                                </svg>
+                                Subscription Details
+                            </h3>
+                            
+                            <div className="space-y-4">
+                                {/* Tier Info */}
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-1">Active Plan</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-[10px] font-extrabold px-3 py-1 rounded-lg border uppercase tracking-wider ${
+                                            user.subscriptionTier === 'premium' 
+                                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+                                                : user.subscriptionTier === 'basic'
+                                                ? 'bg-primary-500/10 text-primary-400 border-primary-500/20'
+                                                : user.subscriptionTier === 'day'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                : 'bg-dark-100 dark:bg-dark-850 text-dark-400 border-dark-200 dark:border-dark-800'
+                                        }`}>
+                                            {user.subscriptionTier === 'premium' && 'Premium Pass'}
+                                            {user.subscriptionTier === 'basic' && 'Basic Pass'}
+                                            {user.subscriptionTier === 'day' && 'Daily Pass'}
+                                            {user.subscriptionTier === 'none' && 'Free Trial'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {user.subscriptionTier !== 'none' ? (
+                                    <>
+                                        {/* Purchase Date */}
+                                        {user.subscriptionStartedAt && (
+                                            <div>
+                                                <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Purchased On</span>
+                                                <span className="text-xs text-dark-700 dark:text-dark-300 font-semibold font-mono">
+                                                    {new Date(user.subscriptionStartedAt).toLocaleDateString(undefined, { 
+                                                        year: 'numeric', 
+                                                        month: 'long', 
+                                                        day: 'numeric'
+                                                    })}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Expiry Date */}
+                                        {user.subscriptionExpiresAt && (
+                                            <div>
+                                                <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Expires On</span>
+                                                <span className="text-xs text-dark-700 dark:text-dark-300 font-semibold font-mono">
+                                                    {new Date(user.subscriptionExpiresAt).toLocaleDateString(undefined, { 
+                                                        year: 'numeric', 
+                                                        month: 'long', 
+                                                        day: 'numeric'
+                                                    })}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="pt-2">
+                                        <p className="text-xs text-dark-500 dark:text-dark-400 leading-normal mb-3">
+                                            Upgrade to access algorithmic sandboxes, ATS resume checker, LaTeX templates, and mock AI interviews.
+                                        </p>
+                                        <button 
+                                            onClick={() => {
+                                                window.dispatchEvent(new CustomEvent('subscription-required', { detail: { requiredTier: 'basic' } }));
+                                            }}
+                                            className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs tracking-wider transition-all duration-150 cursor-pointer shadow-lg shadow-primary-500/10 text-center"
+                                        >
+                                            Upgrade Workspace
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
                         {/* Interactive Widget Configuration Panel (Customizable Layout) */}
                         <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
                             <h3 className="font-bold text-dark-900 dark:text-white font-display mb-3">Custom Dashboard Widgets</h3>

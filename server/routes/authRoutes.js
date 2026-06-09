@@ -29,6 +29,9 @@ router.get('/me', protect, (req, res) => {
                 email: req.user.email,
                 role: req.user.role,
                 subscriptionTier: req.user.subscriptionTier || 'none',
+                trialStartedAt: req.user.trialStartedAt,
+                subscriptionStartedAt: req.user.subscriptionStartedAt,
+                subscriptionExpiresAt: req.user.subscriptionExpiresAt,
                 createdAt: req.user.createdAt,
                 title: req.user.title,
                 bio: req.user.bio,
@@ -51,10 +54,18 @@ router.get('/me', protect, (req, res) => {
 router.post('/subscribe', protect, async (req, res) => {
     try {
         const { tier } = req.body;
-        if (!['none', 'basic', 'premium'].includes(tier)) {
+        if (!['none', 'day', 'basic', 'premium'].includes(tier)) {
             return res.status(400).json({ success: false, message: 'Invalid subscription tier' });
         }
         req.user.subscriptionTier = tier;
+        if (tier === 'none') {
+            req.user.subscriptionStartedAt = null;
+            req.user.subscriptionExpiresAt = null;
+        } else {
+            req.user.subscriptionStartedAt = new Date();
+            const duration = tier === 'day' ? 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+            req.user.subscriptionExpiresAt = new Date(Date.now() + duration);
+        }
         await req.user.save();
         res.json({
             success: true,
@@ -66,7 +77,22 @@ router.post('/subscribe', protect, async (req, res) => {
                     email: req.user.email,
                     role: req.user.role,
                     subscriptionTier: req.user.subscriptionTier,
-                    createdAt: req.user.createdAt
+                    trialStartedAt: req.user.trialStartedAt,
+                    subscriptionStartedAt: req.user.subscriptionStartedAt,
+                    subscriptionExpiresAt: req.user.subscriptionExpiresAt,
+                    createdAt: req.user.createdAt,
+                    title: req.user.title,
+                    bio: req.user.bio,
+                    location: req.user.location,
+                    targetRole: req.user.targetRole,
+                    skills: req.user.skills || [],
+                    socials: req.user.socials || {},
+                    themeColor: req.user.themeColor || 'purple',
+                    avatar: req.user.avatar,
+                    xp: req.user.xp || 0,
+                    level: req.user.level || 1,
+                    achievements: req.user.achievements || [],
+                    widgets: req.user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
                 }
             }
         });

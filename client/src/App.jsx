@@ -71,7 +71,7 @@ const AppContent = () => {
     }
 
     const checkTime = () => {
-      const registeredTime = new Date(user.createdAt).getTime();
+      const registeredTime = new Date(user.trialStartedAt || user.createdAt).getTime();
       const elapsed = Date.now() - registeredTime;
       const limit = 5 * 60 * 1000; // 5 minutes
       const remaining = limit - elapsed;
@@ -117,9 +117,50 @@ const AppContent = () => {
         </div>
       )}
 
-      {/* trial expired blocker */}
+      {/* trial expired blocker lock screen */}
       {isAuthenticated && user && user.subscriptionTier === 'none' && timeLeft === 0 && (
-        <div className="fixed inset-0 z-[9998] bg-dark-950/60 backdrop-blur-sm pointer-events-auto" />
+        <div className="fixed inset-0 z-[9998] bg-dark-950/90 backdrop-blur-lg flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-dark-900 border border-dark-800 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden">
+            {/* Design accents */}
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/10 border border-primary-500/30 flex items-center justify-center mx-auto mb-6 text-primary-400">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0-6v2m0-5a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            
+            <h2 className="text-2xl font-extrabold text-white mb-2 font-display">
+              Free Session Expired
+            </h2>
+            <p className="text-sm text-dark-350 mb-6 leading-relaxed">
+              Your 5-minute free preview session has ended. To continue using the DSA compilers, AI mock interviews, and LaTeX resume builders, activate a subscription plan.
+            </p>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={() => {
+                  setRequiredTier('basic');
+                  setSubModalOpen(true);
+                }}
+                className="w-full py-3.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs tracking-wider transition-all duration-150 shadow-lg shadow-primary-500/20 cursor-pointer"
+              >
+                Choose Subscription Plan
+              </button>
+              
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.href = '/login';
+                }}
+                className="w-full py-3.5 rounded-xl border border-dark-850 hover:border-dark-750 text-dark-400 hover:text-white font-bold text-xs tracking-wider transition-all duration-150 cursor-pointer"
+              >
+                Log Out / Switch Account
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <Routes>

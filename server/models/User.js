@@ -94,8 +94,17 @@ const userSchema = new mongoose.Schema({
     },
     subscriptionTier: {
         type: String,
-        enum: ['none', 'basic', 'premium'],
+        enum: ['none', 'day', 'basic', 'premium'],
         default: 'none'
+    },
+    trialStartedAt: {
+        type: Date
+    },
+    subscriptionStartedAt: {
+        type: Date
+    },
+    subscriptionExpiresAt: {
+        type: Date
     },
     resetPasswordToken: {
         type: String,

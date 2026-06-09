@@ -70,12 +70,12 @@ const checkSubscription = (tierRequired) => {
             return next();
         }
 
-        // Grace period check (5 minutes from registration/createdAt)
-        const registrationTime = new Date(req.user.createdAt).getTime();
+        // Grace period check (5 minutes from registration/trialStartedAt)
+        const trialStartTime = new Date(req.user.trialStartedAt || req.user.createdAt).getTime();
         const currentTime = Date.now();
         const gracePeriodMs = 5 * 60 * 1000; // 5 minutes
 
-        if (currentTime - registrationTime <= gracePeriodMs) {
+        if (currentTime - trialStartTime <= gracePeriodMs) {
             return next();
         }
 
@@ -83,11 +83,11 @@ const checkSubscription = (tierRequired) => {
         const userTier = req.user.subscriptionTier || 'none';
 
         if (tierRequired === 'basic') {
-            if (userTier === 'basic' || userTier === 'premium') {
+            if (userTier === 'day' || userTier === 'basic' || userTier === 'premium') {
                 return next();
             }
         } else if (tierRequired === 'premium') {
-            if (userTier === 'premium') {
+            if (userTier === 'day' || userTier === 'premium') {
                 return next();
             }
         }

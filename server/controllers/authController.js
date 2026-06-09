@@ -34,7 +34,8 @@ const register = async (req, res) => {
             name,
             email,
             password,
-            role: email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'ADMIN' : 'USER'
+            role: email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'ADMIN' : 'USER',
+            trialStartedAt: new Date()
         });
 
         // Generate tokens
@@ -63,6 +64,9 @@ const register = async (req, res) => {
                     email: user.email,
                     role: user.role,
                     subscriptionTier: user.subscriptionTier || 'none',
+                    trialStartedAt: user.trialStartedAt,
+                    subscriptionStartedAt: user.subscriptionStartedAt,
+                    subscriptionExpiresAt: user.subscriptionExpiresAt,
                     createdAt: user.createdAt,
                     title: user.title,
                     bio: user.bio,
@@ -119,6 +123,17 @@ const login = async (req, res) => {
         const accessToken = generateAccessToken(user._id);
         const refreshToken = generateRefreshToken(user._id);
 
+        // Handle trial session logic
+        if (user.subscriptionTier === 'none') {
+            if (user.trialStartedAt) {
+                // Logging in again - instantly expire their free trial
+                user.trialStartedAt = new Date(0);
+            } else {
+                // First login ever
+                user.trialStartedAt = new Date();
+            }
+        }
+
         // Save refresh token to user
         user.refreshToken = refreshToken;
         await user.save();
@@ -141,6 +156,9 @@ const login = async (req, res) => {
                     email: user.email,
                     role: user.role,
                     subscriptionTier: user.subscriptionTier || 'none',
+                    trialStartedAt: user.trialStartedAt,
+                    subscriptionStartedAt: user.subscriptionStartedAt,
+                    subscriptionExpiresAt: user.subscriptionExpiresAt,
                     createdAt: user.createdAt,
                     title: user.title,
                     bio: user.bio,
@@ -461,6 +479,9 @@ const updateProfile = async (req, res) => {
                     email: freshUser.email,
                     role: freshUser.role,
                     subscriptionTier: freshUser.subscriptionTier || 'none',
+                    trialStartedAt: freshUser.trialStartedAt,
+                    subscriptionStartedAt: freshUser.subscriptionStartedAt,
+                    subscriptionExpiresAt: freshUser.subscriptionExpiresAt,
                     createdAt: freshUser.createdAt,
                     title: freshUser.title,
                     bio: freshUser.bio,

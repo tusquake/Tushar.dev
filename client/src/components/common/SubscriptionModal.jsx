@@ -31,7 +31,9 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
     if (!isOpen) return null;
 
     const getPlanPrice = (tier) => {
-        return tier === 'premium' ? 109 : 79;
+        if (tier === 'day') return 19;
+        if (tier === 'basic') return 79;
+        return 109;
     };
 
     const handleOpenGateway = (tier) => {
@@ -191,18 +193,65 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                         </div>
 
                         {/* Plan Cards Container */}
-                        <div className="flex-1 overflow-y-auto p-6 md:p-8 grid md:grid-cols-2 gap-6 items-stretch scrollbar-thin">
+                        <div className="flex-1 overflow-y-auto p-6 md:p-8 grid md:grid-cols-3 gap-6 items-stretch scrollbar-thin">
                             
+                            {/* Day Pass Card */}
+                            <div className={`p-6 rounded-xl border flex flex-col justify-between transition-all duration-300 cursor-pointer ${
+                                selectedTier === 'day' 
+                                    ? 'border-emerald-500 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.15)]' 
+                                    : 'border-dark-850 bg-dark-950/40 hover:border-dark-700'
+                            }`} onClick={() => setSelectedTier('day')}>
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-bold text-white">Daily Pass</h3>
+                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">All Features</span>
+                                    </div>
+                                    <div className="mb-6">
+                                        <span className="text-3xl font-extrabold text-white font-display">₹19</span>
+                                        <span className="text-xs text-dark-400 font-medium"> / day</span>
+                                    </div>
+                                    <ul className="space-y-3 mb-6 text-xs text-dark-300">
+                                        <li className="flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Complete Access to All Features for 24 Hours
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            DSA sandbox & system design canvas
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            AI technical & system interviews
+                                        </li>
+                                    </ul>
+                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenGateway('day');
+                                    }}
+                                    className="w-full py-3 rounded-lg text-xs font-bold transition-all duration-200 mt-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg cursor-pointer"
+                                >
+                                    Activate Day Pass (₹19)
+                                </button>
+                            </div>
+
                             {/* Basic Card - DSA & System Design */}
-                            <div className={`p-6 rounded-xl border flex flex-col justify-between transition-all duration-300 ${
+                            <div className={`p-6 rounded-xl border flex flex-col justify-between transition-all duration-300 cursor-pointer ${
                                 selectedTier === 'basic' 
                                     ? 'border-primary-500 bg-primary-500/5 shadow-[0_0_20px_rgba(124,58,237,0.15)]' 
                                     : 'border-dark-850 bg-dark-950/40 hover:border-dark-700'
                             }`} onClick={() => setSelectedTier('basic')}>
                                 <div>
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-bold text-white">Basic Workspace</h3>
-                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-dark-800 text-dark-300">DSA & Systems</span>
+                                        <h3 className="text-lg font-bold text-white">Basic Pass</h3>
+                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-dark-800 text-dark-300 font-mono">DSA & Systems</span>
                                     </div>
                                     <div className="mb-6">
                                         <span className="text-3xl font-extrabold text-white font-display">₹79</span>
@@ -225,13 +274,7 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                                             <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                             </svg>
-                                            System Design Architecture Assessment Canvas
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Progress Tracking & Day Completion Heatmap
+                                            System Design Architecture Canvas
                                         </li>
                                     </ul>
                                 </div>
@@ -247,15 +290,15 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                             </div>
 
                             {/* Premium Card - AI Workspace */}
-                            <div className={`p-6 rounded-xl border flex flex-col justify-between transition-all duration-300 ${
+                            <div className={`p-6 rounded-xl border flex flex-col justify-between transition-all duration-300 cursor-pointer ${
                                 selectedTier === 'premium' 
                                     ? 'border-purple-500 bg-purple-500/5 shadow-[0_0_20px_rgba(168,85,247,0.15)]' 
                                     : 'border-dark-850 bg-dark-950/40 hover:border-dark-700'
                             }`} onClick={() => setSelectedTier('premium')}>
                                 <div>
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-bold text-white">Premium Workspace</h3>
-                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">All AI Tools</span>
+                                        <h3 className="text-lg font-bold text-white">Premium Pass</h3>
+                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">All AI Tools</span>
                                     </div>
                                     <div className="mb-6">
                                         <span className="text-3xl font-extrabold text-white font-display">₹109</span>
@@ -272,19 +315,13 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                                             <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Interactive LaTeX Resume Builder & Editor
+                                            LaTeX Resume Builder & ATS Scanner
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                             </svg>
-                                            ATS Resume Scanner & Formatting Score
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <svg className="w-4 h-4 text-[#39d353] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            AI mock Interviews (Technical & System Design)
+                                            AI Technical Mock Interviews
                                         </li>
                                     </ul>
                                 </div>
