@@ -61,6 +61,7 @@ const Profile = () => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [toast, setToast] = useState('');
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
