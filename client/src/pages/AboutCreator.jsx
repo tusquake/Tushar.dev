@@ -163,7 +163,7 @@ const AboutCreator = () => {
                         <div className="w-32 h-32 md:w-44 md:h-44 rounded-3xl bg-gradient-to-br from-primary-500 to-purple-500 p-1 flex-shrink-0">
                             <div className="w-full h-full rounded-3xl bg-dark-100 dark:bg-dark-800 flex items-center justify-center overflow-hidden">
                                 <img
-                                    src="/tushar-profile.png"
+                                    src="https://storage.googleapis.com/galvanic-axle-474007-a2-media/tushar-profile.png"
                                     alt="Tushar Seth"
                                     className="w-full h-full object-cover rounded-3xl"
                                 />

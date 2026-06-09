@@ -83,7 +83,10 @@ const Projects = () => {
     const getImageUrl = (imagePath) => {
         if (!imagePath || imagePath === 'undefined' || imagePath === 'null') return '';
         if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
-        if (imagePath.startsWith('/projects/') || imagePath.startsWith('/images/')) {
+        if (imagePath.startsWith('/projects/')) {
+            return `https://storage.googleapis.com/galvanic-axle-474007-a2-media${imagePath}`;
+        }
+        if (imagePath.startsWith('/images/')) {
             return imagePath;
         }
         return `${SERVER_URL}${imagePath}`;
