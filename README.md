@@ -1,77 +1,66 @@
-# Portfolio + Learning Web Application
+# CodeForge: The Ultimate Gamified Developer Portfolio & Learning SaaS Ecosystem
 
-A modern, production-ready portfolio, task management, and learning platform built with React, Node.js/Express, MongoDB, and integrated with third-party OAuth and payment systems.
+**Turn your professional showcase into a highly-engaging, monetizable product.** 
 
-## Features
-
-- **Portfolio Showcase** - Display projects, certificates, and skills.
-- **Learning Tracker** - Personal learning roadmap with progress tracking.
-- **Gamified Task List & Calendar** - Create daily tasks, track achievements, earn XP rewards, and view schedule on an interactive calendar.
-- **OAuth 2.0 Integration** - Google and GitHub social logins via Passport.js alongside standard email/password login.
-- **Razorpay Payment Gateway** - Production-ready checkout for daily, basic, and premium subscription passes with automatic local simulator fallback.
-- **JWT Authentication** - Secure login/register with short-lived access tokens and refresh tokens stored in secure `httpOnly` cookies.
-- **Contact System** - Send contact inquiries with automated email notifications via Nodemailer.
-- **Rate Limiting & Security** - Protection against spam with Helmet headers, CORS filters, and route-specific rate limits.
-- **Aesthetic Dark Theme** - Sleek, responsive layout utilizing glassmorphism and modern micro-animations.
+CodeForge is not just a developer portfolio—it is a premium, feature-rich SaaS (Software as a Service) platform designed to engage visitors, track learning paths, and monetize premium resources out of the box. With its stunning modern dark-mode aesthetic, gamified progress engine, and real-time payment checkouts, CodeForge is built to impress recruiters, clients, and prospective buyers from the first click.
 
 ---
 
-## Tech Stack
+## Why CodeForge Stands Out (SaaS-Ready Value)
 
-### Frontend
-- **React (Vite)**
-- **React Router v7**
-- **Context API** for global auth, notifications, and subscription state
-- **Axios** with request/response interceptors (automatic token refresh)
-- **Tailwind CSS** & modern custom styling variables
+### 💰 Monetize Your Content Instantly
+Comes with a fully-integrated **Razorpay Production Payment Gateway**. Charge users for premium access using Daily, Monthly, or Premium Subscription tiers. Whether selling courses, coding sandboxes, or premium resume scanners, payments are secure and automated.
 
-### Backend
-- **Node.js + Express**
-- **MongoDB + Mongoose**
-- **Passport.js** (Google & GitHub OAuth 2.0 strategies)
-- **Razorpay Node SDK** (signature verification, secure hashing)
-- **JWT Authentication** (access tokens and refresh cookies)
-- **Nodemailer** for email delivery
-- **express-rate-limit** & **Helmet** for network security
+### 🎮 Gamified Productivity & Retention
+Keep users returning daily with a built-in **Interactive Task Planner & Dynamic Calendar**. Users earn Experience Points (XP), level up, and unlock achievements as they complete daily coding goals. A perfect system for user engagement and retention.
 
----
+### ⚡ Seamless, Frictionless Onboarding
+Boost sign-up conversion rates with one-click **Google & GitHub Social Authentication**, alongside standard, highly-secure email registration. 
 
-## Project Structure
+### 🚀 Visual Learning Roadmap
+An interactive, milestone-based learning tracker allows users to map out their curriculum, mark progress, and visually showcase their technical growth in a sleek roadmap dashboard.
 
-```
-Portfolio/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/     # Reusable components (Tasks, SubscriptionModal, etc.)
-│   │   ├── pages/          # Page views (Dashboard, Login, Profile)
-│   │   ├── context/        # Auth and theme context provider
-│   │   ├── services/       # API services (paymentAPI, taskAPI)
-│   │   └── routes/         # Protected and public routes
-│   └── ...
-│
-├── server/                 # Node.js backend
-│   ├── controllers/        # Route logic (payment, auth, task)
-│   ├── models/             # Mongoose schemas (User, Task, Project)
-│   ├── routes/             # Express routing mapping
-│   ├── middlewares/        # Authentication checks and error handlers
-│   ├── config/             # DB and passport strategy configurations
-│   └── server.js           # Entry point
-│
-└── README.md
-```
+### 🛡️ Enterprise-Grade Security
+Built with modern security best practices including secure HTTP-only cookies, protection against spam, rate limiting, and standard encryption, ensuring user data is always protected.
 
 ---
 
-## Getting Started
+## Premium Core Modules
+
+### 1. Interactive Gamified Dashboard
+- **Daily Task Planner**: Add, complete, and track tasks with a simple interactive interface.
+- **Dynamic Scheduler Calendar**: A beautiful calendar visualizer mapping out all goals, schedules, and deadlines.
+- **XP Engine**: Real-time level progress bars and animated achievement notifications.
+
+### 2. SaaS Billing Engine
+- **Subscription Tier Cards**: Sleek UI highlighting Day Pass, Basic Pass, and Premium Pass options.
+- **Razorpay Integration**: Supports Cards, UPI, Wallets, and Netbanking.
+- **Smart Simulator Fallback**: Graceful local payment sandbox for easy testing and development without live credentials.
+
+### 3. Professional Portfolio Showcase
+- **Projects Carousel**: Highlight your best work with description tags, images, and live links.
+- **Certificates Vault**: Display verified credentials and technical achievements.
+- **Resume Builder & ATS Scanner**: Built-in resume compiler and ATS optimization scanner for career progression.
+
+---
+
+## Technology Stack
+
+CodeForge is engineered using a robust, modern, and scalable stack:
+- **Frontend**: React.js (Vite), Tailwind CSS, Context API for global state.
+- **Backend**: Node.js, Express.js, MongoDB (Mongoose).
+- **Integrations**: Passport.js (OAuth 2.0), Razorpay API, Nodemailer SMTP.
+
+---
+
+## Quick Setup & Deployment Guide
 
 ### Prerequisites
 - Node.js 18+
-- MongoDB (local or Atlas)
-- npm or yarn
+- MongoDB database (Atlas or Local)
 
-### Backend Setup
-
-1. Navigate to the server directory:
+### 1. Backend Server Setup
+1. Navigate to the server folder:
    ```bash
    cd server
    ```
@@ -79,16 +68,33 @@ Portfolio/
    ```bash
    npm install
    ```
-3. Configure the environment variables in a `.env` file (see [Environment Variables](#environment-variables)).
-4. Start the server:
+3. Set up your `.env` file inside `/server`:
+   ```env
+   PORT=5000
+   MONGODB_URI=your_mongodb_uri
+   CLIENT_URL=http://localhost:5173
+   
+   # JWT Configuration
+   JWT_ACCESS_SECRET=your_access_secret
+   JWT_REFRESH_SECRET=your_refresh_secret
+   
+   # Social Login
+   GOOGLE_CLIENT_ID=your_google_id
+   GOOGLE_CLIENT_SECRET=your_google_secret
+   GITHUB_CLIENT_ID=your_github_id
+   GITHUB_CLIENT_SECRET=your_github_secret
+   
+   # Payment Gateway Keys
+   RAZORPAY_KEY_ID=your_razorpay_key_id
+   RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+   ```
+4. Launch backend:
    ```bash
    npm run dev
    ```
-   The API will run at `http://localhost:5000`
 
-### Frontend Setup
-
-1. Navigate to the client directory:
+### 2. Frontend Client Setup
+1. Navigate to the client folder:
    ```bash
    cd client
    ```
@@ -96,76 +102,14 @@ Portfolio/
    ```bash
    npm install
    ```
-3. Start the development server:
+3. Run local dev server:
    ```bash
    npm run dev
    ```
-   The app will run at `http://localhost:5173`
+   *Visit `http://localhost:5173` to experience CodeForge locally!*
 
 ---
 
-## API Endpoints
+Built to impress. Engineered for scalability. Ready for monetization.
 
-### Authentication & OAuth
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register a new user |
-| POST | `/api/auth/login` | Login user |
-| POST | `/api/auth/logout` | Logout user |
-| POST | `/api/auth/refresh` | Refresh access token |
-| GET | `/api/auth/google` | Trigger Google OAuth flow |
-| GET | `/api/auth/google/callback` | Google OAuth callback |
-| GET | `/api/auth/github` | Trigger GitHub OAuth flow |
-| GET | `/api/auth/github/callback` | GitHub OAuth callback |
-
-### Tasks & Gamification
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/tasks` | Get all user tasks |
-| POST | `/api/tasks` | Create a new task |
-| PUT | `/api/tasks/:id` | Update task status, description, or title |
-| DELETE | `/api/tasks/:id` | Delete a task |
-| GET | `/api/tasks/stats` | Retrieve user XP, level, and accomplishments |
-
-### Payments & Subscriptions
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/payment/order` | Create a new Razorpay order |
-| POST | `/api/payment/verify` | Verify transaction signature and upgrade tier |
-
----
-
-## Environment Variables
-
-Create a `.env` file in the `server` directory:
-
-```env
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=your_mongodb_uri
-CLIENT_URL=http://localhost:5173
-
-# JWT Secrets
-JWT_ACCESS_SECRET=your_jwt_access_secret
-JWT_REFRESH_SECRET=your_jwt_refresh_secret
-
-# OAuth Keys
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-
-# Razorpay Configuration
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-
-# SMTP Email Configuration
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_gmail_app_password
-```
-
----
-
-Built by Tushar Seth
+**Developed by Tushar Seth**
