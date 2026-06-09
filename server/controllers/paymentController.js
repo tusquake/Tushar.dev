@@ -56,7 +56,13 @@ exports.createOrder = async (req, res) => {
         console.error('Razorpay Create Order Error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to create payment order'
+            message: 'Failed to create payment order',
+            error: error.message || error,
+            envKeysPresent: {
+                hasKeyId: !!process.env.RAZORPAY_KEY_ID,
+                hasKeySecret: !!process.env.RAZORPAY_KEY_SECRET,
+                keyIdStart: process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 8) : 'none'
+            }
         });
     }
 };
