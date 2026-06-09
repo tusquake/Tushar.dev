@@ -341,7 +341,7 @@ const forgotPassword = async (req, res) => {
         await user.save();
 
         // Create reset URL pointing to frontend route
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        const clientUrl = process.env.CLIENT_URL || 'https://tushar-dev-1.onrender.com';
         const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
         // Log reset URL in development mode for easier local testing

@@ -5,6 +5,7 @@ const { register, login, refreshAccessToken, logout, getProfile, forgotPassword,
 const { loginLimiter, registerLimiter } = require('../middlewares/rateLimiter');
 const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtils');
 const { protect } = require('../middlewares/authMiddleware');
+const { sendSubscriptionEmail } = require('../utils/emailService');
 
 // Local credentials Auth routes
 router.post('/register', registerLimiter, register);
@@ -67,6 +68,15 @@ router.post('/subscribe', protect, async (req, res) => {
             req.user.subscriptionExpiresAt = new Date(Date.now() + duration);
         }
         await req.user.save();
+
+        if (tier !== 'none') {
+            sendSubscriptionEmail({
+                email: req.user.email,
+                name: req.user.name,
+                tier: tier,
+                expiresAt: req.user.subscriptionExpiresAt
+            }).catch(emailErr => console.error('Subscription email failed:', emailErr));
+        }
         res.json({
             success: true,
             message: `Successfully subscribed to ${tier} tier`,
