@@ -38,7 +38,7 @@ exports.createOrder = async (req, res) => {
         const options = {
             amount: amount * 100, // amount in paise (e.g. 19 * 100 = 1900 paise)
             currency: 'INR',
-            receipt: `receipt_sub_${req.user._id}_${Date.now()}`
+            receipt: `rcpt_${req.user._id.toString().slice(-8)}_${Date.now().toString().slice(-10)}`
         };
 
         const order = await razorpay.orders.create(options);
@@ -57,12 +57,7 @@ exports.createOrder = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to create payment order',
-            error: error.message || error,
-            envKeysPresent: {
-                hasKeyId: !!process.env.RAZORPAY_KEY_ID,
-                hasKeySecret: !!process.env.RAZORPAY_KEY_SECRET,
-                keyIdStart: process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 8) : 'none'
-            }
+            error: error.message || error
         });
     }
 };
