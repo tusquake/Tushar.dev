@@ -2,6 +2,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
 const User = require('../models/User');
+const { sendWelcomeEmail } = require('../utils/emailService');
 
 passport.serializeUser((user, done) => {
     done(null, user.id);
@@ -58,6 +59,10 @@ passport.use(new GoogleStrategy({
             role: 'USER'
         });
 
+        // Send welcome email in the background
+        sendWelcomeEmail({ email: user.email, name: user.name })
+            .catch(err => console.error('Error sending welcome email on Google OAuth signup:', err));
+
         return done(null, user);
     } catch (err) {
         return done(err, null);
@@ -102,6 +107,10 @@ passport.use(new GitHubStrategy({
             avatar: profile.photos?.[0]?.value,
             role: 'USER'
         });
+
+        // Send welcome email in the background
+        sendWelcomeEmail({ email: user.email, name: user.name })
+            .catch(err => console.error('Error sending welcome email on GitHub OAuth signup:', err));
 
         return done(null, user);
     } catch (err) {

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/tokenUtils');
-const { sendResetPasswordEmail } = require('../utils/emailService');
+const { sendResetPasswordEmail, sendWelcomeEmail } = require('../utils/emailService');
 
 // Admin email - this user gets admin role automatically
 const ADMIN_EMAIL = 'sethtushar111@gmail.com';
@@ -48,6 +48,10 @@ const register = async (req, res) => {
         // Save refresh token to user
         user.refreshToken = refreshToken;
         await user.save();
+
+        // Send welcome email in the background
+        sendWelcomeEmail({ email: user.email, name: user.name })
+            .catch(err => console.error('Error sending welcome email on credentials signup:', err));
 
         // Set refresh token in httpOnly cookie
         res.cookie('refreshToken', refreshToken, {
