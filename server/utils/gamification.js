@@ -11,7 +11,8 @@ const XP_VALUES = {
     RESUME_BUILT: 30,
     INTERVIEW_COMPLETED: 100,
     PROFILE_CUSTOMIZED: 25,
-    FIRST_LOGIN: 10
+    FIRST_LOGIN: 10,
+    TASK_COMPLETED: 15
 };
 
 // Check and award achievements/badges

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { projectsAPI, certificatesAPI, contactAPI, uploadAPI, learningAPI, dsaProgressAPI } from '../services/api';
+import { projectsAPI, certificatesAPI, contactAPI, uploadAPI, learningAPI, dsaProgressAPI, tasksAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -10,9 +10,21 @@ import { ALL_QUESTIONS } from '../data/dsaQuestions';
 import Heatmap from '../components/common/Heatmap';
 
 const Dashboard = () => {
-    const { user, isAdmin, loading: authLoading } = useAuth();
+    const { user, isAdmin, loading: authLoading, refreshUser } = useAuth();
     const [activeTab, setActiveTab] = useState(isAdmin ? 'projects' : 'roadmap');
     const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState('');
+    
+    // Helper to get local date string YYYY-MM-DD
+    const getLocalDateString = (dateObj = new Date()) => {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const [selectedDate, setSelectedDate] = useState(getLocalDateString());
+
     const [data, setData] = useState({
         projects: [],
         certificates: [],
@@ -20,11 +32,53 @@ const Dashboard = () => {
         learningTopics: [],
         dsaProgress: [],
         activities: [],
+        tasks: [],
     });
+
+    const showToast = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(''), 3500);
+    };
+
+    // Helper to get local date range of the current week based on selectedDateStr
+    const getWeekDays = (selectedDateStr) => {
+        const [year, month, day] = selectedDateStr.split('-').map(Number);
+        const selectedDateObj = new Date(year, month - 1, day);
+        
+        const dayOfWeek = selectedDateObj.getDay(); // 0 is Sunday
+        const startOfWeek = new Date(selectedDateObj);
+        startOfWeek.setDate(selectedDateObj.getDate() - dayOfWeek);
+
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(startOfWeek);
+            d.setDate(startOfWeek.getDate() + i);
+            days.push(d);
+        }
+        return days;
+    };
+
+    const handlePrevWeek = () => {
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const current = new Date(year, month - 1, day);
+        current.setDate(current.getDate() - 7);
+        setSelectedDate(getLocalDateString(current));
+    };
+
+    const handleNextWeek = () => {
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const current = new Date(year, month - 1, day);
+        current.setDate(current.getDate() + 7);
+        setSelectedDate(getLocalDateString(current));
+    };
+
+    const handleGoToToday = () => {
+        setSelectedDate(getLocalDateString(new Date()));
+    };
 
     // Modal states
     const [showModal, setShowModal] = useState(false);
-    const [modalType, setModalType] = useState(''); // 'project', 'certificate', 'learningTopic'
+    const [modalType, setModalType] = useState(''); // 'project', 'certificate', 'learningTopic', 'task'
     const [editItem, setEditItem] = useState(null);
     const [formData, setFormData] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -55,12 +109,15 @@ const Dashboard = () => {
                     contacts: contactsRes.data.data || [],
                     learningTopics: [],
                     dsaProgress: [],
+                    activities: [],
+                    tasks: [],
                 });
             } else {
-                const [topicsRes, dsaRes, activitiesRes] = await Promise.all([
+                const [topicsRes, dsaRes, activitiesRes, tasksRes] = await Promise.all([
                     learningAPI.getAll(),
                     dsaProgressAPI.getProgress(),
                     learningAPI.getActivityHistory(),
+                    tasksAPI.getAll(),
                 ]);
 
                 setData({
@@ -70,6 +127,7 @@ const Dashboard = () => {
                     learningTopics: topicsRes.data.data || [],
                     dsaProgress: dsaRes.data.completedQuestions || [],
                     activities: activitiesRes.data.data || [],
+                    tasks: tasksRes.data.data || [],
                 });
             }
         } catch (error) {
@@ -103,6 +161,8 @@ const Dashboard = () => {
                 return { name: '', issuer: '', issueDate: '', credentialUrl: '', image: '' };
             case 'learningTopic':
                 return { title: '', category: 'Other', description: '', status: 'not-started', priority: 3, notes: '' };
+            case 'task':
+                return { title: '', description: '', date: selectedDate, category: 'Other', priority: 2, completed: false };
             default:
                 return {};
         }
@@ -127,6 +187,8 @@ const Dashboard = () => {
                     await certificatesAPI.update(editItem._id, payload);
                 } else if (modalType === 'learningTopic') {
                     await learningAPI.update(editItem._id, payload);
+                } else if (modalType === 'task') {
+                    await tasksAPI.update(editItem._id, payload);
                 }
             } else {
                 if (modalType === 'project') {
@@ -135,6 +197,8 @@ const Dashboard = () => {
                     await certificatesAPI.create(payload);
                 } else if (modalType === 'learningTopic') {
                     await learningAPI.create(payload);
+                } else if (modalType === 'task') {
+                    await tasksAPI.create(payload);
                 }
             }
 
@@ -159,6 +223,8 @@ const Dashboard = () => {
                 await contactAPI.delete(id);
             } else if (type === 'learningTopic') {
                 await learningAPI.delete(id);
+            } else if (type === 'task') {
+                await tasksAPI.delete(id);
             }
             fetchAllData();
         } catch (error) {
@@ -188,6 +254,34 @@ const Dashboard = () => {
         }
     };
 
+    const handleToggleTask = async (task) => {
+        try {
+            // Snappy local state update
+            const updatedCompleted = !task.completed;
+            setData(prev => ({
+                ...prev,
+                tasks: prev.tasks.map(t => t._id === task._id ? { ...t, completed: updatedCompleted } : t)
+            }));
+
+            const res = await tasksAPI.update(task._id, { completed: updatedCompleted });
+            
+            if (updatedCompleted && res.data?.xpResult?.success) {
+                showToast(`🎉 Task completed! +${res.data.xpResult.xpAdded} XP gained.`);
+                refreshUser();
+            }
+
+            // Fetch fresh activity log to update the heatmap in real time
+            const activityRes = await learningAPI.getActivityHistory();
+            setData(prev => ({
+                ...prev,
+                activities: activityRes.data.data || []
+            }));
+        } catch (error) {
+            console.error('Failed to toggle task:', error);
+            fetchAllData(); // rollback
+        }
+    };
+
     // Admin Dashboard Tabs
     const adminTabs = [
         { id: 'projects', label: 'Projects', count: data.projects.length },
@@ -195,11 +289,39 @@ const Dashboard = () => {
         { id: 'contacts', label: 'Messages', count: data.contacts.length },
     ];
 
+    // Calculate today's incomplete tasks count
+    const todayStr = getLocalDateString(new Date());
+    const todayTasks = data.tasks.filter(t => {
+        const tDateStr = getLocalDateString(new Date(t.date));
+        return tDateStr === todayStr;
+    });
+    const todayIncompleteCount = todayTasks.filter(t => !t.completed).length;
+
     // User Dashboard Tabs
     const userTabs = [
         { id: 'roadmap', label: 'My Roadmap', count: data.learningTopics.length },
+        { id: 'tasks', label: 'Daily Planner', count: todayIncompleteCount },
         { id: 'dsaStats', label: 'DSA Progress Stats', count: data.dsaProgress.length },
     ];
+
+    const getTaskPriorityBadge = (priority) => {
+        switch (priority) {
+            case 3: return 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 border border-rose-250/20';
+            case 2: return 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-450 border border-amber-250/20';
+            case 1: 
+            default:
+                return 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-450 border border-emerald-250/20';
+        }
+    };
+
+    const getTaskPriorityLabel = (priority) => {
+        switch (priority) {
+            case 3: return 'High';
+            case 2: return 'Medium';
+            case 1: return 'Low';
+            default: return 'Medium';
+        }
+    };
 
     const currentTabs = isAdmin ? adminTabs : userTabs;
 
@@ -555,6 +677,259 @@ const Dashboard = () => {
                     </div>
                 )}
 
+                {!isAdmin && activeTab === 'tasks' && (() => {
+                    const filteredTasks = data.tasks.filter(t => {
+                        const tDateStr = getLocalDateString(new Date(t.date));
+                        return tDateStr === selectedDate;
+                    });
+                    const dayTotal = filteredTasks.length;
+                    const dayCompleted = filteredTasks.filter(t => t.completed).length;
+                    const dayPercent = dayTotal ? Math.round((dayCompleted / dayTotal) * 100) : 0;
+
+                    return (
+                        <div className="animate-fade-in space-y-6">
+                            {/* Calendar Header with Navigation */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-5 rounded-2xl border border-dark-200/50 dark:border-dark-800">
+                                <div>
+                                    <h2 className="text-xl font-bold text-dark-900 dark:text-white font-display flex items-center gap-2">
+                                        <svg className="w-5 h-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Daily Planner
+                                    </h2>
+                                    <p className="text-xs text-dark-400 mt-1">Schedule daily tasks, finish them, and gain XP rewards.</p>
+                                </div>
+                                
+                                {/* Controls */}
+                                <div className="flex items-center gap-3">
+                                    <button 
+                                        onClick={handlePrevWeek}
+                                        className="p-2 hover:bg-dark-100 dark:hover:bg-dark-800 border border-dark-200 dark:border-dark-800 rounded-xl cursor-pointer text-dark-600 dark:text-dark-400 transition-colors"
+                                        title="Previous Week"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+                                    
+                                    <span className="font-bold text-sm text-dark-800 dark:text-dark-200 min-w-[120px] text-center font-display">
+                                        {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                                    </span>
+
+                                    <button 
+                                        onClick={handleNextWeek}
+                                        className="p-2 hover:bg-dark-100 dark:hover:bg-dark-800 border border-dark-200 dark:border-dark-800 rounded-xl cursor-pointer text-dark-600 dark:text-dark-400 transition-colors"
+                                        title="Next Week"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+
+                                    <button
+                                        onClick={handleGoToToday}
+                                        className="px-3 py-1.5 text-xs font-bold bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400 rounded-xl border border-primary-200/30 hover:bg-primary-100/50 transition-colors cursor-pointer"
+                                    >
+                                        Today
+                                    </button>
+
+                                    {/* Date Picker Input Wrapper */}
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            value={selectedDate}
+                                            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="p-2 hover:bg-dark-100 dark:hover:bg-dark-800 border border-dark-200 dark:border-dark-800 rounded-xl text-dark-600 dark:text-dark-400 transition-colors pointer-events-none"
+                                        >
+                                            <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Weekly Calendar Strip */}
+                            <div className="grid grid-cols-7 gap-2 bg-white dark:bg-dark-900 p-4 rounded-2xl border border-dark-200/50 dark:border-dark-800">
+                                {getWeekDays(selectedDate).map((day, idx) => {
+                                    const dateStr = getLocalDateString(day);
+                                    const isSelected = dateStr === selectedDate;
+                                    const isToday = dateStr === getLocalDateString(new Date());
+                                    
+                                    // Calculate dots for this day
+                                    const dayTasks = data.tasks.filter(t => getLocalDateString(new Date(t.date)) === dateStr);
+                                    const hasTasks = dayTasks.length > 0;
+                                    const allDone = hasTasks && dayTasks.every(t => t.completed);
+
+                                    return (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setSelectedDate(dateStr)}
+                                            className={`flex flex-col items-center p-3 rounded-2xl cursor-pointer transition-all duration-300 ${
+                                                isSelected
+                                                    ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20 scale-105'
+                                                    : isToday
+                                                        ? 'bg-primary-50/50 dark:bg-primary-950/10 border border-primary-500/30 text-primary-600 dark:text-primary-400'
+                                                        : 'hover:bg-dark-50 dark:hover:bg-dark-850/50 border border-transparent text-dark-700 dark:text-dark-300'
+                                            }`}
+                                        >
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                                                isSelected ? 'text-primary-100' : 'text-dark-400 dark:text-dark-550'
+                                            }`}>
+                                                {day.toLocaleDateString(undefined, { weekday: 'short' })}
+                                            </span>
+                                            <span className="text-lg font-black mt-1.5 leading-none font-display">
+                                                {day.getDate()}
+                                            </span>
+                                            
+                                            {/* Status Dot */}
+                                            {hasTasks && (
+                                                <span className={`w-1.5 h-1.5 rounded-full mt-2 ${
+                                                    isSelected 
+                                                        ? 'bg-white' 
+                                                        : allDone 
+                                                            ? 'bg-emerald-500' 
+                                                            : 'bg-amber-500'
+                                                }`} />
+                                            )}
+                                            {!hasTasks && <span className="w-1.5 h-1.5 mt-2" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Day Progress & Actions */}
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 dark:bg-dark-900/40 p-5 rounded-2xl border border-dark-200/50 dark:border-dark-800">
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-dark-900 dark:text-white text-base">
+                                        {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                                    </h3>
+                                    {filteredTasks.length > 0 ? (
+                                        <div className="mt-2 flex items-center gap-3">
+                                            <div className="flex-1 max-w-[240px] bg-dark-200 dark:bg-dark-800 h-2 rounded-full overflow-hidden">
+                                                <div className="bg-emerald-500 h-full rounded-full transition-all duration-550" style={{ width: `${dayPercent}%` }}></div>
+                                            </div>
+                                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-450 font-mono">
+                                                {dayCompleted}/{dayTotal} Done ({dayPercent}%)
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-dark-450 mt-1">No tasks scheduled for today.</p>
+                                    )}
+                                </div>
+                                
+                                <Button onClick={() => openAddModal('task')} className="flex items-center gap-2 self-start md:self-auto">
+                                    <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add Daily Task
+                                </Button>
+                            </div>
+
+                            {/* Tasks List */}
+                            <div className="space-y-3">
+                                {filteredTasks.map((task) => (
+                                    <Card 
+                                        key={task._id} 
+                                        className={`p-4 bg-white dark:bg-dark-900 border transition-all ${
+                                            task.completed 
+                                                ? 'border-emerald-500/10 dark:border-emerald-950/20 bg-emerald-50/5 dark:bg-emerald-950/5' 
+                                                : 'border-dark-200/50 dark:border-dark-800'
+                                        }`} 
+                                        hover={false}
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            {/* Styled Checkbox */}
+                                            <button
+                                                onClick={() => handleToggleTask(task)}
+                                                className={`w-5.5 h-5.5 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer mt-0.5 ${
+                                                    task.completed
+                                                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                                                        : 'border-dark-300 dark:border-dark-700 hover:border-primary-500'
+                                                }`}
+                                            >
+                                                {task.completed && (
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </button>
+
+                                            {/* Content */}
+                                            <div className="flex-1">
+                                                <div className="flex flex-wrap items-center gap-2.5">
+                                                    <h4 className={`font-bold text-dark-900 dark:text-white leading-snug ${
+                                                        task.completed ? 'line-through text-dark-450 dark:text-dark-500' : ''
+                                                    }`}>
+                                                        {task.title}
+                                                    </h4>
+                                                    
+                                                    {/* Category Badge */}
+                                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${getCategoryBadgeColor(task.category)}`}>
+                                                        {task.category}
+                                                    </span>
+
+                                                    {/* Priority Badge */}
+                                                    <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md uppercase tracking-wider ${getTaskPriorityBadge(task.priority)}`}>
+                                                        {getTaskPriorityLabel(task.priority)} Priority
+                                                    </span>
+                                                </div>
+
+                                                {task.description && (
+                                                    <p className={`text-xs mt-1 leading-relaxed ${
+                                                        task.completed ? 'text-dark-400 dark:text-dark-550' : 'text-dark-500 dark:text-dark-400'
+                                                    }`}>
+                                                        {task.description}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => openEditModal('task', task)}
+                                                    className="p-1.5 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/25 rounded-lg cursor-pointer transition-colors"
+                                                    title="Edit task"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete('task', task._id)}
+                                                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/25 rounded-lg cursor-pointer transition-colors"
+                                                    title="Delete task"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+
+                                {filteredTasks.length === 0 && (
+                                    <div className="text-center py-16 text-dark-500 bg-white/40 dark:bg-dark-900/40 rounded-2xl border border-dark-200/50 dark:border-dark-800">
+                                        <svg className="w-12 h-12 text-dark-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                        </svg>
+                                        <h3 className="font-bold text-dark-700 dark:text-dark-300">No tasks scheduled</h3>
+                                        <p className="text-sm text-dark-400 max-w-sm mx-auto mt-1">Get organized! Schedule topics, coding questions or personal tasks for this day.</p>
+                                        <Button onClick={() => openAddModal('task')} className="mt-4 text-xs font-semibold py-2">
+                                            Add First Task
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })()}
+
                 {!isAdmin && activeTab === 'dsaStats' && (
                     <div className="animate-fade-in grid md:grid-cols-3 gap-6">
                         {/* Overall circular stats */}
@@ -904,6 +1279,70 @@ const Dashboard = () => {
                                     </>
                                 )}
 
+                                {modalType === 'task' && (
+                                    <>
+                                        <Input
+                                            label="Task Title"
+                                            placeholder="e.g. Solve 3 Leetcode questions, Design database schema"
+                                            value={formData.title || ''}
+                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                            required
+                                        />
+                                        <Input
+                                            label="Task Date"
+                                            type="date"
+                                            value={formData.date ? formData.date.split('T')[0] : ''}
+                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                            required
+                                        />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="label text-xs font-bold text-dark-700 dark:text-dark-300 uppercase tracking-wider mb-1.5 block">Category</label>
+                                                <select
+                                                    value={formData.category || 'Other'}
+                                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                    className="w-full text-sm py-2 px-3 bg-dark-50 dark:bg-dark-850 border border-dark-200 dark:border-dark-850 rounded-xl text-dark-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all cursor-pointer"
+                                                >
+                                                    <option value="Frontend">Frontend</option>
+                                                    <option value="Backend">Backend</option>
+                                                    <option value="DSA">DSA</option>
+                                                    <option value="System Design">System Design</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="label text-xs font-bold text-dark-700 dark:text-dark-300 uppercase tracking-wider mb-1.5 block">Priority</label>
+                                                <select
+                                                    value={formData.priority || 2}
+                                                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
+                                                    className="w-full text-sm py-2 px-3 bg-dark-50 dark:bg-dark-850 border border-dark-200 dark:border-dark-850 rounded-xl text-dark-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all cursor-pointer"
+                                                >
+                                                    <option value={3}>High Priority</option>
+                                                    <option value={2}>Medium Priority</option>
+                                                    <option value={1}>Low Priority</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <Input
+                                            label="Task Description"
+                                            placeholder="What exactly needs to be done?"
+                                            value={formData.description || ''}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            textarea
+                                            rows={3}
+                                        />
+                                        <label className="flex items-center gap-2 cursor-pointer mt-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.completed || false}
+                                                onChange={(e) => setFormData({ ...formData, completed: e.target.checked })}
+                                                className="rounded border-dark-300 dark:border-dark-700 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                            />
+                                            <span className="text-sm font-semibold text-dark-700 dark:text-dark-300">Mark as completed</span>
+                                        </label>
+                                    </>
+                                )}
+
                                 <div className="flex gap-3 pt-4 border-t border-dark-100 dark:border-dark-800 mt-5">
                                     <Button
                                         type="button"
@@ -918,11 +1357,23 @@ const Dashboard = () => {
                                         loading={submitting}
                                         className="flex-1 cursor-pointer py-2.5"
                                     >
-                                        {editItem ? 'Update Topic' : 'Create Topic'}
+                                        {editItem 
+                                            ? `Update ${modalType === 'learningTopic' ? 'Topic' : modalType === 'project' ? 'Project' : modalType === 'certificate' ? 'Certificate' : 'Task'}` 
+                                            : `Create ${modalType === 'learningTopic' ? 'Topic' : modalType === 'project' ? 'Project' : modalType === 'certificate' ? 'Certificate' : 'Task'}`
+                                        }
                                     </Button>
                                 </div>
                             </form>
                         </Card>
+                    </div>
+                )}
+
+                {toast && (
+                    <div className="fixed bottom-5 right-5 z-50 px-4 py-3 bg-emerald-500 text-white rounded-xl shadow-lg animate-fade-in flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="font-semibold text-sm">{toast}</span>
                     </div>
                 )}
             </div>

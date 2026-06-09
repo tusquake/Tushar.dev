@@ -172,5 +172,13 @@ export const reviewsAPI = {
     create: (data) => api.post('/reviews', data),
 };
 
+// Tasks API
+export const tasksAPI = {
+    getAll: (date) => api.get('/tasks', { params: { date } }),
+    create: (data) => api.post('/tasks', data),
+    update: (id, data) => api.put(`/tasks/${id}`, data),
+    delete: (id) => api.delete(`/tasks/${id}`),
+};
+
 export default api;
 
