@@ -8,19 +8,19 @@ CodeForge is not just a developer portfolio—it is a premium, feature-rich SaaS
 
 ## Why CodeForge Stands Out (SaaS-Ready Value)
 
-### 💰 Monetize Your Content Instantly
+### Monetize Your Content Instantly
 Comes with a fully-integrated **Razorpay Production Payment Gateway**. Charge users for premium access using Daily, Monthly, or Premium Subscription tiers. Whether selling courses, coding sandboxes, or premium resume scanners, payments are secure and automated.
 
-### 🎮 Gamified Productivity & Retention
+### Gamified Productivity & Retention
 Keep users returning daily with a built-in **Interactive Task Planner & Dynamic Calendar**. Users earn Experience Points (XP), level up, and unlock achievements as they complete daily coding goals. A perfect system for user engagement and retention.
 
-### ⚡ Seamless, Frictionless Onboarding
+### Seamless, Frictionless Onboarding
 Boost sign-up conversion rates with one-click **Google & GitHub Social Authentication**, alongside standard, highly-secure email registration. 
 
-### 🚀 Visual Learning Roadmap
+### Visual Learning Roadmap
 An interactive, milestone-based learning tracker allows users to map out their curriculum, mark progress, and visually showcase their technical growth in a sleek roadmap dashboard.
 
-### 🛡️ Enterprise-Grade Security
+### Enterprise-Grade Security
 Built with modern security best practices including secure HTTP-only cookies, protection against spam, rate limiting, and standard encryption, ensuring user data is always protected.
 
 ---
