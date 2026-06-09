@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { authAPI, learningAPI, dsaProgressAPI, interviewAPI, resumeAPI } from '../services/api';
+import { authAPI, learningAPI, dsaProgressAPI, interviewAPI, resumeAPI, uploadAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -46,13 +47,48 @@ const getLevelTitle = (lvl) => {
 };
 
 const Profile = () => {
-    const { user, refreshUser } = useAuth();
+    const navigate = useNavigate();
+    const { user, refreshUser, logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
     const [editMode, setEditMode] = useState(false);
     const [activeTab, setActiveTab] = useState('overview'); // overview, edit, leaderboard, achievements
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [leaderboard, setLeaderboard] = useState([]);
     const [toast, setToast] = useState('');
+    const [uploadingImage, setUploadingImage] = useState(false);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('File size should be less than 5MB');
+            return;
+        }
+
+        setUploadingImage(true);
+        try {
+            const res = await uploadAPI.uploadImage(file);
+            if (res.data.success) {
+                const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                const serverOrigin = apiBaseUrl.replace('/api', '');
+                const fullImageUrl = `${serverOrigin}${res.data.data.imageUrl}`;
+                
+                setFormData(prev => ({ ...prev, avatar: fullImageUrl }));
+                showToast('Image uploaded successfully!');
+            }
+        } catch (error) {
+            console.error('Image upload failed:', error);
+            showToast(error.response?.data?.message || 'Failed to upload image');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
     
     // Detailed stats
     const [stats, setStats] = useState({
@@ -214,7 +250,9 @@ const Profile = () => {
                 {/* Toast Notification */}
                 {toast && (
                     <div className="fixed top-24 right-4 z-[9999] px-5 py-3 rounded-xl bg-emerald-500 text-white font-semibold shadow-2xl flex items-center gap-3 animate-fade-in border border-emerald-600/20">
-                        <span>✨</span>
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         <span>{toast}</span>
                     </div>
                 )}
@@ -251,12 +289,21 @@ const Profile = () => {
                                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-2.5 text-xs text-white/80 font-medium">
                                     {formData.location && (
                                         <span className="flex items-center gap-1">
-                                            📍 {formData.location}
+                                            <svg className="w-3.5 h-3.5 text-white/85" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            {formData.location}
                                         </span>
                                     )}
                                     {formData.targetRole && (
                                         <span className="flex items-center gap-1">
-                                            🎯 Target: {formData.targetRole}
+                                            <svg className="w-3.5 h-3.5 text-white/85" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 18a6 6 0 100-12 6 6 0 000 12z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 14a2 2 0 100-4 2 2 0 000 4z" />
+                                            </svg>
+                                            Target: {formData.targetRole}
                                         </span>
                                     )}
                                     <span>Joined: {new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}</span>
@@ -292,7 +339,12 @@ const Profile = () => {
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
                             }`}
                     >
-                        👤 Profile Hub
+                        <span className="flex items-center gap-1.5">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Profile Hub
+                        </span>
                     </button>
                     <button
                         onClick={() => { setActiveTab('overview'); setEditMode(true); }}
@@ -301,7 +353,13 @@ const Profile = () => {
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
                             }`}
                     >
-                        ⚙️ Customize Profile
+                        <span className="flex items-center gap-1.5">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Customize Profile
+                        </span>
                     </button>
                     <button
                         onClick={() => { setActiveTab('achievements'); setEditMode(false); }}
@@ -310,7 +368,12 @@ const Profile = () => {
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
                             }`}
                     >
-                        🏆 Badges & Trophies
+                        <span className="flex items-center gap-1.5">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                            Badges & Trophies
+                        </span>
                     </button>
                     <button
                         onClick={() => { setActiveTab('leaderboard'); setEditMode(false); }}
@@ -319,7 +382,12 @@ const Profile = () => {
                             : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
                             }`}
                     >
-                        🔥 Leaderboard
+                        <span className="flex items-center gap-1.5">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Leaderboard
+                        </span>
                     </button>
                 </div>
 
@@ -338,23 +406,35 @@ const Profile = () => {
                             {/* Social Icons Linkouts */}
                             <div className="flex items-center gap-3 mt-6 pt-5 border-t border-dark-100 dark:border-dark-800">
                                 {formData.socials.github && (
-                                    <a href={formData.socials.github} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors" title="GitHub">
-                                        📁 GitHub
+                                    <a href={formData.socials.github} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors flex items-center gap-1.5" title="GitHub">
+                                        <svg className="w-4 h-4 text-dark-500 fill-current" viewBox="0 0 24 24">
+                                            <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+                                        </svg>
+                                        GitHub
                                     </a>
                                 )}
                                 {formData.socials.linkedin && (
-                                    <a href={formData.socials.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors" title="LinkedIn">
-                                        🔗 LinkedIn
+                                    <a href={formData.socials.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors flex items-center gap-1.5" title="LinkedIn">
+                                        <svg className="w-4 h-4 text-dark-500 fill-current" viewBox="0 0 24 24">
+                                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                                        </svg>
+                                        LinkedIn
                                     </a>
                                 )}
                                 {formData.socials.twitter && (
-                                    <a href={formData.socials.twitter} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors" title="Twitter">
-                                        🐦 Twitter
+                                    <a href={formData.socials.twitter} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors flex items-center gap-1.5" title="Twitter">
+                                        <svg className="w-4 h-4 text-dark-500 fill-current" viewBox="0 0 24 24">
+                                            <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                                        </svg>
+                                        Twitter
                                     </a>
                                 )}
                                 {formData.socials.website && (
-                                    <a href={formData.socials.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors" title="Website">
-                                        🌐 Portfolio
+                                    <a href={formData.socials.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors flex items-center gap-1.5" title="Website">
+                                        <svg className="w-4 h-4 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                        </svg>
+                                        Portfolio
                                     </a>
                                 )}
                                 {!formData.socials.github && !formData.socials.linkedin && !formData.socials.twitter && !formData.socials.website && (
@@ -370,7 +450,12 @@ const Profile = () => {
                             
                             <div className="space-y-3">
                                 <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300">📈 Statistics Grid</span>
+                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        Statistics Grid
+                                    </span>
                                     <input
                                         type="checkbox"
                                         checked={formData.widgets.showStats}
@@ -380,7 +465,12 @@ const Profile = () => {
                                 </label>
 
                                 <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300">🏅 Badges Shelf</span>
+                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                        </svg>
+                                        Badges Shelf
+                                    </span>
                                     <input
                                         type="checkbox"
                                         checked={formData.widgets.showAchievements}
@@ -390,7 +480,12 @@ const Profile = () => {
                                 </label>
 
                                 <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300">📊 Skill Levels</span>
+                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+                                        </svg>
+                                        Skill Levels
+                                    </span>
                                     <input
                                         type="checkbox"
                                         checked={formData.widgets.showSkills}
@@ -400,7 +495,12 @@ const Profile = () => {
                                 </label>
 
                                 <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300">⏳ Activity Stream</span>
+                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Activity Stream
+                                    </span>
                                     <input
                                         type="checkbox"
                                         checked={formData.widgets.showActivity}
@@ -416,6 +516,22 @@ const Profile = () => {
                                 className="w-full mt-4 py-2 border border-primary-500/20 text-primary-500 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 rounded-xl text-xs font-bold transition-all"
                             >
                                 Apply Widgets Layout
+                            </button>
+                        </Card>
+
+                        {/* Account Actions */}
+                        <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                            <h3 className="font-bold text-dark-900 dark:text-white font-display mb-2">Account Actions</h3>
+                            <p className="text-xs text-dark-400 mb-4">Manage your session or sign out of your account on this device.</p>
+                            
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 dark:border-red-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                            >
+                                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Log Out of Account
                             </button>
                         </Card>
                     </div>
@@ -621,6 +737,39 @@ const Profile = () => {
                                             </button>
                                         ))}
                                     </div>
+                                    
+                                    <div className="mt-4 p-4 border border-dashed border-dark-300 dark:border-dark-700 rounded-2xl bg-dark-50/50 dark:bg-dark-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div>
+                                            <h5 className="text-sm font-semibold text-dark-900 dark:text-white">Upload Custom Profile Picture</h5>
+                                            <p className="text-xs text-dark-400">Supports JPG, PNG, GIF up to 5MB</p>
+                                        </div>
+                                        <label className="relative cursor-pointer bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs py-2 px-4 rounded-xl transition-all shadow-md flex items-center gap-2">
+                                            {uploadingImage ? (
+                                                <>
+                                                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                    </svg>
+                                                    <span>Uploading...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                                    </svg>
+                                                    <span>Choose Image File</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={handleImageUpload}
+                                                disabled={uploadingImage}
+                                            />
+                                        </label>
+                                    </div>
+
                                     <div className="mt-4">
                                         <Input
                                             label="Or enter custom Image URL"

@@ -6,8 +6,8 @@ const path = require('path');
 
 // @desc    Upload image
 // @route   POST /api/upload
-// @access  Private (Admin)
-router.post('/', protect, adminOnly, upload.single('image'), (req, res) => {
+// @access  Private
+router.post('/', protect, upload.single('image'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({

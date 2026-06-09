@@ -37,6 +37,7 @@ router.get('/me', protect, (req, res) => {
                 skills: req.user.skills || [],
                 socials: req.user.socials || {},
                 themeColor: req.user.themeColor || 'purple',
+                avatar: req.user.avatar,
                 xp: req.user.xp || 0,
                 level: req.user.level || 1,
                 achievements: req.user.achievements || [],

@@ -32,7 +32,8 @@ const userSchema = new mongoose.Schema({
         sparse: true
     },
     avatar: {
-        type: String
+        type: String,
+        default: 'https://api.dicebear.com/7.x/bottts/svg?seed=samurai&backgroundColor=b6e3f4'
     },
     role: {
         type: String,

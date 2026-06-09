@@ -63,7 +63,8 @@ const register = async (req, res) => {
                     email: user.email,
                     role: user.role,
                     subscriptionTier: user.subscriptionTier || 'none',
-                    createdAt: user.createdAt
+                    createdAt: user.createdAt,
+                    avatar: user.avatar
                 },
                 accessToken
             }
@@ -129,7 +130,8 @@ const login = async (req, res) => {
                     email: user.email,
                     role: user.role,
                     subscriptionTier: user.subscriptionTier || 'none',
-                    createdAt: user.createdAt
+                    createdAt: user.createdAt,
+                    avatar: user.avatar
                 },
                 accessToken
             }
@@ -398,7 +400,7 @@ const resetPassword = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
     try {
-        const { title, bio, location, targetRole, skills, socials, themeColor, widgets } = req.body;
+        const { title, bio, location, targetRole, skills, socials, themeColor, widgets, avatar } = req.body;
         
         const user = await User.findById(req.user._id);
         if (!user) {
@@ -416,6 +418,7 @@ const updateProfile = async (req, res) => {
         if (socials !== undefined) user.socials = socials;
         if (themeColor !== undefined) user.themeColor = themeColor;
         if (widgets !== undefined) user.widgets = widgets;
+        if (avatar !== undefined) user.avatar = avatar;
 
         await user.save();
 
@@ -441,6 +444,7 @@ const updateProfile = async (req, res) => {
                     skills: user.skills || [],
                     socials: user.socials || {},
                     themeColor: user.themeColor || 'purple',
+                    avatar: user.avatar,
                     xp: user.xp || 0,
                     level: user.level || 1,
                     achievements: user.achievements || [],
