@@ -1,7 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { authAPI } from '../../services/api';
+import { authAPI, paymentAPI } from '../../services/api';
+
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        if (window.Razorpay) {
+            resolve(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
 
 const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
     const navigate = useNavigate();
@@ -38,18 +52,101 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
         return 109;
     };
 
-    const handleOpenGateway = (tier) => {
+    const handleOpenGateway = async (tier) => {
+        setLoading(true);
         setSelectedTier(tier);
-        setShowGateway(true);
-        setGatewayStep('input');
-        // Reset form inputs
-        setCardNumber('');
-        setCardExpiry('');
-        setCardCvv('');
-        setCardName('');
-        setUpiId('');
-        setSelectedBank('');
-        setOtp('');
+        try {
+            // 1. Load Razorpay Script
+            const isLoaded = await loadRazorpayScript();
+            if (!isLoaded) {
+                throw new Error('Script loading failed');
+            }
+
+            // 2. Create Order on Backend
+            const orderRes = await paymentAPI.createOrder(tier);
+            if (!orderRes.data || !orderRes.data.success) {
+                throw new Error('Order creation failed');
+            }
+
+            const { id: order_id, amount, currency, key } = orderRes.data.data;
+
+            // 3. Open Razorpay Checkout Options
+            const options = {
+                key: key || 'rzp_test_5Wq2jD5x7z7b6a', // Fallback to test key if not set in env
+                amount: amount,
+                currency: currency || 'INR',
+                name: 'CodeForge Workstation',
+                description: `${tier.toUpperCase()} Tier Activation`,
+                order_id: order_id,
+                handler: async function (response) {
+                    // This callback is executed upon successful payment
+                    setShowGateway(true);
+                    setGatewayStep('processing');
+                    try {
+                        const verifyRes = await paymentAPI.verifyPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            tier: tier
+                        });
+
+                        if (verifyRes.data?.success) {
+                            const updatedUser = verifyRes.data.data.user;
+                            
+                            // Synchronize with Local Storage
+                            const localUserData = JSON.parse(localStorage.getItem('user') || '{}');
+                            const mergedUser = { ...localUserData, ...updatedUser };
+                            localStorage.setItem('user', JSON.stringify(mergedUser));
+
+                            setMockPaymentId(response.razorpay_payment_id);
+                            setGatewayStep('success');
+                            setSuccess(true);
+
+                            // Reload profile to refresh context state
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2500);
+                        } else {
+                            throw new Error('Verification failed');
+                        }
+                    } catch (error) {
+                        console.error('Payment verification failed:', error);
+                        alert('Payment verification failed. Please contact support.');
+                        setShowGateway(false);
+                        setLoading(false);
+                    }
+                },
+                prefill: {
+                    name: user?.name || '',
+                    email: user?.email || '',
+                },
+                theme: {
+                    color: '#6366f1' // matches primary theme color
+                },
+                modal: {
+                    ondismiss: function () {
+                        setLoading(false);
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        } catch (error) {
+            console.warn('Razorpay initialization failed, falling back to simulator:', error);
+            // Fall back to simulator
+            setShowGateway(true);
+            setGatewayStep('input');
+            // Reset form inputs
+            setCardNumber('');
+            setCardExpiry('');
+            setCardCvv('');
+            setCardName('');
+            setUpiId('');
+            setSelectedBank('');
+            setOtp('');
+            setLoading(false);
+        }
     };
 
     const handleCardNumberChange = (e) => {
@@ -237,13 +334,14 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                                     </ul>
                                 </div>
                                 <button
+                                    disabled={loading}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenGateway('day');
                                     }}
-                                    className="w-full py-3 rounded-lg text-xs font-bold transition-all duration-200 mt-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg cursor-pointer"
+                                    className="w-full py-3 rounded-lg text-xs font-bold transition-all duration-200 mt-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Activate Day Pass (₹19)
+                                    {loading && selectedTier === 'day' ? 'Initializing...' : 'Activate Day Pass (₹19)'}
                                 </button>
                             </div>
 
@@ -284,13 +382,14 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                                     </ul>
                                 </div>
                                 <button
+                                    disabled={loading}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenGateway('basic');
                                     }}
-                                    className="w-full py-3 rounded-lg text-xs font-bold transition-all duration-200 mt-4 bg-primary-500 hover:bg-primary-600 text-white shadow-lg cursor-pointer"
+                                    className="w-full py-3 rounded-lg text-xs font-bold transition-all duration-200 mt-4 bg-primary-500 hover:bg-primary-600 text-white shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Activate Basic Plan (₹79)
+                                    {loading && selectedTier === 'basic' ? 'Initializing...' : 'Activate Basic Plan (₹79)'}
                                 </button>
                             </div>
 
@@ -331,13 +430,14 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                                     </ul>
                                 </div>
                                 <button
+                                    disabled={loading}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenGateway('premium');
                                     }}
-                                    className="w-full py-3 rounded-lg text-xs font-bold transition-all duration-200 mt-4 bg-purple-600 hover:bg-purple-700 text-white shadow-lg cursor-pointer"
+                                    className="w-full py-3 rounded-lg text-xs font-bold transition-all duration-200 mt-4 bg-purple-600 hover:bg-purple-700 text-white shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Activate Premium Plan (₹109)
+                                    {loading && selectedTier === 'premium' ? 'Initializing...' : 'Activate Premium Plan (₹109)'}
                                 </button>
                             </div>
 

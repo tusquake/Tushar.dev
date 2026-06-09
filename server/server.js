@@ -18,6 +18,7 @@ const resumeRoutes = require('./routes/resumeRoutes');
 const interviewRoutes = require('./routes/interviewRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Initialize express app
 const app = express();
@@ -94,6 +95,7 @@ app.use('/api/resume', resumeRoutes);
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -180,5 +180,11 @@ export const tasksAPI = {
     delete: (id) => api.delete(`/tasks/${id}`),
 };
 
+// Payment API
+export const paymentAPI = {
+    createOrder: (tier) => api.post('/payment/order', { tier }),
+    verifyPayment: (paymentData) => api.post('/payment/verify', paymentData),
+};
+
 export default api;
 
