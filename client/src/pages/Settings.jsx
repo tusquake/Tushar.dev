@@ -58,11 +58,7 @@ const Settings = () => {
                     <p className="text-dark-500 dark:text-dark-400 mt-2">Manage your API keys, preferences, and data privacy options.</p>
                 </div>
 
-                {toast && (
-                    <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 text-sm font-semibold flex items-center justify-between animate-fade-in">
-                        <span>{toast}</span>
-                    </div>
-                )}
+
 
                 <div className="space-y-6">
                     <Card className="p-6 md:p-8">
@@ -182,6 +178,22 @@ const Settings = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Floating Toast Notification */}
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-[100] max-w-sm p-4 rounded-2xl bg-slate-900 border border-emerald-500/20 shadow-2xl text-emerald-400 text-sm font-semibold flex items-center gap-3 animate-fade-in">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{toast}</span>
+                    <button
+                        onClick={() => setToast('')}
+                        className="ml-auto text-slate-400 hover:text-white transition cursor-pointer"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
