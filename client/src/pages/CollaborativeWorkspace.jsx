@@ -18,7 +18,9 @@ import {
   Terminal,
   MessageSquare,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { marked } from 'marked';
@@ -86,6 +88,14 @@ export default function CollaborativeWorkspace() {
   const [workspaceMode, setWorkspaceMode] = useState('editor'); // editor, whiteboard
   const [canvasHistory, setCanvasHistory] = useState([]);
   const [modalConfig, setModalConfig] = useState(null);
+
+  // WebRTC Voice States & Refs
+  const [isVoiceConnected, setIsVoiceConnected] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [remoteStreams, setRemoteStreams] = useState({});
+  const [voiceUsers, setVoiceUsers] = useState([]);
+  const localStreamRef = useRef(null);
+  const peerConnectionsRef = useRef({});
 
   // Editor Reference
   const editorRef = useRef(null);
@@ -263,6 +273,200 @@ export default function CollaborativeWorkspace() {
       }
     };
   }, [inLobby, urlRoomId]);
+
+  // Helper to create WebRTC peer connection
+  const createPeerConnection = (peerSocketId, localStream) => {
+    if (peerConnectionsRef.current[peerSocketId]) {
+      return peerConnectionsRef.current[peerSocketId];
+    }
+
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    });
+
+    // Add local tracks to peer connection
+    if (localStream) {
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+      });
+    }
+
+    // Handle ICE candidates
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket?.emit('webrtc-signal', {
+          to: peerSocketId,
+          signal: { type: 'candidate', candidate: event.candidate }
+        });
+      }
+    };
+
+    // Handle remote streams
+    pc.ontrack = (event) => {
+      const remoteStream = event.streams[0];
+      setRemoteStreams(prev => ({
+        ...prev,
+        [peerSocketId]: remoteStream
+      }));
+    };
+
+    peerConnectionsRef.current[peerSocketId] = pc;
+    return pc;
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleVoiceUserJoined = async ({ socketId, username }) => {
+      setVoiceUsers(prev => {
+        if (prev.includes(socketId)) return prev;
+        return [...prev, socketId];
+      });
+
+      if (localStreamRef.current) {
+        setTerminalOutput(prev => [
+          ...prev,
+          { type: 'system', text: `Voice: Connecting to ${username}...` }
+        ]);
+
+        try {
+          const pc = createPeerConnection(socketId, localStreamRef.current);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('webrtc-signal', {
+            to: socketId,
+            signal: { type: 'offer', sdp: offer }
+          });
+        } catch (err) {
+          console.error('Error creating RTC offer:', err);
+        }
+      }
+    };
+
+    const handleVoiceUserLeft = (socketId) => {
+      if (peerConnectionsRef.current[socketId]) {
+        peerConnectionsRef.current[socketId].close();
+        delete peerConnectionsRef.current[socketId];
+      }
+      setRemoteStreams(prev => {
+        const copy = { ...prev };
+        delete copy[socketId];
+        return copy;
+      });
+      setVoiceUsers(prev => prev.filter(id => id !== socketId));
+    };
+
+    const handleWebRTCSignal = async ({ from, signal }) => {
+      if (!localStreamRef.current) return;
+
+      try {
+        if (signal.type === 'offer') {
+          const pc = createPeerConnection(from, localStreamRef.current);
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit('webrtc-signal', {
+            to: from,
+            signal: { type: 'answer', sdp: answer }
+          });
+        } else if (signal.type === 'answer') {
+          const pc = peerConnectionsRef.current[from];
+          if (pc) {
+            await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+          }
+        } else if (signal.type === 'candidate') {
+          const pc = peerConnectionsRef.current[from];
+          if (pc) {
+            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          }
+        }
+      } catch (err) {
+        console.error('Error handling WebRTC signal:', err);
+      }
+    };
+
+    socket.on('voice-user-joined', handleVoiceUserJoined);
+    socket.on('voice-user-left', handleVoiceUserLeft);
+    socket.on('webrtc-signal', handleWebRTCSignal);
+
+    return () => {
+      socket.off('voice-user-joined', handleVoiceUserJoined);
+      socket.off('voice-user-left', handleVoiceUserLeft);
+      socket.off('webrtc-signal', handleWebRTCSignal);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    return () => {
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      Object.values(peerConnectionsRef.current).forEach(pc => pc.close());
+    };
+  }, []);
+
+  const joinVoice = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      localStreamRef.current = stream;
+      setIsVoiceConnected(true);
+      setIsMuted(false);
+      socket?.emit('voice-join');
+
+      setVoiceUsers(prev => {
+        if (prev.includes(socket.id)) return prev;
+        return [...prev, socket.id];
+      });
+
+      setTerminalOutput(prev => [
+        ...prev,
+        { type: 'system', text: 'Voice: Connected to voice channel.' }
+      ]);
+    } catch (err) {
+      console.error('Microphone access denied:', err);
+      setModalConfig({
+        title: 'Microphone Required',
+        message: 'Could not access your microphone. Please check your browser permissions and try again.',
+        type: 'alert'
+      });
+    }
+  };
+
+  const leaveVoice = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+
+    Object.entries(peerConnectionsRef.current).forEach(([id, pc]) => {
+      pc.close();
+    });
+    peerConnectionsRef.current = {};
+
+    setRemoteStreams({});
+    setVoiceUsers([]);
+    setIsVoiceConnected(false);
+    setIsMuted(false);
+    socket?.emit('voice-leave');
+
+    setTerminalOutput(prev => [
+      ...prev,
+      { type: 'system', text: 'Voice: Disconnected from voice channel.' }
+    ]);
+  };
+
+  const toggleMute = () => {
+    if (localStreamRef.current) {
+      const currentMuted = !isMuted;
+      localStreamRef.current.getAudioTracks().forEach(track => {
+        track.enabled = !currentMuted;
+      });
+      setIsMuted(currentMuted);
+    }
+  };
 
   // Document Sync Setup
   useEffect(() => {
@@ -653,6 +857,44 @@ export default function CollaborativeWorkspace() {
               <option value="java" className="bg-slate-900 text-white">Java (JDK)</option>
             </select>
 
+            {/* Voice Connection Buttons */}
+            <div className="flex items-center gap-1.5 bg-slate-850 p-1 rounded-xl border border-white/10">
+              <button
+                onClick={isVoiceConnected ? leaveVoice : joinVoice}
+                className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer ${
+                  isVoiceConnected
+                    ? 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-white/5 hover:bg-white/10 text-slate-350'
+                }`}
+              >
+                {isVoiceConnected ? (
+                  <>
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    Connected ({voiceUsers.length})
+                  </>
+                ) : (
+                  'Join Voice'
+                )}
+              </button>
+              
+              {isVoiceConnected && (
+                <button
+                  onClick={toggleMute}
+                  className={`p-1.5 rounded-lg transition cursor-pointer ${
+                    isMuted
+                      ? 'bg-rose-600/20 text-rose-400 border border-rose-500/20'
+                      : 'bg-slate-850 hover:bg-slate-800 text-slate-300'
+                  }`}
+                  title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
+                >
+                  {isMuted ? <MicOff size={12} /> : <Mic size={12} />}
+                </button>
+              )}
+            </div>
+
             {/* Invite button */}
             <button
               onClick={handleCopyLink}
@@ -965,6 +1207,11 @@ export default function CollaborativeWorkspace() {
           </div>
         </div>
       </div>
+
+      {/* Remote WebRTC audio elements */}
+      {Object.entries(remoteStreams).map(([peerId, stream]) => (
+        <RemoteAudioPlayer key={peerId} stream={stream} />
+      ))}
 
       {/* Premium In-App Modal / Dialog */}
       {modalConfig && (
@@ -1367,4 +1614,17 @@ function WhiteboardCanvas({ socket, canvasHistory, setCanvasHistory, setModalCon
       </div>
     </div>
   );
+}
+
+// Hidden HTML5 Audio player helper for remote WebRTC streams
+function RemoteAudioPlayer({ stream }) {
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (audioRef.current && stream) {
+      audioRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return <audio ref={audioRef} autoPlay className="hidden" />;
 }

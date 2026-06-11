@@ -293,10 +293,47 @@ Provide a concise, expert answer. If correcting code, explain the bug briefly an
       }
     });
 
+    // WebRTC Voice Signaling events
+    socket.on('voice-join', () => {
+      const { roomId } = socket;
+      if (!roomId) return;
+      
+      const workspace = workspaces.get(roomId);
+      if (workspace) {
+        const user = workspace.users.get(socket.id);
+        if (user) {
+          user.inVoice = true;
+          // Notify other users that this socket joined voice
+          socket.to(roomId).emit('voice-user-joined', { socketId: socket.id, username: user.username });
+        }
+      }
+    });
+
+    socket.on('voice-leave', () => {
+      const { roomId } = socket;
+      if (!roomId) return;
+
+      const workspace = workspaces.get(roomId);
+      if (workspace) {
+        const user = workspace.users.get(socket.id);
+        if (user) {
+          user.inVoice = false;
+        }
+      }
+      socket.to(roomId).emit('voice-user-left', socket.id);
+    });
+
+    socket.on('webrtc-signal', ({ to, signal }) => {
+      io.to(to).emit('webrtc-signal', { from: socket.id, signal });
+    });
+
     // Disconnect handler
     socket.on('disconnect', () => {
       const { roomId } = socket;
       if (!roomId) return;
+
+      // Broadcast voice left on unexpected disconnect
+      io.to(roomId).emit('voice-user-left', socket.id);
 
       const workspace = workspaces.get(roomId);
       if (!workspace) return;
