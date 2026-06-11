@@ -92,6 +92,7 @@ export default function CodeEditor() {
         { type: 'system', text: 'Select a programming language and click [Run Code] to compile.' }
     ]);
     const [performanceMetrics, setPerformanceMetrics] = useState({ time: 0, memory: 0 });
+    const [modalConfig, setModalConfig] = useState(null);
     
     // AI Panel State
     const [aiQuery, setAiQuery] = useState('');
@@ -308,7 +309,11 @@ Provide instructions and modified code structure to achieve this request.`;
                 { type: 'system', text: 'System: Applied AI Intellisense suggestion to active document.' }
             ]);
         } else {
-            alert("No clear code block found in the AI response to automatically apply.");
+            setModalConfig({
+                title: "Apply Suggestion",
+                message: "No clear code block found in the AI response to automatically apply. Please verify that the suggestion contains standard markdown code blocks.",
+                type: "alert"
+            });
         }
     };
 
@@ -321,9 +326,17 @@ Provide instructions and modified code structure to achieve this request.`;
 
     // Reset code to boilerplate
     const handleResetCode = () => {
-        if (window.confirm("Are you sure you want to reset the editor? All your changes will be lost.")) {
-            setCode(BOILERPLATES[language]);
-        }
+        setModalConfig({
+            title: "Reset Code Editor",
+            message: "Are you sure you want to reset the editor? All your active changes in the editor workspace will be lost.",
+            type: "confirm",
+            onConfirm: () => {
+                setCode(BOILERPLATES[language]);
+                setTerminalOutput([
+                    { type: 'system', text: 'Editor successfully reset to template boilerplate.' }
+                ]);
+            }
+        });
     };
 
     // Dynamic classes based on active theme
@@ -691,6 +704,58 @@ Provide instructions and modified code structure to achieve this request.`;
                 </div>
 
             </div>
-        </div>
-    );
+
+        {/* Premium In-App Modal / Dialog */}
+        {modalConfig && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in">
+                <div className="max-w-md w-full mx-4 p-6 rounded-3xl bg-slate-900 border border-white/10 shadow-2xl relative overflow-hidden text-center animate-scale-up">
+                    {/* Background design glow */}
+                    <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-white mb-2">{modalConfig.title}</h3>
+                    <p className="text-xs text-slate-400 mb-6 leading-relaxed">{modalConfig.message}</p>
+
+                    <div className="flex gap-3 justify-center">
+                        {modalConfig.type === 'confirm' ? (
+                            <>
+                                <button
+                                    onClick={() => {
+                                        if (modalConfig.onConfirm) modalConfig.onConfirm();
+                                        setModalConfig(null);
+                                    }}
+                                    className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer"
+                                >
+                                    Confirm
+                                </button>
+                                <button
+                                    onClick={() => setModalConfig(null)}
+                                    className="px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-350 font-semibold text-xs transition cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    if (modalConfig.onConfirm) modalConfig.onConfirm();
+                                    setModalConfig(null);
+                                }}
+                                className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer"
+                            >
+                                OK
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
+  );
 }

@@ -85,6 +85,7 @@ export default function CollaborativeWorkspace() {
   const [copied, setCopied] = useState(false);
   const [workspaceMode, setWorkspaceMode] = useState('editor'); // editor, whiteboard
   const [canvasHistory, setCanvasHistory] = useState([]);
+  const [modalConfig, setModalConfig] = useState(null);
 
   // Editor Reference
   const editorRef = useRef(null);
@@ -169,9 +170,15 @@ export default function CollaborativeWorkspace() {
 
     // Room Errors
     newSocket.on('room-error', (err) => {
-      alert(err);
-      setInLobby(true);
-      navigate('/code-editor');
+      setModalConfig({
+        title: 'Connection Error',
+        message: err,
+        type: 'alert',
+        onConfirm: () => {
+          setInLobby(true);
+          navigate('/code-editor');
+        }
+      });
     });
 
     // User Joined
@@ -379,7 +386,11 @@ export default function CollaborativeWorkspace() {
       };
       reader.readAsDataURL(file);
     } else {
-      alert('File size exceeds the session transfer cap (2MB).');
+      setModalConfig({
+        title: 'File Size Limit',
+        message: 'File size exceeds the session transfer cap (2MB). Please upload a smaller image/media file.',
+        type: 'alert'
+      });
     }
   };
 
@@ -753,6 +764,7 @@ export default function CollaborativeWorkspace() {
                   socket={socket}
                   canvasHistory={canvasHistory}
                   setCanvasHistory={setCanvasHistory}
+                  setModalConfig={setModalConfig}
                 />
               )}
             </div>
@@ -953,12 +965,64 @@ export default function CollaborativeWorkspace() {
           </div>
         </div>
       </div>
+
+      {/* Premium In-App Modal / Dialog */}
+      {modalConfig && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="max-w-md w-full mx-4 p-6 rounded-3xl bg-slate-900 border border-white/10 shadow-2xl relative overflow-hidden text-center animate-scale-up">
+            {/* Background design glow */}
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            <h3 className="text-lg font-bold text-white mb-2">{modalConfig.title}</h3>
+            <p className="text-xs text-slate-400 mb-6 leading-relaxed">{modalConfig.message}</p>
+
+            <div className="flex gap-3 justify-center">
+              {modalConfig.type === 'confirm' ? (
+                <>
+                  <button
+                    onClick={() => {
+                      if (modalConfig.onConfirm) modalConfig.onConfirm();
+                      setModalConfig(null);
+                    }}
+                    className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => setModalConfig(null)}
+                    className="px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-350 font-semibold text-xs transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (modalConfig.onConfirm) modalConfig.onConfirm();
+                    setModalConfig(null);
+                  }}
+                  className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer"
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // Standalone module-level Collaborative Whiteboard Component
-function WhiteboardCanvas({ socket, canvasHistory, setCanvasHistory }) {
+function WhiteboardCanvas({ socket, canvasHistory, setCanvasHistory, setModalConfig }) {
   const canvasRef = useRef(null);
   const [color, setColor] = useState('#ec4899'); // Neon Pink default
   const [brushSize, setBrushSize] = useState(5);
@@ -1168,9 +1232,14 @@ function WhiteboardCanvas({ socket, canvasHistory, setCanvasHistory }) {
   };
 
   const handleClearAll = () => {
-    if (confirm('Clear whiteboard for all users?')) {
-      socket?.emit('clear-canvas');
-    }
+    setModalConfig({
+      title: 'Clear Whiteboard',
+      message: 'Are you sure you want to clear the whiteboard for all users? This action cannot be undone.',
+      type: 'confirm',
+      onConfirm: () => {
+        socket?.emit('clear-canvas');
+      }
+    });
   };
 
   return (
