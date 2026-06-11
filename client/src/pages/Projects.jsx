@@ -255,7 +255,7 @@ const Projects = () => {
             description: 'An enterprise-grade production scheduler utilizing sorting rules (EDD, SPT, LPT) and order prioritization pipelines.',
             techStack: ['React', 'Spring Boot', 'PostgreSQL', 'Kafka', 'Tailwind CSS'],
             githubLink: 'https://github.com/tusquake/Production-Sequencing-Manager',
-            image: '',
+            image: '/projects/production_sequencing.png',
             featured: true,
         },
         {
@@ -264,7 +264,7 @@ const Projects = () => {
             description: 'Lightweight configuration verification module checking schema correctness, default fallbacks, and missing production variables.',
             techStack: ['TypeScript', 'Node.js', 'npm', 'Jest', 'CI/CD'],
             githubLink: 'https://github.com/tusquake/env-validator',
-            image: '',
+            image: '/projects/env_validator.png',
             featured: false,
         },
         {
@@ -273,7 +273,7 @@ const Projects = () => {
             description: 'A distributed task executor system supporting cron expressions, retry backoffs, and execution logs tracking.',
             techStack: ['Spring Boot', 'Quartz', 'MySQL', 'React', 'RabbitMQ'],
             githubLink: 'https://github.com/tusquake/Taskedular',
-            image: '',
+            image: '/projects/taskedular.png',
             featured: false,
         },
         {
@@ -282,7 +282,7 @@ const Projects = () => {
             description: 'A high-performance peer-to-peer payment gateway simulating transaction processing, ledger balancing, and audit runs.',
             techStack: ['Go', 'Kafka', 'Redis', 'PostgreSQL', 'Docker'],
             githubLink: 'https://github.com/tusquake/QuickPe',
-            image: '',
+            image: '/projects/quickpe.png',
             featured: true,
         },
         {
@@ -291,7 +291,7 @@ const Projects = () => {
             description: 'Cross-platform mobile application capturing background GPS telemetry logs and syncing them to backend clusters.',
             techStack: ['React Native', 'Expo', 'Google Maps API', 'Node.js'],
             githubLink: 'https://github.com/tusquake/Mobile-Geotkr',
-            image: '',
+            image: '/projects/mobile_geotkr.png',
             featured: false,
         },
         {
@@ -300,7 +300,7 @@ const Projects = () => {
             description: 'A robust multi-factor authentication library implementing TOTP key generators, QR codes, and backup codes management.',
             techStack: ['Spring Security', 'TOTP', 'Redis', 'Thymeleaf', 'PostgreSQL'],
             githubLink: 'https://github.com/tusquake/MFA',
-            image: '',
+            image: '/projects/mfa.png',
             featured: false,
         },
         {
@@ -309,7 +309,7 @@ const Projects = () => {
             description: 'A patient-doctor collaboration portal offering video consultation scheduling, prescription records, and live chats.',
             techStack: ['React', 'Express', 'MongoDB', 'Socket.io', 'Tailwind'],
             githubLink: 'https://github.com/tusquake/HealSync',
-            image: '',
+            image: '/projects/healsync.png',
             featured: true,
         },
         {
@@ -318,7 +318,7 @@ const Projects = () => {
             description: 'A modular e-commerce engine providing catalog search, shopping carts management, checkout pipelines, and order logging.',
             techStack: ['Spring Boot', 'Hibernate', 'PostgreSQL', 'React', 'Docker'],
             githubLink: 'https://github.com/tusquake/Ecom-Mini',
-            image: '',
+            image: '/projects/ecom_mini.png',
             featured: false,
         },
         {
@@ -327,7 +327,7 @@ const Projects = () => {
             description: 'A self-hosted video streaming service transcoding media assets into HLS segments for adaptive bitrate playback.',
             techStack: ['Node.js', 'FFmpeg', 'HLS', 'React', 'AWS S3'],
             githubLink: 'https://github.com/tusquake/Streamify',
-            image: '',
+            image: '/projects/streamify.png',
             featured: true,
         },
         {
@@ -336,7 +336,7 @@ const Projects = () => {
             description: 'An AI-powered ticketing assistant classifying customer queries and generating context-aware support draft replies.',
             techStack: ['Python', 'Gemini API', 'LangChain', 'FastAPI', 'React'],
             githubLink: 'https://github.com/tusquake/AI-Customer-Support',
-            image: '',
+            image: '/projects/ai_customer_support.png',
             featured: true,
         },
         {
@@ -345,7 +345,7 @@ const Projects = () => {
             description: 'An enterprise procurement tool facilitating vendor onboarding, RFQ submissions, and purchase order tracking.',
             techStack: ['Spring Boot', 'PostgreSQL', 'React', 'Tailwind', 'Docker'],
             githubLink: 'https://github.com/tusquake/Procura',
-            image: '',
+            image: '/projects/procura.png',
             featured: false,
         },
         {
@@ -354,7 +354,7 @@ const Projects = () => {
             description: 'On-demand local service directory linking consumers with vetted local repair, cleaning, and maintenance specialists.',
             techStack: ['Go', 'WebSockets', 'Redis', 'PostgreSQL', 'React'],
             githubLink: 'https://github.com/tusquake/Servigo',
-            image: '',
+            image: '/projects/servigo.png',
             featured: false,
         },
         {
@@ -363,7 +363,7 @@ const Projects = () => {
             description: 'Sleek, lightweight link-shortener application providing geo-location click metrics and QR-code generators.',
             techStack: ['Node.js', 'Express', 'MongoDB', 'Redis', 'Tailwind'],
             githubLink: 'https://github.com/tusquake/SnapURL',
-            image: '',
+            image: '/projects/snapurl.png',
             featured: false,
         },
         {
@@ -372,7 +372,7 @@ const Projects = () => {
             description: 'Core banking ledger simulator managing accounts creation, balance updates, funds transfers, and statements.',
             techStack: ['Java', 'Spring Boot', 'JPA', 'MySQL', 'Thymeleaf'],
             githubLink: 'https://github.com/tusquake/Banking-System',
-            image: '',
+            image: '/projects/banking_system.png',
             featured: false,
         },
         {
@@ -381,7 +381,7 @@ const Projects = () => {
             description: 'A static landing page for a gourmet coffee cafe showcasing menu cards, booking sheets, and interactive reviews.',
             techStack: ['HTML', 'CSS', 'JavaScript', 'Responsive Design'],
             githubLink: 'https://github.com/tusquake/Coffee-Shop',
-            image: '',
+            image: '/projects/coffee_shop.png',
             featured: false,
         },
         {
@@ -390,7 +390,7 @@ const Projects = () => {
             description: 'Real-time stock portfolio tracker visualizing price tickers, order execution simulation, and history metrics.',
             techStack: ['Go', 'WebSockets', 'Redis', 'React', 'TimescaleDB'],
             githubLink: 'https://github.com/tusquake/Stock-Trading-Platform',
-            image: '',
+            image: '/projects/stock_trading.png',
             featured: true,
         },
         {
@@ -399,7 +399,7 @@ const Projects = () => {
             description: 'A library of custom NGINX configuration templates optimized for reverse proxy, SSL termination, and rate limiting.',
             techStack: ['Bash', 'NGINX Config', 'SSL/TLS', 'Docker'],
             githubLink: 'https://github.com/tusquake/Nginx',
-            image: '',
+            image: '/projects/nginx.png',
             featured: false,
         },
         {
@@ -408,7 +408,7 @@ const Projects = () => {
             description: 'An analytical panel compiling sales metrics, customer orders fulfillment status, and order revenue breakdowns.',
             techStack: ['React', 'Node.js', 'MongoDB', 'Chart.js', 'Tailwind'],
             githubLink: 'https://github.com/tusquake/Customer-Order-Management-Dashboard',
-            image: '',
+            image: '/projects/order_dashboard.png',
             featured: false,
         },
         {
@@ -417,7 +417,7 @@ const Projects = () => {
             description: 'An intelligent research canvas using RAG to extract semantic summaries and key citations from uploaded PDF papers.',
             techStack: ['Python', 'Gemini API', 'ChromaDB', 'FastAPI', 'React'],
             githubLink: 'https://github.com/tusquake/AI-Research-Assistant',
-            image: '',
+            image: '/projects/ai_research_assistant.png',
             featured: true,
         },
         {
@@ -426,7 +426,7 @@ const Projects = () => {
             description: 'Mobile grocery checkout assistant supporting item cataloging, real-time total updates, and local store locator.',
             techStack: ['React Native', 'Node.js', 'MongoDB', 'Redux Toolkit'],
             githubLink: 'https://github.com/tusquake/ServiCart',
-            image: '',
+            image: '/projects/servicart.png',
             featured: false,
         },
     ];
