@@ -588,184 +588,7 @@ export default function CollaborativeWorkspace() {
     );
   }
 
-  // Collaborative Drawing Canvas Component
-  function WhiteboardCanvas({ socket, canvasHistory, setCanvasHistory }) {
-    const canvasRef = useRef(null);
-    const [color, setColor] = useState('#ec4899'); // Neon Pink default
-    const [brushSize, setBrushSize] = useState(5);
-    const [tool, setTool] = useState('brush'); // brush, eraser
-    const isDrawing = useRef(false);
-    const lastPoint = useRef({ x: 0, y: 0 });
 
-    // Redraw complete history when canvasHistory changes or component mounts
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      
-      // Clear canvas before drawing history
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      canvasHistory.forEach((stroke) => {
-        ctx.beginPath();
-        ctx.strokeStyle = stroke.color;
-        ctx.lineWidth = stroke.width;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.moveTo(stroke.x0, stroke.y0);
-        ctx.lineTo(stroke.x1, stroke.y1);
-        ctx.stroke();
-      });
-    }, [canvasHistory]);
-
-    const handleMouseDown = (e) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      isDrawing.current = true;
-      
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-
-      lastPoint.current = {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-      };
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isDrawing.current) return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const rect = canvas.getBoundingClientRect();
-
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-
-      const currentPoint = {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-      };
-
-      const strokeColor = tool === 'eraser' ? '#0b0f19' : color;
-
-      // Draw locally
-      ctx.beginPath();
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
-      ctx.lineTo(currentPoint.x, currentPoint.y);
-      ctx.stroke();
-
-      const stroke = {
-        x0: lastPoint.current.x,
-        y0: lastPoint.current.y,
-        x1: currentPoint.x,
-        y1: currentPoint.y,
-        color: strokeColor,
-        width: brushSize
-      };
-
-      // Emit stroke
-      socket?.emit('draw-stroke', stroke);
-
-      // Save in parent state history
-      setCanvasHistory((prev) => [...prev, stroke]);
-
-      lastPoint.current = currentPoint;
-    };
-
-    const handleMouseUp = () => {
-      isDrawing.current = false;
-    };
-
-    const handleClearAll = () => {
-      if (confirm('Clear whiteboard for all users?')) {
-        socket?.emit('clear-canvas');
-      }
-    };
-
-    return (
-      <div className="flex-1 flex flex-col p-4 gap-4 bg-slate-950/40">
-        {/* Canvas Tool Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-900/50 border border-white/5 rounded-xl text-xs">
-          <div className="flex items-center gap-4">
-            {/* Tools */}
-            <div className="flex bg-slate-800/40 p-0.5 rounded-lg border border-white/5">
-              <button
-                onClick={() => setTool('brush')}
-                className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
-                  tool === 'brush' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Brush
-              </button>
-              <button
-                onClick={() => setTool('eraser')}
-                className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
-                  tool === 'eraser' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Eraser
-              </button>
-            </div>
-
-            {/* Stroke Size Selector */}
-            <select
-              value={brushSize}
-              onChange={(e) => setBrushSize(Number(e.target.value))}
-              className="px-2 py-1 rounded bg-slate-850 border border-white/10 text-white outline-none cursor-pointer"
-            >
-              <option value={2}>Thin (2px)</option>
-              <option value={5}>Medium (5px)</option>
-              <option value={10}>Thick (10px)</option>
-              <option value={20}>Huge (20px)</option>
-            </select>
-
-            {/* Color palette */}
-            {tool === 'brush' && (
-              <div className="flex gap-2">
-                {['#ec4899', '#06b6d4', '#10b981', '#8b5cf6', '#eab308', '#ffffff'].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setColor(c)}
-                    className={`w-5 h-5 rounded-full transition transform hover:scale-110 cursor-pointer ${
-                      color === c ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-950 scale-110' : ''
-                    }`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={handleClearAll}
-            className="px-3 py-1 rounded-lg bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 text-rose-400 transition cursor-pointer"
-          >
-            Clear Board
-          </button>
-        </div>
-
-        {/* Canvas Box */}
-        <div className="flex-1 bg-[#0b0f19] border border-white/5 rounded-2xl relative overflow-hidden min-h-[350px]">
-          <canvas
-            ref={canvasRef}
-            width={800}
-            height={500}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            className="absolute inset-0 w-full h-full cursor-crosshair"
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen pt-24 pb-12 bg-white dark:bg-dark-950 transition-colors duration-300 flex flex-col">
@@ -813,10 +636,10 @@ export default function CollaborativeWorkspace() {
               onChange={(e) => setLanguage(e.target.value)}
               className="px-3 py-1.5 rounded-xl text-xs bg-slate-850 border border-white/10 text-white outline-none cursor-pointer"
             >
-              <option value="javascript">JavaScript (ES6)</option>
-              <option value="python">Python (3.x)</option>
-              <option value="cpp">C++ (GCC)</option>
-              <option value="java">Java (JDK)</option>
+              <option value="javascript" className="bg-slate-900 text-white">JavaScript (ES6)</option>
+              <option value="python" className="bg-slate-900 text-white">Python (3.x)</option>
+              <option value="cpp" className="bg-slate-900 text-white">C++ (GCC)</option>
+              <option value="java" className="bg-slate-900 text-white">Java (JDK)</option>
             </select>
 
             {/* Invite button */}
@@ -1129,6 +952,349 @@ export default function CollaborativeWorkspace() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Standalone module-level Collaborative Whiteboard Component
+function WhiteboardCanvas({ socket, canvasHistory, setCanvasHistory }) {
+  const canvasRef = useRef(null);
+  const [color, setColor] = useState('#ec4899'); // Neon Pink default
+  const [brushSize, setBrushSize] = useState(5);
+  const [tool, setTool] = useState('brush'); // brush, eraser, rectangle, circle, line
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const isDrawing = useRef(false);
+  const startPoint = useRef({ x: 0, y: 0 });
+  const lastPoint = useRef({ x: 0, y: 0 });
+
+  // Redraw complete history when canvasHistory changes
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    canvasHistory.forEach((stroke) => {
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (stroke.type === 'rectangle') {
+        ctx.strokeRect(stroke.x, stroke.y, stroke.w, stroke.h);
+      } else if (stroke.type === 'circle') {
+        ctx.beginPath();
+        ctx.ellipse(stroke.cx, stroke.cy, stroke.rx, stroke.ry, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+      } else if (stroke.type === 'line' || stroke.type === 'brush') {
+        ctx.moveTo(stroke.x0, stroke.y0);
+        ctx.lineTo(stroke.x1, stroke.y1);
+        ctx.stroke();
+      }
+    });
+  }, [canvasHistory]);
+
+  const handleMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    isDrawing.current = true;
+    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const pt = {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+
+    startPoint.current = pt;
+    lastPoint.current = pt;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDrawing.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const currentPoint = {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+
+    const strokeColor = tool === 'eraser' ? '#0b0f19' : color;
+
+    if (tool === 'brush' || tool === 'eraser') {
+      // Draw segment locally
+      ctx.beginPath();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
+      ctx.lineTo(currentPoint.x, currentPoint.y);
+      ctx.stroke();
+
+      const stroke = {
+        type: 'brush',
+        x0: lastPoint.current.x,
+        y0: lastPoint.current.y,
+        x1: currentPoint.x,
+        y1: currentPoint.y,
+        color: strokeColor,
+        width: brushSize
+      };
+
+      socket?.emit('draw-stroke', stroke);
+      setCanvasHistory((prev) => [...prev, stroke]);
+      lastPoint.current = currentPoint;
+    } else {
+      // Shapes preview drawing
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw absolute history first
+      canvasHistory.forEach((stroke) => {
+        ctx.beginPath();
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (stroke.type === 'rectangle') {
+          ctx.strokeRect(stroke.x, stroke.y, stroke.w, stroke.h);
+        } else if (stroke.type === 'circle') {
+          ctx.beginPath();
+          ctx.ellipse(stroke.cx, stroke.cy, stroke.rx, stroke.ry, 0, 0, 2 * Math.PI);
+          ctx.stroke();
+        } else if (stroke.type === 'line' || stroke.type === 'brush') {
+          ctx.moveTo(stroke.x0, stroke.y0);
+          ctx.lineTo(stroke.x1, stroke.y1);
+          ctx.stroke();
+        }
+      });
+
+      // Draw the temporary shape outline
+      ctx.beginPath();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (tool === 'rectangle') {
+        const x = Math.min(startPoint.current.x, currentPoint.x);
+        const y = Math.min(startPoint.current.y, currentPoint.y);
+        const w = Math.abs(currentPoint.x - startPoint.current.x);
+        const h = Math.abs(currentPoint.y - startPoint.current.y);
+        ctx.strokeRect(x, y, w, h);
+      } else if (tool === 'circle') {
+        const cx = (startPoint.current.x + currentPoint.x) / 2;
+        const cy = (startPoint.current.y + currentPoint.y) / 2;
+        const rx = Math.abs(currentPoint.x - startPoint.current.x) / 2;
+        const ry = Math.abs(currentPoint.y - startPoint.current.y) / 2;
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+      } else if (tool === 'line') {
+        ctx.moveTo(startPoint.current.x, startPoint.current.y);
+        ctx.lineTo(currentPoint.x, currentPoint.y);
+        ctx.stroke();
+      }
+    }
+  };
+
+  const handleMouseUp = (e) => {
+    if (!isDrawing.current) return;
+    isDrawing.current = false;
+
+    if (tool !== 'brush' && tool !== 'eraser') {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      const currentX = (e.clientX - rect.left) * scaleX;
+      const currentY = (e.clientY - rect.top) * scaleY;
+
+      let stroke = null;
+
+      if (tool === 'rectangle') {
+        stroke = {
+          type: 'rectangle',
+          x: Math.min(startPoint.current.x, currentX),
+          y: Math.min(startPoint.current.y, currentY),
+          w: Math.abs(currentX - startPoint.current.x),
+          h: Math.abs(currentY - startPoint.current.y),
+          color: color,
+          width: brushSize
+        };
+      } else if (tool === 'circle') {
+        stroke = {
+          type: 'circle',
+          cx: (startPoint.current.x + currentX) / 2,
+          cy: (startPoint.current.y + currentY) / 2,
+          rx: Math.abs(currentX - startPoint.current.x) / 2,
+          ry: Math.abs(currentY - startPoint.current.y) / 2,
+          color: color,
+          width: brushSize
+        };
+      } else if (tool === 'line') {
+        stroke = {
+          type: 'line',
+          x0: startPoint.current.x,
+          y0: startPoint.current.y,
+          x1: currentX,
+          y1: currentY,
+          color: color,
+          width: brushSize
+        };
+      }
+
+      if (stroke) {
+        socket?.emit('draw-stroke', stroke);
+        setCanvasHistory((prev) => [...prev, stroke]);
+      }
+    }
+  };
+
+  const handleClearAll = () => {
+    if (confirm('Clear whiteboard for all users?')) {
+      socket?.emit('clear-canvas');
+    }
+  };
+
+  return (
+    <div className={isFullscreen ? "fixed inset-0 z-[60] bg-[#070b13] flex flex-col p-6 gap-4" : "flex-1 flex flex-col p-4 gap-4 bg-slate-950/40"}>
+      {/* Canvas Tool Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-900/50 border border-white/5 rounded-xl text-xs">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Tools */}
+          <div className="flex bg-slate-800/40 p-0.5 rounded-lg border border-white/5">
+            <button
+              onClick={() => setTool('brush')}
+              className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                tool === 'brush' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Brush
+            </button>
+            <button
+              onClick={() => setTool('rectangle')}
+              className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                tool === 'rectangle' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Rect
+            </button>
+            <button
+              onClick={() => setTool('circle')}
+              className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                tool === 'circle' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Circle
+            </button>
+            <button
+              onClick={() => setTool('line')}
+              className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                tool === 'line' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Line
+            </button>
+            <button
+              onClick={() => setTool('eraser')}
+              className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                tool === 'eraser' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-205'
+              }`}
+            >
+              Eraser
+            </button>
+          </div>
+
+          {/* Stroke Size Selector */}
+          <select
+            value={brushSize}
+            onChange={(e) => setBrushSize(Number(e.target.value))}
+            className="px-2 py-1 rounded bg-slate-850 border border-white/10 text-white outline-none cursor-pointer text-xs"
+          >
+            <option value={2} className="bg-slate-900 text-white">Thin (2px)</option>
+            <option value={5} className="bg-slate-900 text-white">Medium (5px)</option>
+            <option value={10} className="bg-slate-900 text-white">Thick (10px)</option>
+            <option value={20} className="bg-slate-900 text-white">Huge (20px)</option>
+          </select>
+
+          {/* Color palette */}
+          {tool !== 'eraser' && (
+            <div className="flex gap-2">
+              {['#ec4899', '#06b6d4', '#10b981', '#8b5cf6', '#eab308', '#ffffff'].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setColor(c)}
+                  className={`w-5 h-5 rounded-full transition transform hover:scale-110 cursor-pointer ${
+                    color === c ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-950 scale-110' : ''
+                  }`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Fullscreen Button */}
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/5 text-slate-300 font-medium transition cursor-pointer flex items-center gap-1.5"
+          >
+            {isFullscreen ? (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4" />
+                </svg>
+                Exit Fullscreen
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" />
+                </svg>
+                Fullscreen
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleClearAll}
+            className="px-3 py-1.5 rounded-lg bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 text-rose-400 transition cursor-pointer"
+          >
+            Clear Board
+          </button>
+        </div>
+      </div>
+
+      {/* Canvas Box */}
+      <div className={`flex-grow bg-[#0b0f19] border border-white/5 rounded-2xl relative overflow-hidden ${isFullscreen ? 'min-h-[70vh]' : 'min-h-[350px]'}`}>
+        <canvas
+          ref={canvasRef}
+          width={1000}
+          height={600}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          className="absolute inset-0 w-full h-full cursor-crosshair"
+        />
       </div>
     </div>
   );
