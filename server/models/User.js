@@ -64,7 +64,8 @@ const userSchema = new mongoose.Schema({
         github: { type: String, default: '' },
         linkedin: { type: String, default: '' },
         twitter: { type: String, default: '' },
-        website: { type: String, default: '' }
+        website: { type: String, default: '' },
+        leetcode: { type: String, default: '' }
     },
     themeColor: {
         type: String,

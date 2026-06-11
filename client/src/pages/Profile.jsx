@@ -107,7 +107,7 @@ const Profile = () => {
         location: '',
         targetRole: '',
         skills: [],
-        socials: { github: '', linkedin: '', twitter: '', website: '' },
+        socials: { github: '', linkedin: '', twitter: '', website: '', leetcode: '' },
         themeColor: 'purple',
         avatar: '',
         widgets: { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
@@ -130,6 +130,7 @@ const Profile = () => {
                     linkedin: user.socials?.linkedin || '',
                     twitter: user.socials?.twitter || '',
                     website: user.socials?.website || '',
+                    leetcode: user.socials?.leetcode || '',
                 },
                 themeColor: user.themeColor || 'purple',
                 avatar: user.avatar || PRESET_AVATARS[0].url,
@@ -455,7 +456,15 @@ const Profile = () => {
                                         Portfolio
                                     </a>
                                 )}
-                                {!formData.socials.github && !formData.socials.linkedin && !formData.socials.twitter && !formData.socials.website && (
+                                {formData.socials.leetcode && (
+                                    <a href={`https://leetcode.com/${formData.socials.leetcode}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors flex items-center gap-1.5" title="LeetCode">
+                                        <svg className="w-4 h-4 text-amber-500 fill-current" viewBox="0 0 24 24">
+                                            <path d="M13.483 0a1.374 1.374 0 0 0-.961.414l-9.77 9.77a1.375 1.375 0 0 0-.025 1.919l8.09 8.09a1.385 1.385 0 0 0 1.96 0l9.76-9.76a1.372 1.372 0 0 0 .008-1.936L14.453.414A1.374 1.374 0 0 0 13.483 0zm.082 2.507 7.79 7.79-8.38 8.38-7.79-7.79 8.38-8.38z"/>
+                                        </svg>
+                                        LeetCode
+                                    </a>
+                                )}
+                                {!formData.socials.github && !formData.socials.linkedin && !formData.socials.twitter && !formData.socials.website && !formData.socials.leetcode && (
                                     <span className="text-xs text-dark-400 italic">No social links configured yet.</span>
                                 )}
                             </div>
@@ -974,6 +983,15 @@ const Profile = () => {
                                                 socials: { ...formData.socials, website: e.target.value }
                                             })}
                                             placeholder="https://mywebsite.dev"
+                                        />
+                                        <Input
+                                            label="LeetCode Username"
+                                            value={formData.socials.leetcode}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                socials: { ...formData.socials, leetcode: e.target.value }
+                                            })}
+                                            placeholder="LeetCode username (e.g. Tushar_Seth)"
                                         />
                                     </div>
                                 </div>

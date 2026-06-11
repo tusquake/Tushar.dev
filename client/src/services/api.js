@@ -151,6 +151,7 @@ export const uploadAPI = {
 export const dsaProgressAPI = {
     getProgress: () => api.get('/learning/dsa/progress'),
     updateProgress: (completedQuestions) => api.post('/learning/dsa/progress', { completedQuestions }),
+    getLeetcodeSubmissions: (username) => api.post('/learning/dsa/leetcode-submissions', { username }),
 };
 
 // Resume API

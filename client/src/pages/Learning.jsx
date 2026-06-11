@@ -409,7 +409,7 @@ const FileTreeItem = ({ item, level, selectedPath, onFileClick, expandedFolders,
 };
 
 const Learning = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user, refreshUser } = useAuth();
     const [resources, setResources] = useState([]);
     const [learningTopics, setLearningTopics] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -446,6 +446,89 @@ const Learning = () => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [syncStatus, setSyncStatus] = useState('local'); // 'local', 'syncing', 'synced', 'error'
     const [confirmReset, setConfirmReset] = useState(false);
+
+    // LeetCode Sync States
+    const [showLeetcodeModal, setShowLeetcodeModal] = useState(false);
+    const [leetcodeUsername, setLeetcodeUsername] = useState('');
+    const [leetcodeSyncing, setLeetcodeSyncing] = useState(false);
+    const [leetcodeSyncResult, setLeetcodeSyncResult] = useState(null);
+    const [leetcodeSyncError, setLeetcodeSyncError] = useState('');
+
+    const handleLeetcodeSync = async (username) => {
+        if (!username || !username.trim()) {
+            setLeetcodeSyncError('Please enter a valid LeetCode username.');
+            return;
+        }
+
+        setLeetcodeSyncing(true);
+        setLeetcodeSyncError('');
+        setLeetcodeSyncResult(null);
+
+        try {
+            const response = await dsaProgressAPI.getLeetcodeSubmissions(username.trim());
+            const submissions = response.data.submissions || [];
+
+            const acceptedSlugs = submissions
+                .filter(s => s.statusDisplay === 'Accepted')
+                .map(s => s.titleSlug);
+
+            if (acceptedSlugs.length === 0) {
+                setLeetcodeSyncResult({
+                    newlySyncedCount: 0,
+                    newlySyncedTitles: [],
+                    totalSubmissionsFetched: submissions.length,
+                    message: 'No accepted submissions found in your recent activity.'
+                });
+                setLeetcodeSyncing(false);
+                return;
+            }
+
+            const newCompletedGids = [];
+            const syncedTitles = [];
+            const allQuestionsList = [...ALL_QUESTIONS, ...INTERVIEW_200_QUESTIONS];
+            
+            acceptedSlugs.forEach(slug => {
+                const matches = allQuestionsList.filter(q => q.slug === slug);
+                matches.forEach(q => {
+                    if (!completedQuestions.includes(q.gid) && !newCompletedGids.includes(q.gid)) {
+                        newCompletedGids.push(q.gid);
+                        syncedTitles.push(q.n);
+                    }
+                });
+            });
+
+            if (newCompletedGids.length > 0) {
+                const mergedCompleted = Array.from(new Set([...completedQuestions, ...newCompletedGids]));
+                setCompletedQuestions(mergedCompleted);
+
+                setLeetcodeSyncResult({
+                    newlySyncedCount: newCompletedGids.length,
+                    newlySyncedTitles: Array.from(new Set(syncedTitles)),
+                    totalSubmissionsFetched: submissions.length,
+                    xpGained: newCompletedGids.length * 20
+                });
+
+                if (refreshUser) {
+                    setTimeout(() => refreshUser(), 1000);
+                }
+            } else {
+                setLeetcodeSyncResult({
+                    newlySyncedCount: 0,
+                    newlySyncedTitles: [],
+                    totalSubmissionsFetched: submissions.length,
+                    message: 'All of your recent LeetCode solutions are already marked as completed.'
+                });
+            }
+        } catch (err) {
+            console.error('LeetCode sync error:', err);
+            setLeetcodeSyncError(
+                err.response?.data?.message || 
+                'Failed to sync with LeetCode. Please check your username and try again.'
+            );
+        } finally {
+            setLeetcodeSyncing(false);
+        }
+    };
 
     // Fetch resources and user roadmap topics
     useEffect(() => {
@@ -1216,6 +1299,23 @@ const Learning = () => {
                                         </div>
                                     )}
                                 </div>
+
+                                {isAuthenticated && (
+                                    <button
+                                        onClick={() => {
+                                            setLeetcodeUsername(user?.socials?.leetcode || '');
+                                            setLeetcodeSyncResult(null);
+                                            setLeetcodeSyncError('');
+                                            setShowLeetcodeModal(true);
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-450 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 dark:border-amber-500/30 transition-all cursor-pointer shadow-sm"
+                                    >
+                                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                            <path d="M13.483 0a1.374 1.374 0 0 0-.961.414l-9.77 9.77a1.375 1.375 0 0 0-.025 1.919l8.09 8.09a1.385 1.385 0 0 0 1.96 0l9.76-9.76a1.372 1.372 0 0 0 .008-1.936L14.453.414A1.374 1.374 0 0 0 13.483 0zm.082 2.507 7.79 7.79-8.38 8.38-7.79-7.79 8.38-8.38z"/>
+                                        </svg>
+                                        Sync LeetCode
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -1534,6 +1634,138 @@ const Learning = () => {
                     <SystemDesignCanvas />
                 )}
             </div>
+
+            {/* LeetCode Sync Modal */}
+            {showLeetcodeModal && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-dark-950/60 backdrop-blur-sm animate-fade-in">
+                    <div className="relative w-full max-w-md p-6 bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800 rounded-3xl shadow-2xl animate-scale-in">
+                        {/* Close button */}
+                        <button
+                            onClick={() => setShowLeetcodeModal(false)}
+                            className="absolute top-4 right-4 p-1.5 rounded-lg text-dark-405 hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors cursor-pointer"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-10 h-10 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500">
+                                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                                    <path d="M13.483 0a1.374 1.374 0 0 0-.961.414l-9.77 9.77a1.375 1.375 0 0 0-.025 1.919l8.09 8.09a1.385 1.385 0 0 0 1.96 0l9.76-9.76a1.372 1.372 0 0 0 .008-1.936L14.453.414A1.374 1.374 0 0 0 13.483 0zm.082 2.507 7.79 7.79-8.38 8.38-7.79-7.79 8.38-8.38z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold font-display text-dark-900 dark:text-white">Sync LeetCode Solved</h3>
+                                <p className="text-xs text-dark-400">Import your accepted submissions directly</p>
+                            </div>
+                        </div>
+
+                        {!leetcodeSyncResult ? (
+                            <div className="space-y-4">
+                                <p className="text-xs text-dark-500 dark:text-dark-400 leading-relaxed">
+                                    This will fetch your 100 most recent submissions from LeetCode. Any accepted solutions matching our DSA sheets will automatically be marked completed, earning you <strong className="text-emerald-500 font-extrabold">+20 XP</strong> per question!
+                                </p>
+                                
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] uppercase font-bold tracking-wider text-dark-500 dark:text-dark-400 block">
+                                        LeetCode Username
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={leetcodeUsername}
+                                        onChange={(e) => setLeetcodeUsername(e.target.value)}
+                                        placeholder="e.g. Tushar_Seth"
+                                        disabled={leetcodeSyncing}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-950/60 text-dark-900 dark:text-white placeholder-dark-450 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm"
+                                    />
+                                </div>
+
+                                {leetcodeSyncError && (
+                                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold flex items-start gap-2 animate-fade-in">
+                                        <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <span>{leetcodeSyncError}</span>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => handleLeetcodeSync(leetcodeUsername)}
+                                    disabled={leetcodeSyncing}
+                                    className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white font-bold text-sm tracking-wider transition-all duration-150 cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                                >
+                                    {leetcodeSyncing ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            <span>Syncing with LeetCode...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3 3L22 4" />
+                                            </svg>
+                                            <span>Sync Solved Progress</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-5">
+                                {leetcodeSyncResult.newlySyncedCount > 0 ? (
+                                    <div className="text-center py-4">
+                                        <div className="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mx-auto mb-3 shadow-inner">
+                                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <h4 className="text-base font-extrabold text-dark-900 dark:text-white">Sync Completed!</h4>
+                                        <p className="text-sm font-semibold text-emerald-500 dark:text-emerald-400 mt-1">
+                                            +{leetcodeSyncResult.xpGained} XP Earned!
+                                        </p>
+                                        
+                                        <div className="mt-4 p-4 rounded-2xl bg-dark-50 dark:bg-dark-950/40 border border-dark-200/50 dark:border-dark-800 text-left">
+                                            <span className="text-[9px] uppercase font-bold tracking-wider text-dark-400 block mb-2">
+                                                Synced {leetcodeSyncResult.newlySyncedCount} New Question{leetcodeSyncResult.newlySyncedCount > 1 ? 's' : ''}:
+                                            </span>
+                                            <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
+                                                {leetcodeSyncResult.newlySyncedTitles.map((title, i) => (
+                                                    <div key={i} className="text-xs font-semibold text-dark-750 dark:text-dark-300 flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                        <span>{title}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4">
+                                        <div className="w-14 h-14 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 mx-auto mb-3 shadow-inner">
+                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <h4 className="text-sm font-bold text-dark-900 dark:text-white">All Caught Up!</h4>
+                                        <p className="text-xs text-dark-500 dark:text-dark-400 mt-2">
+                                            {leetcodeSyncResult.message}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => setShowLeetcodeModal(false)}
+                                    className="w-full py-2.5 rounded-xl border border-dark-200 dark:border-dark-800 bg-dark-50 hover:bg-dark-100 dark:bg-dark-900 dark:hover:bg-dark-850 text-dark-750 dark:text-dark-350 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+                                >
+                                    Dismiss Cabinet
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

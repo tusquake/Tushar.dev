@@ -107,7 +107,93 @@ const updateDsaProgress = async (req, res) => {
     }
 };
 
+const User = require('../models/User');
+
+// @desc    Get user's recent LeetCode submissions via proxy
+// @route   POST /api/learning/dsa/leetcode-submissions
+// @access  Private
+const getLeetcodeSubmissions = async (req, res) => {
+    try {
+        const { username } = req.body;
+        if (!username) {
+            return res.status(400).json({
+                success: false,
+                message: 'LeetCode username is required'
+            });
+        }
+
+        const query = `
+            query recentSubmissions($username: String!, $limit: Int) {
+                recentSubmissionList(username: $username, limit: $limit) {
+                    title
+                    titleSlug
+                    statusDisplay
+                    lang
+                    timestamp
+                }
+            }
+        `;
+
+        const response = await fetch('https://leetcode.com/graphql', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
+            body: JSON.stringify({
+                query,
+                variables: { username, limit: 100 }
+            })
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).json({
+                success: false,
+                message: `LeetCode API responded with status ${response.status}`
+            });
+        }
+
+        const result = await response.json();
+        
+        if (result.errors) {
+            return res.status(400).json({
+                success: false,
+                message: result.errors[0]?.message || 'Error from LeetCode API'
+            });
+        }
+
+        const submissions = result.data?.recentSubmissionList || [];
+
+        // Automatically update user's leetcode social link if not set or changed
+        const user = await User.findById(req.user._id);
+        if (user) {
+            if (!user.socials) {
+                user.socials = { github: '', linkedin: '', twitter: '', website: '', leetcode: '' };
+            }
+            if (user.socials.leetcode !== username) {
+                user.socials.leetcode = username;
+                user.markModified('socials');
+                await user.save();
+            }
+        }
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        console.error('LeetCode submissions proxy error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch LeetCode submissions',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getDsaProgress,
-    updateDsaProgress
+    updateDsaProgress,
+    getLeetcodeSubmissions
 };
+

@@ -11,7 +11,8 @@ const {
 } = require('../controllers/learningController');
 const {
     getDsaProgress,
-    updateDsaProgress
+    updateDsaProgress,
+    getLeetcodeSubmissions
 } = require('../controllers/dsaProgressController');
 const { protect, checkSubscription } = require('../middlewares/authMiddleware');
 const {
@@ -27,6 +28,7 @@ router.use(checkSubscription('basic'));
 // DSA Progress & Activity History routes (defined before parameterized routes to avoid conflicts)
 router.get('/dsa/progress', learningGetLimiter, getDsaProgress);
 router.post('/dsa/progress', learningMutateLimiter, updateDsaProgress);
+router.post('/dsa/leetcode-submissions', learningMutateLimiter, getLeetcodeSubmissions);
 router.get('/activity', learningGetLimiter, getActivityHistory);
 
 // GET routes with rate limiting
