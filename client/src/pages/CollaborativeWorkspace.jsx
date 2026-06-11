@@ -95,20 +95,20 @@ export default function CollaborativeWorkspace() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [mediaPreview, setMediaPreview] = useState(null);
-  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   // AI Assistant States
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [aiStatus, setAiStatus] = useState({ status: 'idle', querier: '' });
-  const aiEndRef = useRef(null);
+  const aiContainerRef = useRef(null);
 
   // Terminal States
   const [terminalOutput, setTerminalOutput] = useState([
     { type: 'system', text: 'Workspace Terminal Operational.' }
   ]);
   const [isRunning, setIsRunning] = useState(false);
-  const terminalEndRef = useRef(null);
+  const terminalContainerRef = useRef(null);
 
   // Cursor presence states
   const [remoteCursors, setRemoteCursors] = useState({});
@@ -137,7 +137,7 @@ export default function CollaborativeWorkspace() {
     navigate(`/workspace/${roomId.trim().toUpperCase()}`);
   };
 
-  // Socket Connection and Event Bindings
+    // Socket Connection and Event Bindings
   useEffect(() => {
     if (inLobby || !urlRoomId) return;
 
@@ -148,12 +148,6 @@ export default function CollaborativeWorkspace() {
     });
 
     setSocket(newSocket);
-
-    newSocket.emit('join-room', {
-      roomId: urlRoomId.toUpperCase(),
-      username,
-      avatarColor
-    });
 
     // Room Sync
     newSocket.on('room-sync', ({ users, messages }) => {
@@ -236,6 +230,13 @@ export default function CollaborativeWorkspace() {
       setAiResponse((prev) => prev + `\n\n⚠️ Error: ${errMsg}`);
     });
 
+    // Emit join-room after registering event listeners
+    newSocket.emit('join-room', {
+      roomId: urlRoomId.toUpperCase(),
+      username,
+      avatarColor
+    });
+
     return () => {
       newSocket.close();
       if (bindingRef.current) {
@@ -291,17 +292,23 @@ export default function CollaborativeWorkspace() {
     );
   }, [remoteCursors, roomUsers]);
 
-  // Auto scroll effects
+  // Auto scroll effects inside their containers
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [chatMessages]);
 
   useEffect(() => {
-    aiEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (aiContainerRef.current) {
+      aiContainerRef.current.scrollTop = aiContainerRef.current.scrollHeight;
+    }
   }, [aiResponse]);
 
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (terminalContainerRef.current) {
+      terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
+    }
   }, [terminalOutput]);
 
   const handleEditorDidMount = (editor, monaco) => {
@@ -309,11 +316,6 @@ export default function CollaborativeWorkspace() {
     monacoRef.current = monaco;
 
     const textType = yDocRef.current.getText('monaco');
-    
-    // Initialize with default boilerplate if empty
-    if (textType.toString() === '') {
-      textType.insert(0, BOILERPLATES[language]);
-    }
 
     // Connect Yjs text type to Monaco editor instance
     const binding = new MonacoBinding(
@@ -373,13 +375,15 @@ export default function CollaborativeWorkspace() {
   const handleAskAI = () => {
     if (!aiPrompt.trim()) return;
     const currentCode = yDocRef.current.getText('monaco').toString();
-    const localKey = localStorage.getItem('codeforge_gemini_api_key');
+    const localGemini = localStorage.getItem('codeforge_gemini_api_key');
+    const localGroq = localStorage.getItem('codeforge_groq_api_key');
 
     socket.emit('ask-ai', {
       prompt: aiPrompt,
       currentCode,
       language,
-      userApiKey: localKey
+      userApiKey: localGemini,
+      userGroqKey: localGroq
     });
 
     setAiPrompt('');
@@ -746,7 +750,7 @@ export default function CollaborativeWorkspace() {
                 {activeTab === 'chat' && (
                   <div className="flex flex-col h-full">
                     {/* Message Roster */}
-                    <div className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
+                    <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
                       {chatMessages.length === 0 ? (
                         <div className="flex items-center justify-center h-full text-slate-500 italic text-center px-4 text-xs">
                           No messages in this session yet. Text and media are ephemeral and will disappear when the session closes.
@@ -775,7 +779,6 @@ export default function CollaborativeWorkspace() {
                           </div>
                         ))
                       )}
-                      <div ref={messagesEndRef} />
                     </div>
 
                     {/* Input Controls */}
@@ -823,7 +826,7 @@ export default function CollaborativeWorkspace() {
                 {activeTab === 'ai' && (
                   <div className="flex flex-col h-full">
                     {/* Response Area */}
-                    <div className="flex-1 p-4 overflow-y-auto space-y-4 text-slate-300 text-xs scrollbar-thin select-text">
+                    <div ref={aiContainerRef} className="flex-1 p-4 overflow-y-auto space-y-4 text-slate-300 text-xs scrollbar-thin select-text">
                       {aiResponse ? (
                         <div
                           className="prose prose-invert prose-sm leading-relaxed"
@@ -840,7 +843,6 @@ export default function CollaborativeWorkspace() {
                           AI is thinking (requested by {aiStatus.querier})...
                         </div>
                       )}
-                      <div ref={aiEndRef} />
                     </div>
 
                     {/* Chat Input */}
@@ -876,7 +878,7 @@ export default function CollaborativeWorkspace() {
                         CLEAR
                       </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto space-y-1 scrollbar-thin">
+                    <div ref={terminalContainerRef} className="flex-1 overflow-y-auto space-y-1 scrollbar-thin">
                       {terminalOutput.map((log, index) => {
                         let color = 'text-[#00ffaa]';
                         if (log.type === 'system') color = 'text-purple-400 font-semibold';
@@ -889,7 +891,6 @@ export default function CollaborativeWorkspace() {
                           </div>
                         );
                       })}
-                      <div ref={terminalEndRef} />
                     </div>
                   </div>
                 )}

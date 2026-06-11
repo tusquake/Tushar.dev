@@ -1,6 +1,17 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Y = require('yjs');
 
+const DEFAULT_BOILERPLATE = `// Collaborative Javascript Playground
+// Type your code here. Click "Run Code" to execute.
+
+function main() {
+    console.log("Workspace initialized.");
+    const users = ["User A", "User B", "User C"];
+    console.log("Active participants: " + users.join(", "));
+}
+
+main();`;
+
 // In-memory workspace session storage
 // Structure: RoomID -> { users: Map, messages: Array, yDoc: Y.Doc, cleanupTimer: Timeout }
 const workspaces = new Map();
@@ -19,10 +30,14 @@ function initCollaborativeWorkspace(io) {
       let workspace = workspaces.get(roomId);
 
       if (!workspace) {
+        const yDoc = new Y.Doc();
+        const text = yDoc.getText('monaco');
+        text.insert(0, DEFAULT_BOILERPLATE);
+
         workspace = {
           users: new Map(),
           messages: [],
-          yDoc: new Y.Doc(),
+          yDoc,
           cleanupTimer: null
         };
         workspaces.set(roomId, workspace);
@@ -131,7 +146,7 @@ function initCollaborativeWorkspace(io) {
     });
 
     // Live shared AI assistant stream
-    socket.on('ask-ai', async ({ prompt, currentCode, language, userApiKey }) => {
+    socket.on('ask-ai', async ({ prompt, currentCode, language, userApiKey, userGroqKey }) => {
       const { roomId } = socket;
       if (!roomId) return;
 
@@ -141,16 +156,7 @@ function initCollaborativeWorkspace(io) {
       // Broadcast generating state
       io.to(roomId).emit('ai-status', { status: 'generating', querier: socket.username });
 
-      try {
-        const apiKey = process.env.GEMINI_API_KEY || userApiKey;
-        if (!apiKey) {
-          throw new Error('No API key provided. Please configure a Gemini API Key in Settings or set GEMINI_API_KEY env.');
-        }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-        const fullPrompt = `
+      const fullPrompt = `
 You are an expert AI pair programming partner assisting a collaborative group of developers.
 The current programming language is: ${language}.
 The current code written in the workspace editor:
@@ -163,19 +169,98 @@ User Question: "${prompt}"
 Provide a concise, expert answer. If correcting code, explain the bug briefly and provide clean code blocks.
 `;
 
-        const result = await model.generateContentStream(fullPrompt);
+      const geminiApiKey = process.env.GEMINI_API_KEY || userApiKey;
+      const groqApiKey = process.env.GROQ_API_KEY || userGroqKey;
 
-        for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
-          if (chunkText) {
-            io.to(roomId).emit('ai-chunk', { text: chunkText });
+      let success = false;
+      let lastError = null;
+
+      // 1. Try Gemini first
+      if (geminiApiKey) {
+        try {
+          console.log(`[Workspace ${roomId}] Attempting Gemini stream query...`);
+          const genAI = new GoogleGenerativeAI(geminiApiKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          const result = await model.generateContentStream(fullPrompt);
+
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            if (chunkText) {
+              io.to(roomId).emit('ai-chunk', { text: chunkText });
+            }
           }
+          success = true;
+        } catch (geminiError) {
+          console.warn(`Gemini stream failed for room ${roomId}. Trying Groq fallback...`, geminiError);
+          lastError = geminiError;
         }
+      }
 
+      // 2. Try Groq fallback
+      if (!success && groqApiKey) {
+        try {
+          console.log(`[Workspace ${roomId}] Attempting Groq stream fallback...`);
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              messages: [{ role: 'user', content: fullPrompt }],
+              temperature: 0.15,
+              stream: true
+            })
+          });
+
+          if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Groq API returned status ${response.status}: ${errText}`);
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let done = false;
+          let buffer = '';
+
+          while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            if (value) {
+              buffer += decoder.decode(value, { stream: !done });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                const cleanLine = line.trim();
+                if (cleanLine === 'data: [DONE]') continue;
+                if (cleanLine.startsWith('data: ')) {
+                  try {
+                    const json = JSON.parse(cleanLine.substring(6));
+                    const text = json.choices?.[0]?.delta?.content;
+                    if (text) {
+                      io.to(roomId).emit('ai-chunk', { text });
+                    }
+                  } catch (e) {
+                    // Ignore parse errors on incomplete chunks
+                  }
+                }
+              }
+            }
+          }
+          success = true;
+        } catch (groqError) {
+          console.error(`Groq fallback stream failed for room ${roomId}:`, groqError);
+          lastError = groqError;
+        }
+      }
+
+      if (success) {
         io.to(roomId).emit('ai-status', { status: 'idle' });
-      } catch (error) {
-        console.error('Gemini Stream Error:', error);
-        io.to(roomId).emit('ai-error', error.message || 'AI could not compile a response.');
+      } else {
+        const errMsg = lastError?.message || 'No Gemini or Groq API Keys configured for this workspace.';
+        io.to(roomId).emit('ai-error', errMsg);
         io.to(roomId).emit('ai-status', { status: 'idle' });
       }
     });
