@@ -83,6 +83,8 @@ export default function CollaborativeWorkspace() {
   const [activeTab, setActiveTab] = useState('chat'); // chat, ai, terminal
   const [language, setLanguage] = useState('javascript');
   const [copied, setCopied] = useState(false);
+  const [workspaceMode, setWorkspaceMode] = useState('editor'); // editor, whiteboard
+  const [canvasHistory, setCanvasHistory] = useState([]);
 
   // Editor Reference
   const editorRef = useRef(null);
@@ -150,9 +152,19 @@ export default function CollaborativeWorkspace() {
     setSocket(newSocket);
 
     // Room Sync
-    newSocket.on('room-sync', ({ users, messages }) => {
+    newSocket.on('room-sync', ({ users, messages, canvasHistory }) => {
       setRoomUsers(users);
       setChatMessages(messages);
+      setCanvasHistory(canvasHistory || []);
+    });
+
+    // Collaborative Whiteboard events
+    newSocket.on('draw-stroke', (stroke) => {
+      setCanvasHistory((prev) => [...prev, stroke]);
+    });
+
+    newSocket.on('clear-canvas', () => {
+      setCanvasHistory([]);
     });
 
     // Room Errors
@@ -576,6 +588,185 @@ export default function CollaborativeWorkspace() {
     );
   }
 
+  // Collaborative Drawing Canvas Component
+  function WhiteboardCanvas({ socket, canvasHistory, setCanvasHistory }) {
+    const canvasRef = useRef(null);
+    const [color, setColor] = useState('#ec4899'); // Neon Pink default
+    const [brushSize, setBrushSize] = useState(5);
+    const [tool, setTool] = useState('brush'); // brush, eraser
+    const isDrawing = useRef(false);
+    const lastPoint = useRef({ x: 0, y: 0 });
+
+    // Redraw complete history when canvasHistory changes or component mounts
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      // Clear canvas before drawing history
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      canvasHistory.forEach((stroke) => {
+        ctx.beginPath();
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.moveTo(stroke.x0, stroke.y0);
+        ctx.lineTo(stroke.x1, stroke.y1);
+        ctx.stroke();
+      });
+    }, [canvasHistory]);
+
+    const handleMouseDown = (e) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      isDrawing.current = true;
+      
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      lastPoint.current = {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isDrawing.current) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.getBoundingClientRect();
+
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      const currentPoint = {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+
+      const strokeColor = tool === 'eraser' ? '#0b0f19' : color;
+
+      // Draw locally
+      ctx.beginPath();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
+      ctx.lineTo(currentPoint.x, currentPoint.y);
+      ctx.stroke();
+
+      const stroke = {
+        x0: lastPoint.current.x,
+        y0: lastPoint.current.y,
+        x1: currentPoint.x,
+        y1: currentPoint.y,
+        color: strokeColor,
+        width: brushSize
+      };
+
+      // Emit stroke
+      socket?.emit('draw-stroke', stroke);
+
+      // Save in parent state history
+      setCanvasHistory((prev) => [...prev, stroke]);
+
+      lastPoint.current = currentPoint;
+    };
+
+    const handleMouseUp = () => {
+      isDrawing.current = false;
+    };
+
+    const handleClearAll = () => {
+      if (confirm('Clear whiteboard for all users?')) {
+        socket?.emit('clear-canvas');
+      }
+    };
+
+    return (
+      <div className="flex-1 flex flex-col p-4 gap-4 bg-slate-950/40">
+        {/* Canvas Tool Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-900/50 border border-white/5 rounded-xl text-xs">
+          <div className="flex items-center gap-4">
+            {/* Tools */}
+            <div className="flex bg-slate-800/40 p-0.5 rounded-lg border border-white/5">
+              <button
+                onClick={() => setTool('brush')}
+                className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                  tool === 'brush' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Brush
+              </button>
+              <button
+                onClick={() => setTool('eraser')}
+                className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                  tool === 'eraser' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Eraser
+              </button>
+            </div>
+
+            {/* Stroke Size Selector */}
+            <select
+              value={brushSize}
+              onChange={(e) => setBrushSize(Number(e.target.value))}
+              className="px-2 py-1 rounded bg-slate-850 border border-white/10 text-white outline-none cursor-pointer"
+            >
+              <option value={2}>Thin (2px)</option>
+              <option value={5}>Medium (5px)</option>
+              <option value={10}>Thick (10px)</option>
+              <option value={20}>Huge (20px)</option>
+            </select>
+
+            {/* Color palette */}
+            {tool === 'brush' && (
+              <div className="flex gap-2">
+                {['#ec4899', '#06b6d4', '#10b981', '#8b5cf6', '#eab308', '#ffffff'].map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setColor(c)}
+                    className={`w-5 h-5 rounded-full transition transform hover:scale-110 cursor-pointer ${
+                      color === c ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-950 scale-110' : ''
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleClearAll}
+            className="px-3 py-1 rounded-lg bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 text-rose-400 transition cursor-pointer"
+          >
+            Clear Board
+          </button>
+        </div>
+
+        {/* Canvas Box */}
+        <div className="flex-1 bg-[#0b0f19] border border-white/5 rounded-2xl relative overflow-hidden min-h-[350px]">
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={500}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className="absolute inset-0 w-full h-full cursor-crosshair"
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-24 pb-12 bg-white dark:bg-dark-950 transition-colors duration-300 flex flex-col">
       <style>{dynamicCursorStyles}</style>
@@ -653,54 +844,94 @@ export default function CollaborativeWorkspace() {
 
         {/* Workspace Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch min-h-[500px]">
-          {/* Editor Column */}
+          {/* Editor or Whiteboard Main Workspace Column */}
           <div className="lg:col-span-8 flex flex-col gap-4">
-            <div className="flex-1 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950/80 min-h-[400px] flex flex-col">
-              {/* Editor sub header */}
+            <div className="flex-1 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950/80 min-h-[450px] flex flex-col">
+              {/* Main Workspace Toggle Header */}
               <div className="px-4 py-2 bg-slate-900/50 border-b border-white/5 flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                  collaborator_draft.${language === 'javascript' ? 'js' : language === 'python' ? 'py' : language === 'cpp' ? 'cpp' : 'java'}
-                </span>
-                <span>Yjs CRDT Active</span>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setWorkspaceMode('editor')}
+                    className={`font-bold transition flex items-center gap-1.5 cursor-pointer py-1 px-3 rounded-lg text-[11px] ${
+                      workspaceMode === 'editor' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 font-semibold shadow-inner' : 'text-slate-450 hover:text-slate-200'
+                    }`}
+                  >
+                    <Code size={13} />
+                    Code Editor
+                  </button>
+                  <button
+                    onClick={() => setWorkspaceMode('whiteboard')}
+                    className={`font-bold transition flex items-center gap-1.5 cursor-pointer py-1 px-3 rounded-lg text-[11px] ${
+                      workspaceMode === 'whiteboard' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 font-semibold shadow-inner' : 'text-slate-450 hover:text-slate-200'
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Whiteboard
+                  </button>
+                </div>
+
+                {workspaceMode === 'editor' ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                    collaborator_draft.${language === 'javascript' ? 'js' : language === 'python' ? 'py' : language === 'cpp' ? 'cpp' : 'java'}
+                  </span>
+                ) : (
+                  <span className="text-slate-500 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Shared Sketchboard
+                  </span>
+                )}
               </div>
-              {/* Code Area */}
-              <div className="flex-1">
-                <MonacoEditor
-                  height="100%"
-                  language={language}
-                  theme="vs-dark"
-                  options={{
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    automaticLayout: true,
-                    cursorBlinking: 'smooth',
-                    cursorSmoothCaretAnimation: 'on',
-                    tabSize: 4
-                  }}
-                  onMount={handleEditorDidMount}
+
+              {workspaceMode === 'editor' ? (
+                <>
+                  {/* Code Area */}
+                  <div className="flex-1">
+                    <MonacoEditor
+                      height="100%"
+                      language={language}
+                      theme="vs-dark"
+                      options={{
+                        fontSize: 14,
+                        minimap: { enabled: false },
+                        automaticLayout: true,
+                        cursorBlinking: 'smooth',
+                        cursorSmoothCaretAnimation: 'on',
+                        tabSize: 4
+                      }}
+                      onMount={handleEditorDidMount}
+                    />
+                  </div>
+                  {/* Run Actions */}
+                  <div className="p-3 bg-slate-900/20 border-t border-white/5 flex justify-end">
+                    <button
+                      onClick={handleRunCode}
+                      disabled={isRunning}
+                      className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md shadow-indigo-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isRunning ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Compiling...
+                        </>
+                      ) : (
+                        <>
+                          <Play size={14} />
+                          Run Code
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <WhiteboardCanvas
+                  socket={socket}
+                  canvasHistory={canvasHistory}
+                  setCanvasHistory={setCanvasHistory}
                 />
-              </div>
-              {/* Run Actions */}
-              <div className="p-3 bg-slate-900/20 border-t border-white/5 flex justify-end">
-                <button
-                  onClick={handleRunCode}
-                  disabled={isRunning}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md shadow-indigo-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {isRunning ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Compiling...
-                    </>
-                  ) : (
-                    <>
-                      <Play size={14} />
-                      Run Code
-                    </>
-                  )}
-                </button>
-              </div>
+              )}
             </div>
           </div>
 

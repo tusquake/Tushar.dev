@@ -38,6 +38,7 @@ function initCollaborativeWorkspace(io) {
           users: new Map(),
           messages: [],
           yDoc,
+          canvasHistory: [],
           cleanupTimer: null
         };
         workspaces.set(roomId, workspace);
@@ -70,10 +71,11 @@ function initCollaborativeWorkspace(io) {
       const stateVector = Y.encodeStateAsUpdate(workspace.yDoc);
       socket.emit('yjs-update', Array.from(stateVector));
 
-      // Synchronize users list and messages history
+      // Synchronize users list, messages history, and canvas history
       socket.emit('room-sync', {
         users: Array.from(workspace.users.values()),
-        messages: workspace.messages
+        messages: workspace.messages,
+        canvasHistory: workspace.canvasHistory || []
       });
 
       // Notify others in room
@@ -262,6 +264,32 @@ Provide a concise, expert answer. If correcting code, explain the bug briefly an
         const errMsg = lastError?.message || 'No Gemini or Groq API Keys configured for this workspace.';
         io.to(roomId).emit('ai-error', errMsg);
         io.to(roomId).emit('ai-status', { status: 'idle' });
+      }
+    });
+
+    // Collaborative Whiteboard draw event
+    socket.on('draw-stroke', (stroke) => {
+      const { roomId } = socket;
+      if (!roomId) return;
+      const workspace = workspaces.get(roomId);
+      if (workspace) {
+        workspace.canvasHistory = workspace.canvasHistory || [];
+        workspace.canvasHistory.push(stroke);
+        if (workspace.canvasHistory.length > 2000) {
+          workspace.canvasHistory.shift();
+        }
+        socket.to(roomId).emit('draw-stroke', stroke);
+      }
+    });
+
+    // Collaborative Whiteboard clear event
+    socket.on('clear-canvas', () => {
+      const { roomId } = socket;
+      if (!roomId) return;
+      const workspace = workspaces.get(roomId);
+      if (workspace) {
+        workspace.canvasHistory = [];
+        io.to(roomId).emit('clear-canvas');
       }
     });
 
