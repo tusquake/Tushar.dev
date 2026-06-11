@@ -34,3 +34,10 @@ coverage/
 # GCP credentials
 gcp-credentials-key.json
 
+# Root files to ignore (except README.md)
+ARCHITECTURE_GUIDE.md
+Tushar.png
+Tushar_Seth_Resume.pdf
+firebase.json
+main.tex
+
