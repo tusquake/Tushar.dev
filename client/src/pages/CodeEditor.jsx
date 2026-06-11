@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { callLlm, parseJsonResponse } from '../utils/ai';
 
 const BOILERPLATES = {
@@ -80,6 +81,7 @@ public class Solution {
 };
 
 export default function CodeEditor() {
+    const navigate = useNavigate();
     const [language, setLanguage] = useState('javascript');
     const [code, setCode] = useState(BOILERPLATES.javascript);
     const [theme, setTheme] = useState('neon-horizon'); // neon-horizon, cyberpunk, obsidian, aurora
@@ -408,6 +410,20 @@ Provide instructions and modified code structure to achieve this request.`;
                                 <option value="cpp">C++ (GCC 11)</option>
                                 <option value="java">Java (JDK 17)</option>
                             </select>
+                        </div>
+
+                        {/* Co-Lab Button */}
+                        <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Collaboration</label>
+                            <button
+                                onClick={() => navigate('/collaborative')}
+                                className="px-3.5 py-1.5 rounded-lg text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold shadow-md shadow-indigo-600/15 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                Co-Lab Space
+                            </button>
                         </div>
 
                         {/* Theme Selector */}

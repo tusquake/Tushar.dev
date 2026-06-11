@@ -21,6 +21,7 @@ import LatexResume from './pages/LatexResume';
 import Settings from './pages/Settings';
 import AIInterview from './pages/AIInterview';
 import CodeEditor from './pages/CodeEditor';
+import CollaborativeWorkspace from './pages/CollaborativeWorkspace';
 import Profile from './pages/Profile';
 import TermsOfService from './pages/TermsOfService';
 
@@ -191,6 +192,8 @@ const AppContent = () => {
           <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="ai-interview" element={<ProtectedRoute><AIInterview /></ProtectedRoute>} />
           <Route path="code-editor" element={<ProtectedRoute><CodeEditor /></ProtectedRoute>} />
+          <Route path="collaborative" element={<ProtectedRoute><CollaborativeWorkspace /></ProtectedRoute>} />
+          <Route path="workspace/:roomId" element={<ProtectedRoute><CollaborativeWorkspace /></ProtectedRoute>} />
           <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         </Route>
 

@@ -121,7 +121,23 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const http = require('http');
+const socketIo = require('socket.io');
+
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: allowedOrigins,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        credentials: true
+      }
+});
+
+// Initialize collaborative workspace sockets
+const initCollaborativeWorkspace = require('./sockets/collaborativeWorkspace');
+initCollaborativeWorkspace(io);
+
+server.listen(PORT, () => {
     console.log(`
 🚀 Portfolio Server running in ${process.env.NODE_ENV || 'development'} mode
 📡 API: http://localhost:${PORT}/api

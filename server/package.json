@@ -18,6 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",
+    "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -33,7 +34,9 @@
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "socket.io": "^4.8.3",
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
