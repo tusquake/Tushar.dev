@@ -35,13 +35,28 @@ const AIInterview = () => {
 
     useEffect(() => {
         const updateVoices = () => {
-            const availableVoices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+            const availableVoices = window.speechSynthesis.getVoices().filter(v => 
+                v.lang.startsWith('en') || v.lang.startsWith('hi')
+            );
             setVoices(availableVoices);
             
-            // Try to auto-select a premium natural/online voice if none selected yet
+            // Try to auto-select a premium natural/online or Indian English voice if none selected yet
             if (availableVoices.length > 0) {
                 setSelectedVoiceName(prev => {
                     if (prev) return prev;
+                    
+                    // 1. Try to find a premium/natural Indian English voice
+                    const indianPremium = availableVoices.find(v => 
+                        v.lang.toLowerCase().includes('in') && 
+                        (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Google') || v.name.includes('Neerja') || v.name.includes('Aria'))
+                    );
+                    if (indianPremium) return indianPremium.name;
+
+                    // 2. Try to find any Indian voice (en-IN or hi-IN)
+                    const anyIndian = availableVoices.find(v => v.lang.toLowerCase().includes('in'));
+                    if (anyIndian) return anyIndian.name;
+
+                    // 3. Try standard premium/natural voices
                     const premium = availableVoices.find(v => 
                         v.name.includes('Natural') || 
                         v.name.includes('Online') || 
@@ -1128,11 +1143,34 @@ JSON Evaluation:`;
                                         value={selectedVoiceName}
                                         onChange={(e) => setSelectedVoiceName(e.target.value)}
                                     >
-                                        {voices.map((v, idx) => (
-                                            <option key={idx} value={v.name}>
-                                                {v.name} ({v.lang}) {v.name.includes('Natural') || v.name.includes('Online') ? '✨ Premium Natural' : ''}
-                                            </option>
-                                        ))}
+                                        {voices.map((v, idx) => {
+                                            const name = v.name;
+                                            const lang = v.lang.toLowerCase();
+                                            let label = "";
+                                            if (lang.includes('in')) {
+                                                label += "🇮🇳 India - ";
+                                            } else if (lang.includes('us')) {
+                                                label += "🇺🇸 US - ";
+                                            } else if (lang.includes('gb') || lang.includes('uk')) {
+                                                label += "🇬🇧 UK - ";
+                                            } else if (lang.includes('ca')) {
+                                                label += "🇨🇦 CA - ";
+                                            } else if (lang.includes('au')) {
+                                                label += "🇦🇺 AU - ";
+                                            } else {
+                                                label += `🌐 (${v.lang}) - `;
+                                            }
+
+                                            label += name;
+                                            if (name.includes('Natural') || name.includes('Online') || name.includes('Google') || name.includes('Neerja') || name.includes('Prabhat') || name.includes('Aria') || name.includes('Guy')) {
+                                                label += " ✨ Natural Voice";
+                                            }
+                                            return (
+                                                <option key={idx} value={v.name}>
+                                                    {label}
+                                                </option>
+                                            );
+                                        })}
                                     </select>
                                 </div>
                             )}
