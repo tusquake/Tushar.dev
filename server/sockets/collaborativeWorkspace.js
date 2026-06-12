@@ -41,6 +41,15 @@ function initCollaborativeWorkspace(io) {
           canvasHistory: [],
           cleanupTimer: null
         };
+        
+        // Add virtual AI partner to room users list
+        workspace.users.set('forgeai', {
+          socketId: 'forgeai',
+          username: 'ForgeAI (AI Partner)',
+          avatarColor: '#8b5cf6',
+          cursor: null
+        });
+
         workspaces.set(roomId, workspace);
       }
 
@@ -50,7 +59,9 @@ function initCollaborativeWorkspace(io) {
         console.log(`Cancelled cleanup timer for room: ${roomId}`);
       }
 
-      if (workspace.users.size >= MAX_USERS_PER_ROOM) {
+      // Count human users (exclude 'forgeai')
+      const humanCount = Array.from(workspace.users.values()).filter(u => u.socketId !== 'forgeai').length;
+      if (humanCount >= MAX_USERS_PER_ROOM) {
         socket.emit('room-error', 'Room is full (Maximum 5 users).');
         return;
       }
@@ -145,6 +156,11 @@ function initCollaborativeWorkspace(io) {
       }
 
       io.to(roomId).emit('new-message', messageObj);
+
+      // Trigger ForgeAI if message targets the agent
+      if (text && text.trim().toLowerCase().startsWith('@forgeai')) {
+        handleForgeAIMessage(roomId, io, text);
+      }
     });
 
     // Live shared AI assistant stream
@@ -341,8 +357,9 @@ Provide a concise, expert answer. If correcting code, explain the bug briefly an
       workspace.users.delete(socket.id);
       io.to(roomId).emit('user-left', socket.id);
 
-      // If room is empty, trigger cleanup grace period
-      if (workspace.users.size === 0) {
+      // If room is empty of human users, trigger cleanup grace period
+      const humanCount = Array.from(workspace.users.values()).filter(u => u.socketId !== 'forgeai').length;
+      if (humanCount === 0) {
         workspace.cleanupTimer = setTimeout(() => {
           workspaces.delete(roomId);
           console.log(`🧹 Room ${roomId} has been deleted from memory (empty and inactive).`);
@@ -350,6 +367,150 @@ Provide a concise, expert answer. If correcting code, explain the bug briefly an
       }
     });
   });
+}
+
+// Helper for parsing JSON safely from LLM response
+function parseJsonResponse(text) {
+  let cleanText = text.trim();
+  if (cleanText.startsWith('```json')) {
+    cleanText = cleanText.substring(7);
+  } else if (cleanText.startsWith('```')) {
+    cleanText = cleanText.substring(3);
+  }
+  if (cleanText.endsWith('```')) {
+    cleanText = cleanText.substring(0, cleanText.length - 3);
+  }
+  cleanText = cleanText.trim();
+  
+  try {
+    return JSON.parse(cleanText);
+  } catch (e) {
+    const firstBrace = cleanText.indexOf('{');
+    const lastBrace = cleanText.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      const jsonSubstring = cleanText.substring(firstBrace, lastBrace + 1);
+      return JSON.parse(jsonSubstring);
+    }
+    throw e;
+  }
+}
+
+// Background handler for ForgeAI interaction
+async function handleForgeAIMessage(roomId, io, text) {
+  const workspace = workspaces.get(roomId);
+  if (!workspace) return;
+
+  const promptText = text.replace(/^@forgeai/i, '').trim();
+  if (!promptText) return;
+
+  // 1. Emit a temporary typing message
+  const aiTempMsgId = `msg-forgeai-loading-${Date.now()}`;
+  const tempMessageObj = {
+    id: aiTempMsgId,
+    sender: 'ForgeAI (AI Partner)',
+    avatarColor: '#8b5cf6',
+    text: '🤖 ForgeAI is typing...',
+    timestamp: new Date().toISOString()
+  };
+  io.to(roomId).emit('new-message', tempMessageObj);
+
+  try {
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      throw new Error("Gemini API key is not configured on the server.");
+    }
+
+    const currentCode = workspace.yDoc ? workspace.yDoc.getText('monaco').toString() : '';
+    
+    const systemPrompt = `You are "ForgeAI", an autonomous AI programming partner participating in a collaborative room.
+You are helping developers with code. You can either just chat/explain, or edit the shared code document directly.
+If they ask you to write, modify, refactor, add, fix, or optimize code, you should perform an "edit". Otherwise, perform a "chat".
+
+Current Code in the Editor:
+${currentCode}
+
+User request: "${promptText}"
+
+You must respond with ONLY a valid JSON object. Do not include markdown code block backticks around the JSON.
+Schema:
+{
+  "action": "chat" | "edit",
+  "message": "Your conversational response/explanation to the developers in the chat.",
+  "code": "If action is 'edit', the COMPLETE modified code content. If action is 'chat', leave this empty."
+}
+`;
+
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const result = await model.generateContent(systemPrompt);
+    const responseText = result.response.text();
+    
+    // Parse response
+    let parsed;
+    try {
+      parsed = parseJsonResponse(responseText);
+    } catch (err) {
+      console.error("Failed to parse ForgeAI response:", responseText, err);
+      parsed = {
+        action: "chat",
+        message: parsed?.message || responseText,
+        code: ""
+      };
+    }
+
+    // Delete temporary loading message
+    io.to(roomId).emit('delete-message', aiTempMsgId);
+
+    // Send final message to chat
+    const finalMsgObj = {
+      id: `msg-forgeai-${Date.now()}`,
+      sender: 'ForgeAI (AI Partner)',
+      avatarColor: '#8b5cf6',
+      text: parsed.message || 'I have completed your request.',
+      timestamp: new Date().toISOString()
+    };
+    workspace.messages.push(finalMsgObj);
+    if (workspace.messages.length > MAX_MESSAGE_HISTORY) {
+      workspace.messages.shift();
+    }
+    io.to(roomId).emit('new-message', finalMsgObj);
+
+    // If edit action, apply changes to Yjs doc
+    if (parsed.action === 'edit' && parsed.code) {
+      const textType = workspace.yDoc.getText('monaco');
+      workspace.yDoc.transact(() => {
+        textType.delete(0, textType.length);
+        textType.insert(0, parsed.code);
+      });
+
+      const update = Y.encodeStateAsUpdate(workspace.yDoc);
+      io.to(roomId).emit('yjs-update', Array.from(update));
+
+      // Emit a system notification in the chat
+      const sysMsg = {
+        id: `msg-sys-${Date.now()}`,
+        sender: 'System',
+        avatarColor: '#94a3b8',
+        text: `⚙️ ForgeAI has updated the active code buffer.`,
+        timestamp: new Date().toISOString()
+      };
+      workspace.messages.push(sysMsg);
+      if (workspace.messages.length > MAX_MESSAGE_HISTORY) {
+        workspace.messages.shift();
+      }
+      io.to(roomId).emit('new-message', sysMsg);
+    }
+  } catch (error) {
+    console.error("ForgeAI Agent Error:", error);
+    io.to(roomId).emit('delete-message', aiTempMsgId);
+    io.to(roomId).emit('new-message', {
+      id: `msg-forgeai-err-${Date.now()}`,
+      sender: 'ForgeAI (AI Partner)',
+      avatarColor: '#8b5cf6',
+      text: `⚠️ Sorry, I encountered an error: ${error.message}`,
+      timestamp: new Date().toISOString()
+    });
+  }
 }
 
 module.exports = initCollaborativeWorkspace;

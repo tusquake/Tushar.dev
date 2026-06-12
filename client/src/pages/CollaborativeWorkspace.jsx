@@ -224,6 +224,11 @@ export default function CollaborativeWorkspace() {
       setChatMessages((prev) => [...prev, msg]);
     });
 
+    // Delete Chat Message
+    newSocket.on('delete-message', (msgId) => {
+      setChatMessages((prev) => prev.filter((m) => m.id !== msgId));
+    });
+
     // Yjs Update Handling
     newSocket.on('yjs-update', (updateArray) => {
       try {

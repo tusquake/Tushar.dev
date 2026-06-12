@@ -121,7 +121,7 @@ export default function CodeEditor() {
         setCode(BOILERPLATES[lang]);
     };
 
-    // Intercept Tab key for insertion of 4 spaces
+    // Intercept Tab key and Ctrl+Space for AI Autocomplete
     const handleKeyDown = (e) => {
         if (e.key === 'Tab') {
             e.preventDefault();
@@ -136,6 +136,9 @@ export default function CodeEditor() {
                     textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 4;
                 }
             }, 0);
+        } else if (e.key === ' ' && e.ctrlKey) {
+            e.preventDefault();
+            triggerInlineCompletion();
         }
     };
 
@@ -295,6 +298,59 @@ Provide instructions and modified code structure to achieve this request.`;
             setAiResponse('AI Intellisense failed to connect. Check your internet connection.');
         } finally {
             setAiLoading(false);
+        }
+    };
+
+    // Hotkey triggered AI Autocomplete continuation
+    const triggerInlineCompletion = async () => {
+        if (!aiIntellisense || !textareaRef.current) return;
+        
+        const cursor = textareaRef.current.selectionStart;
+        const textBefore = code.substring(0, cursor);
+        const textAfter = code.substring(cursor);
+        
+        setTerminalOutput(prev => [
+            ...prev,
+            { type: 'info', text: 'AI Copilot: Suggesting code completion...' }
+        ]);
+
+        const prompt = `You are an inline code auto-complete assistant.
+Given the code prefix and suffix, return ONLY the direct next few lines of code to continue the logic. Do not write explanations or wrap the code in markdown blocks.
+
+Code Prefix:
+${textBefore}
+
+Code Suffix:
+${textAfter}
+
+Completion:`;
+
+        try {
+            const completion = await callLlm(prompt);
+            // Clean markdown blocks if LLM wrapped it
+            let cleanCompletion = completion.trim();
+            if (cleanCompletion.startsWith('```')) {
+                cleanCompletion = cleanCompletion.replace(/```[a-z]*\n/, '').replace(/```$/, '');
+            }
+            
+            const newVal = textBefore + cleanCompletion + textAfter;
+            setCode(newVal);
+            
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.selectionStart = textareaRef.current.selectionEnd = cursor + cleanCompletion.length;
+                }
+            }, 0);
+
+            setTerminalOutput(prev => [
+                ...prev,
+                { type: 'system', text: 'AI Copilot: Inserted completion successfully.' }
+            ]);
+        } catch (err) {
+            setTerminalOutput(prev => [
+                ...prev,
+                { type: 'stderr', text: `AI Copilot Error: ${err.message}` }
+            ]);
         }
     };
 
@@ -518,7 +574,7 @@ Provide instructions and modified code structure to achieve this request.`;
                                     onKeyDown={handleKeyDown}
                                     onScroll={handleScroll}
                                     className={`flex-1 py-4 px-4 bg-transparent outline-none border-none resize-none font-mono focus:ring-0 ${styles.textarea} overflow-y-auto`}
-                                    placeholder="Write your code here..."
+                                    placeholder="Write your code here... Press [Ctrl + Space] for AI Autocomplete"
                                     spellCheck={false}
                                 />
                             </div>
