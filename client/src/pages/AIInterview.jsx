@@ -30,6 +30,37 @@ const AIInterview = () => {
     const [timerActive, setTimerActive] = useState(false);
     const [continuousMode, setContinuousMode] = useState(true);
     const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+    const [voices, setVoices] = useState([]);
+    const [selectedVoiceName, setSelectedVoiceName] = useState('');
+
+    useEffect(() => {
+        const updateVoices = () => {
+            const availableVoices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+            setVoices(availableVoices);
+            
+            // Try to auto-select a premium natural/online voice if none selected yet
+            if (availableVoices.length > 0) {
+                setSelectedVoiceName(prev => {
+                    if (prev) return prev;
+                    const premium = availableVoices.find(v => 
+                        v.name.includes('Natural') || 
+                        v.name.includes('Online') || 
+                        v.name.includes('Google') || 
+                        v.name.includes('Aria') || 
+                        v.name.includes('Guy') || 
+                        v.name.includes('Samantha') ||
+                        v.name.includes('Daniel')
+                    ) || availableVoices[0];
+                    return premium.name;
+                });
+            }
+        };
+
+        updateVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = updateVoices;
+        }
+    }, []);
 
     const recognitionRef = useRef(null);
     const idleTimerRef = useRef(null);
@@ -253,14 +284,9 @@ const AIInterview = () => {
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = 'en-US';
 
-        const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(v => 
-            v.lang.startsWith('en-') && 
-            (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Microsoft') || v.name.includes('Samantha') || v.name.includes('Daniel'))
-        ) || voices.find(v => v.lang.startsWith('en-'));
-
-        if (preferredVoice) {
-            utter.voice = preferredVoice;
+        const activeVoice = voices.find(v => v.name === selectedVoiceName) || voices.find(v => v.lang.startsWith('en-'));
+        if (activeVoice) {
+            utter.voice = activeVoice;
         }
         utter.pitch = 1.05;
         utter.rate = 0.95; // Slightly faster to sound more natural
@@ -416,7 +442,13 @@ Generate ONE highly relevant, specific, and challenging interview question stric
 Use the candidate's resume context below ONLY to calibrate the experience level (Junior, Mid, Senior) and the context of the question. 
 If the topic is "Data Structures & Algorithms", ask a specific conceptual or coding/problem-solving question (e.g., about arrays, trees, dynamic programming, complexity, etc.) rather than asking about their previous projects.
 ${exclusionsPrompt}
-Respond with ONLY the question text itself. No introductory remarks, no meta-commentary, no markdown formatting.
+
+Tone Instructions:
+- You must adopt a tone that is extremely polite, humble, encouraging, and friendly.
+- Start the response with a very brief, warm, conversational greeting or transition (e.g., "Hi! Let's take a look at a question about...", "Awesome, I'd love to discuss...", "I hope you are ready for a fun question regarding...") to make the candidate feel comfortable.
+- Avoid sounding strict, robotic, or overly formal. Keep it supportive like a mentor.
+
+Respond with ONLY the conversational spoken text itself. No meta-commentary, no markdown formatting.
 
 Candidate Resume Context:
 ${resumeText}
@@ -450,21 +482,20 @@ Question:`;
     const evaluateAnswer = async () => {
         setLoading(true);
         setError('');
-        const prompt = `You are a professional, supportive, and constructive technical interviewer.
+        const prompt = `You are an extremely polite, humble, warm, and friendly technical interviewer.
 Please evaluate the candidate's response to your question.
 
 Question: "${question}"
 Candidate Answer: "${answer}"
 
 Instructions:
-1. Act like a professional interviewer: be polite, encouraging, and supportive. Do not use scary or overly critical language. Make the candidate feel motivated.
-2. If the candidate missed key parts, made mistake(s), or said they don't know: politely correct them and explicitly provide the correct answer, recommended coding logic, or best-practice solution in your feedback.
-3. Keep the feedback structured, clear, and educational.
-4. Return ONLY a JSON object of shape:
+1. Act like a supportive peer or a humble mentor. Speak in an encouraging, warm, and highly friendly tone.
+2. If the candidate made mistakes, missed details, or skipped: gently and politely guide them. Never sound harsh, critical, or condescending. Keep them fully motivated!
+3. Return ONLY a JSON object of shape:
 {
   "correct": boolean,
-  "feedback": "constructive feedback text containing corrections and correct answers/solutions",
-  "voiceResponse": "A very short, natural, conversational spoken feedback (1-2 sentences max) to say to the candidate. E.g., 'That is a correct answer! You explained the concept well.' or 'Good effort, but not quite. We actually use a hash map here to achieve constant time complexity. Let's move forward.'"
+  "feedback": "A polite, constructive, and educational text feedback.",
+  "voiceResponse": "A very short, warm, and conversational feedback (1-2 sentences max) to say out loud. It MUST be humble and friendly (e.g., 'That's a really great start! I love how you thought about that.', 'Wow, spot on! You explained that beautifully. Let's try the next one.', 'No worries at all, this can be tricky! Actually, we can look at it as...')."
 }
 Do not include any markdown backticks, introductory text, or styling in your raw output.
 
@@ -1075,6 +1106,36 @@ JSON Evaluation:`;
                                     />
                                 </div>
                             </div>
+
+                            {/* Voice Style Selector */}
+                            {voices.length > 0 && (
+                                <div className="space-y-1">
+                                    <label className="label font-bold flex items-center justify-between text-xs text-dark-500">
+                                        <span>Interviewer Voice (Human-like Edge/Chrome/Safari voices)</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => speak("Hello! I am your friendly AI technical interviewer. How does my voice sound to you?")}
+                                            className="text-[10px] text-emerald-500 hover:text-emerald-600 font-extrabold flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                            </svg>
+                                            Listen / Test Voice
+                                        </button>
+                                    </label>
+                                    <select
+                                        className="input text-xs"
+                                        value={selectedVoiceName}
+                                        onChange={(e) => setSelectedVoiceName(e.target.value)}
+                                    >
+                                        {voices.map((v, idx) => (
+                                            <option key={idx} value={v.name}>
+                                                {v.name} ({v.lang}) {v.name.includes('Natural') || v.name.includes('Online') ? '✨ Premium Natural' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             {/* Hands-Free Interactive Settings */}
                             <div className="p-4 rounded-xl bg-primary-500/5 border border-primary-500/10 flex items-center justify-between gap-4">
