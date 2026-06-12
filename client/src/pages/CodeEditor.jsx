@@ -93,6 +93,12 @@ export default function CodeEditor() {
     ]);
     const [performanceMetrics, setPerformanceMetrics] = useState({ time: 0, memory: 0 });
     const [modalConfig, setModalConfig] = useState(null);
+
+    // Debugger / Auto-Fix State (ForgeDebugger)
+    const [debugMode, setDebugMode] = useState(false);
+    const [debugCode, setDebugCode] = useState('');
+    const [debugExplanation, setDebugExplanation] = useState('');
+    const [debugLoading, setDebugLoading] = useState(false);
     
     // AI Panel State
     const [aiQuery, setAiQuery] = useState('');
@@ -354,6 +360,51 @@ Completion:`;
         }
     };
 
+    // Auto-fix errors handler (ForgeDebugger)
+    const handleAutoFixError = async () => {
+        if (!aiIntellisense) return;
+        
+        setDebugMode(true);
+        setDebugLoading(true);
+        setDebugCode('');
+        setDebugExplanation('');
+
+        const errorsText = terminalOutput
+            .filter(log => log.type === 'stderr')
+            .map(log => log.text)
+            .join('\n');
+
+        const prompt = `You are an expert automated debugger and pair programmer.
+The user has executed the following "${language}" code and received an execution error.
+
+Source Code:
+${code}
+
+Stderr Error Output:
+${errorsText}
+
+You must identify the bug and provide the fix.
+You must respond with ONLY a valid JSON object. Do not include markdown code block backticks around the JSON.
+Schema:
+{
+  "explanation": "Brief explanation of the bug and how to fix it.",
+  "fixedCode": "The complete, corrected code to replace the editor buffer."
+}
+`;
+
+        try {
+            const res = await callLlm(prompt);
+            const parsed = parseJsonResponse(res);
+            setDebugCode(parsed.fixedCode || '');
+            setDebugExplanation(parsed.explanation || 'No explanation details returned.');
+        } catch (err) {
+            console.error(err);
+            setDebugExplanation(`Failed to generate debug suggestions: ${err.message}`);
+        } finally {
+            setDebugLoading(false);
+        }
+    };
+
     // Apply Suggestion from AI Panel to Editor
     const applyAiSuggestion = () => {
         // Extract code block from AI Response
@@ -555,28 +606,91 @@ Completion:`;
                             </div>
 
                             {/* Line numbers + Textarea container */}
-                            <div className={`flex font-mono text-sm leading-6 ${styles.editorBg} min-h-[400px] max-h-[500px] overflow-hidden`}>
-                                {/* Line Numbers Column */}
-                                <div
-                                    ref={lineNumbersRef}
-                                    className={`w-12 py-4 select-none text-right pr-3 border-r ${styles.lineNo} overflow-hidden scrollbar-none`}
-                                >
-                                    {lineNumbers.map(n => (
-                                        <div key={n}>{n}</div>
-                                    ))}
+                            <div className={`flex font-mono text-sm leading-6 ${styles.editorBg} min-h-[400px] max-h-[500px] overflow-hidden divide-x divide-dark-800/20 dark:divide-dark-800`}>
+                                {/* Left Half: User Editor */}
+                                <div className="flex flex-1 overflow-hidden min-w-[200px]">
+                                    {/* Line Numbers Column */}
+                                    <div
+                                        ref={lineNumbersRef}
+                                        className={`w-12 py-4 select-none text-right pr-3 border-r ${styles.lineNo} overflow-hidden scrollbar-none`}
+                                    >
+                                        {lineNumbers.map(n => (
+                                            <div key={n}>{n}</div>
+                                        ))}
+                                    </div>
+
+                                    {/* Main Textarea Editor */}
+                                    <textarea
+                                        ref={textareaRef}
+                                        value={code}
+                                        onChange={(e) => setCode(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        onScroll={handleScroll}
+                                        className={`flex-1 py-4 px-4 bg-transparent outline-none border-none resize-none font-mono focus:ring-0 ${styles.textarea} overflow-y-auto`}
+                                        placeholder="Write your code here... Press [Ctrl + Space] for AI Autocomplete"
+                                        spellCheck={false}
+                                    />
                                 </div>
 
-                                {/* Main Textarea Editor */}
-                                <textarea
-                                    ref={textareaRef}
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    onScroll={handleScroll}
-                                    className={`flex-1 py-4 px-4 bg-transparent outline-none border-none resize-none font-mono focus:ring-0 ${styles.textarea} overflow-y-auto`}
-                                    placeholder="Write your code here... Press [Ctrl + Space] for AI Autocomplete"
-                                    spellCheck={false}
-                                />
+                                {/* Right Half: AI Proposed Fix (rendered in Split Screen if debugMode is true) */}
+                                {debugMode && (
+                                    <div className="flex flex-1 flex-col bg-[#0b101d] text-xs leading-5 text-dark-300 min-w-[200px] overflow-hidden">
+                                        <div className="px-4 py-2 bg-red-950/20 border-b border-red-500/20 text-red-400 font-bold uppercase tracking-wider flex items-center justify-between">
+                                            <span>AI Debugger Suggestion</span>
+                                            <div className="flex gap-2">
+                                                {!debugLoading && debugCode && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setCode(debugCode);
+                                                            setDebugMode(false);
+                                                            setTerminalOutput(prev => [
+                                                                ...prev,
+                                                                { type: 'system', text: 'AI Debugger: Applied code changes successfully.' }
+                                                            ]);
+                                                        }}
+                                                        className="px-2 py-0.5 rounded bg-emerald-650 hover:bg-emerald-600 text-white font-bold text-[9px] uppercase tracking-wider transition cursor-pointer"
+                                                    >
+                                                        Accept Fix
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => setDebugMode(false)}
+                                                    className="px-2 py-0.5 rounded bg-dark-850 hover:bg-dark-800 text-dark-200 font-bold text-[9px] uppercase tracking-wider transition cursor-pointer"
+                                                >
+                                                    Close
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 p-4 overflow-y-auto scrollbar-thin select-text">
+                                            {debugLoading ? (
+                                                <div className="flex flex-col gap-2 items-center justify-center h-full text-dark-400">
+                                                    <svg className="animate-spin h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                    </svg>
+                                                    <span className="text-[10px] uppercase tracking-widest animate-pulse font-bold mt-1 text-red-400">Analyzing Error...</span>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    <div className="p-3 bg-red-950/10 border border-red-500/10 rounded-lg">
+                                                        <h4 className="font-bold text-red-400 mb-1">Bug Explanation:</h4>
+                                                        <p className="text-dark-250 font-sans leading-relaxed">{debugExplanation}</p>
+                                                    </div>
+                                                    
+                                                    {debugCode && (
+                                                        <div>
+                                                            <h4 className="font-bold text-emerald-400 mb-1">Proposed Code:</h4>
+                                                            <pre className="p-3 bg-[#070b14] border border-dark-800 rounded-lg overflow-x-auto text-[10px] font-mono whitespace-pre text-dark-100 scrollbar-thin">
+                                                                <code>{debugCode}</code>
+                                                            </pre>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Editor Bottom Actions */}
@@ -752,6 +866,20 @@ Completion:`;
                                         </div>
                                     );
                                 })}
+                                {terminalOutput.some(log => log.type === 'stderr') && !debugMode && (
+                                    <div className="mt-2 p-3 rounded-xl bg-red-950/20 border border-red-500/30 flex items-center justify-between gap-3 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                                            <span className="text-[11px] text-red-300 font-medium animate-none">Execution error detected.</span>
+                                        </div>
+                                        <button
+                                            onClick={handleAutoFixError}
+                                            className="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] uppercase tracking-wider shadow shadow-red-500/30 hover:shadow-red-500/50 transition cursor-pointer"
+                                        >
+                                            Debug with AI
+                                        </button>
+                                    </div>
+                                )}
                                 <div ref={terminalEndRef} />
                             </div>
                         </div>
