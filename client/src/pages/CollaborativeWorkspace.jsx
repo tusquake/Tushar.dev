@@ -573,9 +573,14 @@ export default function CollaborativeWorkspace() {
   const handleSendMessage = () => {
     if (!chatInput.trim() && !mediaPreview) return;
 
+    const localGemini = localStorage.getItem('codeforge_gemini_api_key');
+    const localGroq = localStorage.getItem('codeforge_groq_api_key');
+
     socket.emit('send-message', {
       text: chatInput,
-      media: mediaPreview
+      media: mediaPreview,
+      userApiKey: localGemini,
+      userGroqKey: localGroq
     });
 
     setChatInput('');

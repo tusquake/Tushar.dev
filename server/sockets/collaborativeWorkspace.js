@@ -134,7 +134,7 @@ function initCollaborativeWorkspace(io) {
     });
 
     // Ephemeral session chat messages (includes media)
-    socket.on('send-message', ({ text, media }) => {
+    socket.on('send-message', ({ text, media, userApiKey, userGroqKey }) => {
       const { roomId } = socket;
       if (!roomId) return;
 
@@ -159,7 +159,7 @@ function initCollaborativeWorkspace(io) {
 
       // Trigger ForgeAI if message targets the agent
       if (text && text.trim().toLowerCase().startsWith('@forgeai')) {
-        handleForgeAIMessage(roomId, io, text);
+        handleForgeAIMessage(roomId, io, text, userApiKey, userGroqKey);
       }
     });
 
@@ -396,7 +396,7 @@ function parseJsonResponse(text) {
 }
 
 // Background handler for ForgeAI interaction
-async function handleForgeAIMessage(roomId, io, text) {
+async function handleForgeAIMessage(roomId, io, text, userApiKey, userGroqKey) {
   const workspace = workspaces.get(roomId);
   if (!workspace) return;
 
@@ -415,8 +415,8 @@ async function handleForgeAIMessage(roomId, io, text) {
   io.to(roomId).emit('new-message', tempMessageObj);
 
   try {
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-    const groqApiKey = process.env.GROQ_API_KEY;
+    const geminiApiKey = process.env.GEMINI_API_KEY || userApiKey;
+    const groqApiKey = process.env.GROQ_API_KEY || userGroqKey;
 
     if (!geminiApiKey && !groqApiKey) {
       throw new Error("No Gemini or Groq API key configured on the server.");
