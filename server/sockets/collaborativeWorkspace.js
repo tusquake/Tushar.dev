@@ -416,8 +416,10 @@ async function handleForgeAIMessage(roomId, io, text) {
 
   try {
     const geminiApiKey = process.env.GEMINI_API_KEY;
-    if (!geminiApiKey) {
-      throw new Error("Gemini API key is not configured on the server.");
+    const groqApiKey = process.env.GROQ_API_KEY;
+
+    if (!geminiApiKey && !groqApiKey) {
+      throw new Error("No Gemini or Groq API key configured on the server.");
     }
 
     const currentCode = workspace.yDoc ? workspace.yDoc.getText('monaco').toString() : '';
@@ -440,10 +442,60 @@ Schema:
 }
 `;
 
-    const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent(systemPrompt);
-    const responseText = result.response.text();
+    let responseText = '';
+    let success = false;
+    let lastError = null;
+
+    // 1. Try Gemini first
+    if (geminiApiKey) {
+      try {
+        console.log(`[ForgeAI] Attempting Gemini query...`);
+        const genAI = new GoogleGenerativeAI(geminiApiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const result = await model.generateContent(systemPrompt);
+        responseText = result.response.text();
+        success = true;
+      } catch (geminiError) {
+        console.warn(`[ForgeAI] Gemini failed. Trying Groq fallback...`, geminiError);
+        lastError = geminiError;
+      }
+    }
+
+    // 2. Try Groq fallback
+    if (!success && groqApiKey) {
+      try {
+        console.log(`[ForgeAI] Attempting Groq fallback...`);
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [{ role: 'user', content: systemPrompt }],
+            temperature: 0.15,
+            response_format: { type: "json_object" }
+          })
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Groq API returned status ${response.status}: ${errText}`);
+        }
+
+        const json = await response.json();
+        responseText = json.choices?.[0]?.message?.content || '';
+        success = true;
+      } catch (groqError) {
+        console.error(`[ForgeAI] Groq fallback failed:`, groqError);
+        lastError = groqError;
+      }
+    }
+
+    if (!success) {
+      throw new Error(lastError?.message || 'No Gemini or Groq API Keys configured for ForgeAI.');
+    }
     
     // Parse response
     let parsed;
