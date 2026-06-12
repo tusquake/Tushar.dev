@@ -28,6 +28,8 @@ const AIInterview = () => {
     const [timeRemaining, setTimeRemaining] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [timerActive, setTimerActive] = useState(false);
+    const [continuousMode, setContinuousMode] = useState(true);
+    const [isAiSpeaking, setIsAiSpeaking] = useState(false);
 
     const recognitionRef = useRef(null);
     const idleTimerRef = useRef(null);
@@ -43,6 +45,7 @@ const AIInterview = () => {
                         setStage('session_summary');
                         setTimeout(() => setShowReviewModal(true), 1500);
                         window.speechSynthesis.cancel();
+                        setIsAiSpeaking(false);
                         showToast("Time is up! Generating your session report.");
                         return 0;
                     }
@@ -84,6 +87,7 @@ const AIInterview = () => {
         setIsPaused(nextPaused);
         if (nextPaused) {
             window.speechSynthesis.cancel();
+            setIsAiSpeaking(false);
             if (recognitionRef.current) {
                 try {
                     recognitionRef.current.stop();
@@ -243,7 +247,8 @@ const AIInterview = () => {
     };
 
     // Speech synthesis helper with a more natural interviewer-like voice configuration
-    const speak = (text) => {
+    const speak = (text, onEndCallback) => {
+        setIsAiSpeaking(true);
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = 'en-US';
@@ -257,8 +262,20 @@ const AIInterview = () => {
         if (preferredVoice) {
             utter.voice = preferredVoice;
         }
-        utter.pitch = 1.0;
-        utter.rate = 0.92;
+        utter.pitch = 1.05;
+        utter.rate = 0.95; // Slightly faster to sound more natural
+
+        utter.onend = () => {
+            setIsAiSpeaking(false);
+            if (onEndCallback) onEndCallback();
+        };
+
+        utter.onerror = (e) => {
+            console.error('Speech synthesis error', e);
+            setIsAiSpeaking(false);
+            if (onEndCallback) onEndCallback();
+        };
+
         window.speechSynthesis.speak(utter);
     };
 
@@ -281,6 +298,7 @@ const AIInterview = () => {
         }
         
         window.speechSynthesis.cancel();
+        setIsAiSpeaking(false);
 
         accumulatedTranscriptRef.current = '';
         setAnswer('');
@@ -408,7 +426,6 @@ Question:`;
             const response = await callLlm(prompt);
             const trimmedQ = response.trim();
             setQuestion(trimmedQ);
-            speak(trimmedQ);
             
             // Detect if question involves coding/implementation
             const keywords = ['code', 'write a', 'implement', 'function', 'complexity', 'algorithm', 'treenode', 'class ', 'signature', 'method'];
@@ -416,6 +433,12 @@ Question:`;
             setInputMode(isCoding ? 'code' : 'voice');
             
             setStage('asking');
+
+            speak(trimmedQ, () => {
+                if (continuousMode && !isCoding && !isPaused) {
+                    startListening();
+                }
+            });
         } catch (e) {
             console.error('Failed to generate question', e);
             setError('Failed to start interview. Please check your AI api keys or internet connection.');
@@ -440,7 +463,8 @@ Instructions:
 4. Return ONLY a JSON object of shape:
 {
   "correct": boolean,
-  "feedback": "constructive feedback text containing corrections and correct answers/solutions"
+  "feedback": "constructive feedback text containing corrections and correct answers/solutions",
+  "voiceResponse": "A very short, natural, conversational spoken feedback (1-2 sentences max) to say to the candidate. E.g., 'That is a correct answer! You explained the concept well.' or 'Good effort, but not quite. We actually use a hash map here to achieve constant time complexity. Let's move forward.'"
 }
 Do not include any markdown backticks, introductory text, or styling in your raw output.
 
@@ -449,7 +473,6 @@ JSON Evaluation:`;
             const raw = await callLlm(prompt);
             const parsed = parseJsonResponse(raw);
             setFeedback(parsed);
-            speak(parsed.feedback);
             setStage('feedback');
 
             // Record in current session log
@@ -460,6 +483,17 @@ JSON Evaluation:`;
                 feedback: parsed.feedback
             };
             setSessionLogs(prev => [...prev, sessionItem]);
+
+            // Speak the voiceResponse (or fallback to feedback)
+            const textToSpeak = parsed.voiceResponse || parsed.feedback;
+            speak(textToSpeak, () => {
+                if (continuousMode && !isPaused) {
+                    // Automatically transition to next question after feedback is read!
+                    setTimeout(() => {
+                        generateQuestion();
+                    }, 1500); // Small pause for natural breathing room
+                }
+            });
 
             // If candidate indicated lack of knowledge, pivot topic
             const lowerAnswer = answer.toLowerCase();
@@ -1042,6 +1076,28 @@ JSON Evaluation:`;
                                 </div>
                             </div>
 
+                            {/* Hands-Free Interactive Settings */}
+                            <div className="p-4 rounded-xl bg-primary-500/5 border border-primary-500/10 flex items-center justify-between gap-4">
+                                <div className="space-y-0.5">
+                                    <h4 className="text-xs font-bold text-dark-900 dark:text-white flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        Hands-Free Continuous Mode
+                                    </h4>
+                                    <p className="text-[10px] text-dark-500 dark:text-dark-400 leading-relaxed">
+                                        AI will automatically start listening after speaking the question, evaluate your answer, and transition to the next question without requiring clicks.
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer select-none">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={continuousMode}
+                                        onChange={(e) => setContinuousMode(e.target.checked)}
+                                        className="sr-only peer" 
+                                    />
+                                    <div className="w-11 h-6 bg-dark-200 peer-focus:outline-none rounded-full peer dark:bg-dark-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                </label>
+                            </div>
+
                             {/* Start Button */}
                             <button
                                 onClick={generateQuestion}
@@ -1128,11 +1184,51 @@ JSON Evaluation:`;
                                 </span>
                             </div>
 
-                            <div className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 rounded-2xl shadow-sm space-y-3">
-                                <h3 className="text-sm font-bold text-dark-500 uppercase tracking-wider">AI Question</h3>
+                            <div className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+                                <style>{`
+                                  @keyframes voiceWave {
+                                    0%, 100% { transform: scaleY(0.3); }
+                                    50% { transform: scaleY(1); }
+                                  }
+                                  .voice-bar {
+                                    display: inline-block;
+                                    width: 3px;
+                                    height: 14px;
+                                    background-color: #10b981; /* emerald-500 */
+                                    border-radius: 2px;
+                                    transform-origin: bottom;
+                                    animation: voiceWave 1s ease-in-out infinite;
+                                  }
+                                  .voice-bar:nth-child(1) { animation-delay: 0.1s; }
+                                  .voice-bar:nth-child(2) { animation-delay: 0.4s; }
+                                  .voice-bar:nth-child(3) { animation-delay: 0.2s; }
+                                  .voice-bar:nth-child(4) { animation-delay: 0.6s; }
+                                  .voice-bar:nth-child(5) { animation-delay: 0.3s; }
+                                `}</style>
+
+                                <div className="flex items-center justify-between border-b border-dark-100 dark:border-dark-800/60 pb-2">
+                                    <h3 className="text-xs font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider">AI Intercom</h3>
+                                    {isAiSpeaking && (
+                                        <div className="flex items-center gap-1 py-1 px-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                            <span className="text-[9px] uppercase tracking-wider text-emerald-500 font-extrabold mr-1 animate-pulse">AI Speaking</span>
+                                            <div className="flex items-end gap-0.5 h-3">
+                                                <div className="voice-bar" />
+                                                <div className="voice-bar" />
+                                                <div className="voice-bar" />
+                                                <div className="voice-bar" />
+                                                <div className="voice-bar" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                
                                 <p className="text-lg font-bold text-dark-900 dark:text-white leading-relaxed">{question}</p>
                                 <button
-                                    onClick={() => speak(question)}
+                                    onClick={() => speak(question, () => {
+                                        if (continuousMode && inputMode === 'voice') {
+                                            startListening();
+                                        }
+                                    })}
                                     className="text-xs font-semibold text-emerald-500 hover:text-emerald-600 flex items-center gap-1.5 cursor-pointer mt-1"
                                 >
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
