@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { authAPI, learningAPI, dsaProgressAPI, interviewAPI, resumeAPI, uploadAPI, projectsAPI } from '../services/api';
+import { authAPI, learningAPI, dsaProgressAPI, interviewAPI, resumeAPI, uploadAPI, projectsAPI, integrationsAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -117,6 +117,25 @@ const renderAchievementIcon = (id, sizeClass = "w-7 h-7 sm:w-8 sm:h-8") => {
 };
 
 const ProjectCover = ({ project }) => {
+    if (project.image) {
+        return (
+            <div className="w-full h-full relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-500 bg-dark-950">
+                <img 
+                    src={project.image} 
+                    alt={project.title} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 via-transparent to-transparent" />
+                <div className="absolute top-3 left-3 z-10">
+                    <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-white/10 text-white/95 backdrop-blur-md border border-white/10">
+                        {project.techStack?.[0] || 'System Design'}
+                    </span>
+                </div>
+            </div>
+        );
+    }
+
     const hashString = (str) => {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -278,6 +297,25 @@ const Profile = ({ isPublic = false }) => {
     const [newSkillName, setNewSkillName] = useState('');
     const [newSkillLevel, setNewSkillLevel] = useState(50);
 
+    // Project Form/Modal State
+    const [projectModalOpen, setProjectModalOpen] = useState(false);
+    const [editingProject, setEditingProject] = useState(null);
+    const [projectTitle, setProjectTitle] = useState('');
+    const [projectDesc, setProjectDesc] = useState('');
+    const [projectImage, setProjectImage] = useState('');
+    const [projectLiveLink, setProjectLiveLink] = useState('');
+    const [projectGithubLink, setProjectGithubLink] = useState('');
+    const [projectTechStack, setProjectTechStack] = useState('');
+
+    // GitHub & LeetCode Integrations State
+    const [githubData, setGithubData] = useState(null);
+    const [githubLoading, setGithubLoading] = useState(false);
+    const [githubError, setGithubError] = useState('');
+
+    const [leetcodeData, setLeetcodeData] = useState(null);
+    const [leetcodeLoading, setLeetcodeLoading] = useState(false);
+    const [leetcodeError, setLeetcodeError] = useState('');
+
     useEffect(() => {
         if (isPublic || user) {
             fetchData();
@@ -306,6 +344,65 @@ const Profile = ({ isPublic = false }) => {
             });
         }
     }, [isPublic, user]);
+
+    const extractUsername = (urlOrUsername) => {
+        if (!urlOrUsername) return '';
+        const clean = urlOrUsername.trim();
+        if (clean.includes('/') && (clean.startsWith('http') || clean.startsWith('www'))) {
+            const parts = clean.replace(/\/$/, '').split('/');
+            return parts[parts.length - 1] || '';
+        }
+        return clean;
+    };
+
+    const fetchGithubProfile = async (username) => {
+        if (!username) return;
+        setGithubLoading(true);
+        setGithubError('');
+        try {
+            const res = await integrationsAPI.getGithub(username);
+            if (res.data.success) {
+                setGithubData(res.data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch github integration data:', err);
+            setGithubError(err.response?.data?.message || 'Failed to load GitHub data. Make sure username is valid.');
+        } finally {
+            setGithubLoading(false);
+        }
+    };
+
+    const fetchLeetcodeProfile = async (username) => {
+        if (!username) return;
+        setLeetcodeLoading(true);
+        setLeetcodeError('');
+        try {
+            const res = await integrationsAPI.getLeetcode(username);
+            if (res.data.success) {
+                setLeetcodeData(res.data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch leetcode integration data:', err);
+            setLeetcodeError(err.response?.data?.message || 'Failed to load LeetCode data. Make sure username is valid.');
+        } finally {
+            setLeetcodeLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'github' && !githubData && formData.socials.github) {
+            const username = extractUsername(formData.socials.github);
+            if (username) {
+                fetchGithubProfile(username);
+            }
+        }
+        if (activeTab === 'leetcode' && !leetcodeData && formData.socials.leetcode) {
+            const username = extractUsername(formData.socials.leetcode);
+            if (username) {
+                fetchLeetcodeProfile(username);
+            }
+        }
+    }, [activeTab, formData.socials, githubData, leetcodeData]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -433,6 +530,74 @@ const Profile = ({ isPublic = false }) => {
         }));
     };
 
+    const openAddProjectModal = () => {
+        setEditingProject(null);
+        setProjectTitle('');
+        setProjectDesc('');
+        setProjectImage('');
+        setProjectLiveLink('');
+        setProjectGithubLink('');
+        setProjectTechStack('');
+        setProjectModalOpen(true);
+        setProjectError('');
+    };
+
+    const openEditProjectModal = (proj) => {
+        setEditingProject(proj);
+        setProjectTitle(proj.title || '');
+        setProjectDesc(proj.description || '');
+        setProjectImage(proj.image || '');
+        setProjectLiveLink(proj.liveDemo || '');
+        setProjectGithubLink(proj.githubLink || proj.githubUrl || '');
+        setProjectTechStack(proj.techStack ? proj.techStack.join(', ') : '');
+        setProjectModalOpen(true);
+        setProjectError('');
+    };
+
+    const handleSaveProject = async (e) => {
+        if (e) e.preventDefault();
+        if (!projectTitle.trim() || !projectDesc.trim()) {
+            setProjectError('Title and description are required.');
+            return;
+        }
+
+        const payload = {
+            title: projectTitle.trim(),
+            description: projectDesc.trim(),
+            image: projectImage.trim(),
+            liveDemo: projectLiveLink.trim(),
+            githubLink: projectGithubLink.trim(),
+            techStack: projectTechStack.split(',').map(s => s.trim()).filter(Boolean)
+        };
+
+        setSaving(true);
+        setProjectError('');
+
+        try {
+            if (editingProject) {
+                const res = await projectsAPI.updateUserProject(editingProject._id, payload);
+                if (res.data.success) {
+                    setProjects(prev => prev.map(p => p._id === editingProject._id ? res.data.data : p));
+                    showToast('Project updated successfully!');
+                    setProjectModalOpen(false);
+                }
+            } else {
+                const res = await projectsAPI.createUserProject(payload);
+                if (res.data.success) {
+                    setProjects(prev => [...prev, res.data.data]);
+                    showToast('Project created successfully! +30 XP');
+                    setProjectModalOpen(false);
+                    await refreshUser();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to save project:', error);
+            setProjectError(error.response?.data?.message || 'Failed to save project.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleImportProject = async (e) => {
         if (e) e.preventDefault();
         if (!githubLink.trim()) return;
@@ -464,7 +629,7 @@ const Profile = ({ isPublic = false }) => {
     const handleDeleteProject = async (projectId) => {
         if (!window.confirm('Are you sure you want to remove this project?')) return;
         try {
-            const res = await projectsAPI.delete(projectId);
+            const res = await projectsAPI.deleteUserProject(projectId);
             if (res.data.success) {
                 setProjects(prev => prev.filter(p => p._id !== projectId));
                 showToast('Project deleted successfully.');
@@ -675,22 +840,22 @@ const Profile = ({ isPublic = false }) => {
                 </div>
 
                 {/* Sub Navigation Tabs */}
-                {!isPublic && (
-                    <div className="flex flex-wrap gap-2 mb-8 border-b border-dark-200 dark:border-dark-800 pb-px">
-                        <button
-                            onClick={() => handleTabSwitch('overview', false)}
-                            className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'overview' && !editMode
-                                ? 'text-primary-500 font-bold border-b-2 border-primary-500'
-                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
-                                }`}
-                        >
-                            <span className="flex items-center gap-1.5">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                Profile Hub
-                            </span>
-                        </button>
+                <div className="flex flex-wrap gap-2 mb-8 border-b border-dark-200 dark:border-dark-800 pb-px">
+                    <button
+                        onClick={() => handleTabSwitch('overview', false)}
+                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'overview' && !editMode
+                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                            }`}
+                    >
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Profile Hub
+                        </span>
+                    </button>
+                    {!isPublic && (
                         <button
                             onClick={() => handleTabSwitch('overview', true)}
                             className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${editMode
@@ -698,7 +863,7 @@ const Profile = ({ isPublic = false }) => {
                                 : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
                                 }`}
                         >
-                            <span className="flex items-center gap-1.5">
+                            <span className="flex items-center gap-1.5 font-bold">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -706,36 +871,64 @@ const Profile = ({ isPublic = false }) => {
                                 Customize Profile
                             </span>
                         </button>
-                        <button
-                            onClick={() => handleTabSwitch('achievements', false)}
-                            className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'achievements'
-                                ? 'text-primary-500 font-bold border-b-2 border-primary-500'
-                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
-                                }`}
-                        >
-                            <span className="flex items-center gap-1.5">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                </svg>
-                                Badges & Trophies
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => handleTabSwitch('leaderboard', false)}
-                            className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'leaderboard'
-                                ? 'text-primary-500 font-bold border-b-2 border-primary-500'
-                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
-                                }`}
-                        >
-                            <span className="flex items-center gap-1.5">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                Leaderboard
-                            </span>
-                        </button>
-                    </div>
-                )}
+                    )}
+                    <button
+                        onClick={() => handleTabSwitch('github', false)}
+                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'github'
+                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                            }`}
+                    >
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+                            </svg>
+                            GitHub Profile
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => handleTabSwitch('leetcode', false)}
+                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'leetcode'
+                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                            }`}
+                    >
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                <path d="M13.483 0a1.374 1.374 0 0 0-.961.411L7.116 5.826a1.374 1.374 0 0 0-.411.961v6.844a1.374 1.374 0 0 0 .411.961l5.406 5.415a1.374 1.374 0 0 0 .961.411 1.374 1.374 0 0 0 .961-.411l5.415-5.415a1.374 1.374 0 0 0 .411-.961V6.787a1.374 1.374 0 0 0-.411-.961L14.444.411a1.374 1.374 0 0 0-.961-.411zM12 2.748L19.252 10 12 17.252 4.748 10 12 2.748z" />
+                            </svg>
+                            LeetCode Stats
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => handleTabSwitch('achievements', false)}
+                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'achievements'
+                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                            }`}
+                    >
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                            Badges & Trophies
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => handleTabSwitch('leaderboard', false)}
+                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'leaderboard'
+                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                            }`}
+                    >
+                        <span className="flex items-center gap-1.5 font-bold">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Leaderboard
+                        </span>
+                    </button>
+                </div>
 
                 {/* MAIN CONTENT PANELS */}
                 <div className="grid lg:grid-cols-3 gap-8">
@@ -1095,7 +1288,7 @@ const Profile = ({ isPublic = false }) => {
                                             {formData.skills.map((skill) => (
                                                 <div key={skill.name}>
                                                     <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
-                                                        <span className="text-dark-700 dark:text-dark-350">{skill.name}</span>
+                                                        <span className="text-dark-800 dark:text-dark-100">{skill.name}</span>
                                                         <span className="text-primary-500 font-mono">{skill.level}%</span>
                                                     </div>
                                                     <div className="w-full bg-dark-100 dark:bg-dark-800 h-2 rounded-full overflow-hidden">
@@ -1123,39 +1316,51 @@ const Profile = ({ isPublic = false }) => {
                                         
                                         {/* Import Form (if not public) */}
                                         {!isPublic && (
-                                            <form onSubmit={handleImportProject} className="flex flex-col sm:flex-row gap-2 max-w-md w-full">
-                                                <div className="flex-1 relative">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Paste GitHub Repository link..."
-                                                        value={githubLink}
-                                                        onChange={(e) => setGithubLink(e.target.value)}
-                                                        className="w-full px-3.5 py-1.5 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-xs font-semibold placeholder-dark-450 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                                    />
-                                                </div>
+                                            <div className="flex flex-col sm:flex-row items-center gap-2 max-w-xl w-full sm:justify-end">
                                                 <button
-                                                    type="submit"
-                                                    disabled={importingProject}
-                                                    className="px-4 py-1.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary-500/15 transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
+                                                    type="button"
+                                                    onClick={openAddProjectModal}
+                                                    className="px-3 py-1.5 bg-dark-100 hover:bg-dark-200 dark:bg-dark-850 dark:hover:bg-dark-800 text-dark-800 dark:text-dark-100 font-bold text-xs rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1"
                                                 >
-                                                    {importingProject ? (
-                                                        <>
-                                                            <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                                            </svg>
-                                                            Importing...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                                                            </svg>
-                                                            Import Repo
-                                                        </>
-                                                    )}
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                    Add Manually
                                                 </button>
-                                            </form>
+                                                <form onSubmit={handleImportProject} className="flex flex-1 gap-2 w-full">
+                                                    <div className="flex-1 relative">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Paste GitHub Repository link..."
+                                                            value={githubLink}
+                                                            onChange={(e) => setGithubLink(e.target.value)}
+                                                            className="w-full px-3.5 py-1.5 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-xs font-semibold placeholder-dark-450 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={importingProject}
+                                                        className="px-4 py-1.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary-500/15 transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
+                                                    >
+                                                        {importingProject ? (
+                                                            <>
+                                                                <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                                </svg>
+                                                                Importing...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                                                </svg>
+                                                                Import Repo
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </form>
+                                            </div>
                                         )}
                                     </div>
 
@@ -1176,17 +1381,30 @@ const Profile = ({ isPublic = false }) => {
                                                 <div className="h-32 w-full overflow-hidden relative">
                                                     <ProjectCover project={project} />
                                                     
-                                                    {/* Delete option if owner */}
+                                                    {/* Edit/Delete options if owner */}
                                                     {!isPublic && (
-                                                        <button
-                                                            onClick={() => handleDeleteProject(project._id)}
-                                                            className="absolute top-3 right-3 p-1.5 bg-dark-950/80 hover:bg-red-500 text-white rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-lg"
-                                                            title="Delete Project"
-                                                        >
-                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                        </button>
+                                                        <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all z-20">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openEditProjectModal(project)}
+                                                                className="p-1.5 bg-dark-950/85 hover:bg-primary-500 text-white rounded-lg border border-white/10 transition-all cursor-pointer shadow-lg hover:scale-105"
+                                                                title="Edit Project"
+                                                            >
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                </svg>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteProject(project._id)}
+                                                                className="p-1.5 bg-dark-950/85 hover:bg-red-500 text-white rounded-lg border border-white/10 transition-all cursor-pointer shadow-lg hover:scale-105"
+                                                                title="Delete Project"
+                                                            >
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
 
@@ -1196,41 +1414,60 @@ const Profile = ({ isPublic = false }) => {
                                                             <h4 className="font-bold text-sm text-dark-900 dark:text-white line-clamp-1 group-hover:text-primary-500 transition-colors">
                                                                 {project.title}
                                                             </h4>
-                                                            {project.githubUrl && (
-                                                                <a
-                                                                    href={project.githubUrl}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="text-dark-400 hover:text-dark-900 dark:hover:text-white flex-shrink-0"
-                                                                    title="Open Github Repo"
-                                                                >
-                                                                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                                                                        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
-                                                                    </svg>
-                                                                </a>
-                                                            )}
+                                                            <div className="flex items-center gap-1.5">
+                                                                {(project.githubLink || project.githubUrl) && (
+                                                                    <a
+                                                                        href={project.githubLink || project.githubUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-dark-400 hover:text-dark-900 dark:hover:text-white flex-shrink-0"
+                                                                        title="Open GitHub Repo"
+                                                                    >
+                                                                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                                                            <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+                                                                        </svg>
+                                                                    </a>
+                                                                )}
+                                                                {(project.liveDemo) && (
+                                                                    <a
+                                                                        href={project.liveDemo}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-primary-500 hover:text-primary-600 flex-shrink-0"
+                                                                        title="Open Live Demo"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                        </svg>
+                                                                    </a>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         <p className="text-xs text-dark-500 mt-1.5 line-clamp-2 leading-relaxed">
-                                                            {project.description || 'No description provided for this project repository.'}
+                                                            {project.description || 'No description provided for this project.'}
                                                         </p>
                                                     </div>
 
                                                     <div className="flex justify-between items-center mt-3 pt-3 border-t border-dark-200/40 dark:border-dark-850/50 text-[11px] font-semibold text-dark-500">
                                                         <div className="flex gap-3">
-                                                            {project.stars !== undefined && (
+                                                            {project.stars !== undefined && project.stars > 0 && (
                                                                 <span className="flex items-center gap-1">
                                                                     ★ {project.stars}
                                                                 </span>
                                                             )}
-                                                            {project.forks !== undefined && (
+                                                            {project.forks !== undefined && project.forks > 0 && (
                                                                 <span className="flex items-center gap-1">
                                                                     ⑂ {project.forks}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span className="font-bold text-primary-500">
-                                                            {project.techStack?.[0] || 'Repository'}
-                                                        </span>
+                                                        <div className="flex gap-1 overflow-hidden max-w-[180px]">
+                                                            {project.techStack?.slice(0, 3).map((tech, idx) => (
+                                                                <span key={idx} className="bg-dark-100 dark:bg-dark-850/80 px-1.5 py-0.5 rounded text-[10px] text-dark-600 dark:text-dark-350 whitespace-nowrap">
+                                                                    {tech}
+                                                                </span>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </Card>
@@ -1652,10 +1889,499 @@ const Profile = ({ isPublic = false }) => {
                             </Card>
                         )}
 
+                        {/* TAB 5: GITHUB INTEGRATION */}
+                        {activeTab === 'github' && (
+                            <div className="space-y-6 animate-fade-in">
+                                {!formData.socials.github ? (
+                                    <Card className="p-8 text-center bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800" hover={false}>
+                                        <div className="w-16 h-16 mx-auto bg-dark-50 dark:bg-dark-950 rounded-full flex items-center justify-center text-dark-400 mb-4">
+                                            <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
+                                                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="font-extrabold text-dark-900 dark:text-white font-display text-lg mb-2">GitHub Profile Link Missing</h3>
+                                        <p className="text-sm text-dark-400 max-w-md mx-auto mb-6">
+                                            {isPublic ? 'This developer has not linked their GitHub profile yet.' : 'Link your GitHub profile in customize settings to sync repos, stats, and contribution calendars.'}
+                                        </p>
+                                        {!isPublic && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleTabSwitch('overview', true)}
+                                                className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary-500/15 transition-all cursor-pointer mx-auto block"
+                                            >
+                                                Add GitHub Profile Link
+                                            </button>
+                                        )}
+                                    </Card>
+                                ) : githubLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-20">
+                                        <Loading size="lg" />
+                                        <span className="text-xs text-dark-400 mt-4 font-bold">Synchronizing public GitHub workspace data...</span>
+                                    </div>
+                                ) : githubError ? (
+                                    <Card className="p-6 bg-red-500/5 border border-red-500/15 text-center" hover={false}>
+                                        <p className="text-sm text-red-500 font-semibold mb-4">{githubError}</p>
+                                        {!isPublic && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleTabSwitch('overview', true)}
+                                                className="px-4 py-2 bg-red-500 text-white font-bold text-xs rounded-xl cursor-pointer"
+                                            >
+                                                Edit GitHub Link
+                                            </button>
+                                        )}
+                                    </Card>
+                                ) : githubData ? (
+                                    <>
+                                        {/* Github Stats Overview */}
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                            <Card className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 uppercase tracking-wider">Public Repos</span>
+                                                <h4 className="text-2xl font-black text-dark-900 dark:text-white font-display mt-2">{githubData.publicRepos}</h4>
+                                            </Card>
+                                            <Card className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 uppercase tracking-wider">Total Stars</span>
+                                                <h4 className="text-2xl font-black text-amber-500 font-display mt-2">★ {githubData.totalStars}</h4>
+                                            </Card>
+                                            <Card className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 uppercase tracking-wider">Followers</span>
+                                                <h4 className="text-2xl font-black text-dark-900 dark:text-white font-display mt-2">{githubData.followers}</h4>
+                                            </Card>
+                                            <Card className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 uppercase tracking-wider">Total Forks</span>
+                                                <h4 className="text-2xl font-black text-dark-900 dark:text-white font-display mt-2">{githubData.totalForks}</h4>
+                                            </Card>
+                                        </div>
+
+                                        {/* Contribution Calendar Heatmap */}
+                                        <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div>
+                                                    <h3 className="font-bold text-dark-900 dark:text-white font-display text-base">GitHub Contribution Calendar</h3>
+                                                    <p className="text-xs text-dark-400 mt-0.5">Your public GitHub contributions in the past 12 months</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="overflow-x-auto pb-1 select-none">
+                                                <div className="flex gap-1.5 min-w-[650px] justify-center py-2">
+                                                    {githubData.contributions && githubData.contributions.length > 0 ? (
+                                                        <div className="grid grid-flow-col grid-rows-7 gap-1">
+                                                            {githubData.contributions.map((day, idx) => {
+                                                                const colors = [
+                                                                    'bg-dark-100 dark:bg-dark-850',
+                                                                    'bg-emerald-500/30 dark:bg-emerald-500/20',
+                                                                    'bg-emerald-500/50 dark:bg-emerald-500/40',
+                                                                    'bg-emerald-500/70 dark:bg-emerald-500/60',
+                                                                    'bg-emerald-500 dark:bg-emerald-400'
+                                                                ];
+                                                                const color = colors[day.level] || colors[0];
+                                                                return (
+                                                                    <div
+                                                                        key={idx}
+                                                                        className={`w-2.5 h-2.5 rounded-sm transition-transform hover:scale-125 cursor-pointer ${color}`}
+                                                                        title={`${day.date}: contributions`}
+                                                                    />
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-dark-400 italic">Contribution data is currently private or unavailable.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Card>
+
+                                        {/* Languages & Top Repositories */}
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            {/* Languages breakdown card */}
+                                            <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <h3 className="font-bold text-dark-900 dark:text-white font-display mb-4 text-xs uppercase tracking-wider">Language Distribution</h3>
+                                                <div className="space-y-4">
+                                                    {Object.entries(githubData.languages || {}).length > 0 ? (
+                                                        Object.entries(githubData.languages)
+                                                            .sort((a, b) => b[1] - a[1])
+                                                            .map(([lang, count]) => {
+                                                                const total = Object.values(githubData.languages).reduce((a, b) => a + b, 0);
+                                                                const pct = Math.round((count / total) * 100);
+                                                                return (
+                                                                    <div key={lang}>
+                                                                        <div className="flex justify-between items-center text-xs font-bold mb-1">
+                                                                            <span className="text-dark-700 dark:text-dark-300">{lang}</span>
+                                                                            <span className="text-dark-500 font-mono">{pct}% ({count})</span>
+                                                                        </div>
+                                                                        <div className="w-full bg-dark-100 dark:bg-dark-800 h-1.5 rounded-full overflow-hidden">
+                                                                            <div
+                                                                                className="h-full bg-primary-500 rounded-full"
+                                                                                style={{ width: `${pct}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                    ) : (
+                                                        <p className="text-xs text-dark-400 italic">No language data found.</p>
+                                                    )}
+                                                </div>
+                                            </Card>
+
+                                            {/* Top repositories card */}
+                                            <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <h3 className="font-bold text-dark-900 dark:text-white font-display mb-4 text-xs uppercase tracking-wider">Top Repositories</h3>
+                                                <div className="space-y-3">
+                                                    {githubData.topRepos && githubData.topRepos.length > 0 ? (
+                                                        githubData.topRepos.map((repo) => (
+                                                            <a
+                                                                key={repo.name}
+                                                                href={repo.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="block p-3 border border-dark-200/60 dark:border-dark-800/80 hover:border-primary-500 dark:hover:border-primary-500/50 rounded-xl hover:bg-dark-50 dark:hover:bg-dark-950/20 transition-all"
+                                                            >
+                                                                <div className="flex justify-between items-start">
+                                                                    <h4 className="text-xs font-bold text-dark-900 dark:text-white font-mono break-all">{repo.name}</h4>
+                                                                    <span className="text-[10px] font-semibold text-dark-400 dark:text-dark-500 font-mono">{repo.language}</span>
+                                                                </div>
+                                                                <p className="text-[11px] text-dark-450 dark:text-dark-400 mt-1 line-clamp-2 leading-relaxed">{repo.description || 'No description provided.'}</p>
+                                                                <div className="flex gap-3 mt-2 text-[10px] font-bold text-dark-500 font-mono">
+                                                                    <span>★ {repo.stars} stars</span>
+                                                                    <span>⑂ {repo.forks} forks</span>
+                                                                </div>
+                                                            </a>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-xs text-dark-400 italic">No repositories found.</p>
+                                                    )}
+                                                </div>
+                                            </Card>
+                                        </div>
+                                    </>
+                                ) : null}
+                            </div>
+                        )}
+
+                        {/* TAB 6: LEETCODE INTEGRATION */}
+                        {activeTab === 'leetcode' && (
+                            <div className="space-y-6 animate-fade-in">
+                                {!formData.socials.leetcode ? (
+                                    <Card className="p-8 text-center bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800" hover={false}>
+                                        <div className="w-16 h-16 mx-auto bg-dark-50 dark:bg-dark-950 rounded-full flex items-center justify-center text-dark-400 mb-4">
+                                            <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
+                                                <path d="M13.483 0a1.374 1.374 0 0 0-.961.411L7.116 5.826a1.374 1.374 0 0 0-.411.961v6.844a1.374 1.374 0 0 0 .411.961l5.406 5.415a1.374 1.374 0 0 0 .961.411 1.374 1.374 0 0 0 .961-.411l5.415-5.415a1.374 1.374 0 0 0 .411-.961V6.787a1.374 1.374 0 0 0-.411-.961L14.444.411a1.374 1.374 0 0 0-.961-.411zM12 2.748L19.252 10 12 17.252 4.748 10 12 2.748z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="font-extrabold text-dark-900 dark:text-white font-display text-lg mb-2">LeetCode Profile Link Missing</h3>
+                                        <p className="text-sm text-dark-400 max-w-md mx-auto mb-6">
+                                            {isPublic ? 'This developer has not linked their LeetCode account yet.' : 'Link your LeetCode account in customize settings to showcase your solved problems progress and real-time statistics.'}
+                                        </p>
+                                        {!isPublic && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleTabSwitch('overview', true)}
+                                                className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary-500/15 transition-all cursor-pointer mx-auto block"
+                                            >
+                                                Add LeetCode Profile Link
+                                            </button>
+                                        )}
+                                    </Card>
+                                ) : leetcodeLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-20">
+                                        <Loading size="lg" />
+                                        <span className="text-xs text-dark-400 mt-4 font-bold">Retrieving LeetCode statistics and progress...</span>
+                                    </div>
+                                ) : leetcodeError ? (
+                                    <Card className="p-6 bg-red-500/5 border border-red-500/15 text-center" hover={false}>
+                                        <p className="text-sm text-red-500 font-semibold mb-4">{leetcodeError}</p>
+                                        {!isPublic && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleTabSwitch('overview', true)}
+                                                className="px-4 py-2 bg-red-500 text-white font-bold text-xs rounded-xl cursor-pointer"
+                                            >
+                                                Edit LeetCode Link
+                                            </button>
+                                        )}
+                                    </Card>
+                                ) : leetcodeData ? (
+                                    <>
+                                        {/* Leetcode General Info */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <Card className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 flex items-center gap-4" hover={false}>
+                                                <img
+                                                    src={leetcodeData.avatar || 'https://assets.leetcode.com/users/default_avatar.jpg'}
+                                                    alt="LeetCode Avatar"
+                                                    className="w-12 h-12 rounded-full border border-dark-200 dark:border-dark-800 bg-dark-50"
+                                                />
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-dark-900 dark:text-white">{leetcodeData.realName || leetcodeData.username}</h4>
+                                                    <span className="text-xs text-dark-400">@{leetcodeData.username}</span>
+                                                </div>
+                                            </Card>
+                                            <Card className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 uppercase tracking-wider">LeetCode Rank</span>
+                                                <h4 className="text-2xl font-black text-dark-900 dark:text-white font-display mt-1">#{Number(leetcodeData.ranking).toLocaleString()}</h4>
+                                            </Card>
+                                            <Card className="p-5 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                                <span className="text-[10px] font-bold text-dark-450 dark:text-dark-500 uppercase tracking-wider">Reputation Points</span>
+                                                <h4 className="text-2xl font-black text-primary-500 font-display mt-1">✦ {leetcodeData.reputation}</h4>
+                                            </Card>
+                                        </div>
+
+                                        {/* Circular Progress & Difficulty Breakdown */}
+                                        <div className="grid md:grid-cols-3 gap-6">
+                                            {/* Circular Progress (Solved Stats) */}
+                                            <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 md:col-span-1 flex flex-col items-center justify-center text-center" hover={false}>
+                                                <h3 className="font-bold text-dark-900 dark:text-white font-display mb-4 text-xs uppercase tracking-wider">Total Progress</h3>
+                                                
+                                                {(() => {
+                                                    const solvedTotalObj = leetcodeData.acSubmissionNum?.find(x => x.difficulty === 'All') || { count: 0 };
+                                                    const allQuestionsTotalObj = leetcodeData.allQuestionsCount?.find(x => x.difficulty === 'All') || { count: 1 };
+                                                    
+                                                    const solvedCount = solvedTotalObj.count;
+                                                    const totalCount = allQuestionsTotalObj.count;
+                                                    const percent = Math.round((solvedCount / totalCount) * 100);
+
+                                                    return (
+                                                        <div className="relative w-32 h-32 flex items-center justify-center">
+                                                            <svg className="w-full h-full transform -rotate-90">
+                                                                <circle
+                                                                    cx="64"
+                                                                    cy="64"
+                                                                    r="56"
+                                                                    className="text-dark-100 dark:text-dark-800 stroke-current"
+                                                                    strokeWidth="8"
+                                                                    fill="transparent"
+                                                                />
+                                                                <circle
+                                                                    cx="64"
+                                                                    cy="64"
+                                                                    r="56"
+                                                                    className="text-primary-500 stroke-current"
+                                                                    strokeWidth="8"
+                                                                    fill="transparent"
+                                                                    strokeDasharray={351.8}
+                                                                    strokeDashoffset={351.8 - (351.8 * percent) / 100}
+                                                                    strokeLinecap="round"
+                                                                />
+                                                            </svg>
+                                                            <div className="absolute flex flex-col items-center justify-center">
+                                                                <span className="text-2xl font-black text-dark-900 dark:text-white font-mono">{solvedCount}</span>
+                                                                <span className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase">Solved</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </Card>
+
+                                            {/* Solved by Difficulty Bars */}
+                                            <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 md:col-span-2" hover={false}>
+                                                <h3 className="font-bold text-dark-900 dark:text-white font-display mb-6 text-xs uppercase tracking-wider">Difficulty Breakdown</h3>
+                                                <div className="space-y-4">
+                                                    {['Easy', 'Medium', 'Hard'].map((diff) => {
+                                                        const solvedObj = leetcodeData.acSubmissionNum?.find(x => x.difficulty === diff) || { count: 0 };
+                                                        const totalObj = leetcodeData.allQuestionsCount?.find(x => x.difficulty === diff) || { count: 1 };
+                                                        const solved = solvedObj.count;
+                                                        const total = totalObj.count;
+                                                        const pct = Math.round((solved / total) * 100);
+
+                                                        const theme = {
+                                                            Easy: { text: 'text-emerald-500', bar: 'bg-emerald-500' },
+                                                            Medium: { text: 'text-amber-500', bar: 'bg-amber-500' },
+                                                            Hard: { text: 'text-red-500', bar: 'bg-red-500' }
+                                                        }[diff];
+
+                                                        return (
+                                                            <div key={diff}>
+                                                                <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+                                                                    <span className="text-dark-700 dark:text-dark-300">{diff}</span>
+                                                                    <span className={`${theme.text} font-mono`}>{solved} / {total} ({pct}%)</span>
+                                                                </div>
+                                                                <div className="w-full bg-dark-100 dark:bg-dark-800 h-2 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full ${theme.bar}`}
+                                                                        style={{ width: `${pct}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </Card>
+                                        </div>
+
+                                        {/* Recent Submissions List */}
+                                        <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                            <h3 className="font-bold text-dark-900 dark:text-white font-display text-sm uppercase tracking-wider mb-4">Recent Submissions</h3>
+                                            <div className="divide-y divide-dark-100 dark:divide-dark-850">
+                                                {leetcodeData.submissions && leetcodeData.submissions.length > 0 ? (
+                                                    leetcodeData.submissions.map((sub, idx) => {
+                                                        const dateStr = new Date(Number(sub.timestamp) * 1000).toLocaleDateString(undefined, {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        });
+                                                        const isAc = sub.statusDisplay === 'Accepted';
+                                                        return (
+                                                            <div key={idx} className="flex justify-between items-center py-3">
+                                                                <div>
+                                                                    <h4 className="text-xs font-bold text-dark-900 dark:text-white font-mono break-all">{sub.title}</h4>
+                                                                    <span className="text-[10px] text-dark-400 font-mono uppercase">{sub.lang} • {dateStr}</span>
+                                                                </div>
+                                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded font-mono uppercase ${
+                                                                    isAc ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
+                                                                }`}>
+                                                                    {sub.statusDisplay}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })
+                                                ) : (
+                                                    <p className="text-xs text-dark-450 italic py-4">No recent submissions found.</p>
+                                                )}
+                                            </div>
+                                        </Card>
+                                    </>
+                                ) : null}
+                            </div>
+                        )}
+
                     </div>
                 </div>
             </div>
         </div>
+
+        {/* Project Add/Edit Modal */}
+        {projectModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-fade-in">
+                <div className="w-full max-w-lg bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800 rounded-3xl overflow-hidden shadow-2xl animate-scale-in">
+                    {/* Header */}
+                    <div className="px-6 py-5 border-b border-dark-100 dark:border-dark-850 flex justify-between items-center bg-dark-50 dark:bg-dark-950/30">
+                        <h3 className="font-extrabold text-dark-900 dark:text-white font-display text-lg">
+                            {editingProject ? 'Edit Showcase Project' : 'Add Showcase Project'}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={() => setProjectModalOpen(false)}
+                            className="p-1 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-850 text-dark-450 hover:text-dark-900 dark:hover:text-white transition-all cursor-pointer"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Form */}
+                    <form onSubmit={handleSaveProject} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                        {projectError && (
+                            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold flex items-center gap-2">
+                                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span>{projectError}</span>
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-dark-500 dark:text-dark-400 mb-1.5">
+                                Project Title *
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="e.g. Realtime Code Editor"
+                                value={projectTitle}
+                                onChange={(e) => setProjectTitle(e.target.value)}
+                                className="w-full px-4 py-2 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-sm font-semibold placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/25 dark:focus:ring-primary-500/15 focus:border-primary-500 text-dark-900 dark:text-white"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-dark-500 dark:text-dark-400 mb-1.5">
+                                Description *
+                            </label>
+                            <textarea
+                                required
+                                rows="3"
+                                placeholder="Brief summary of features, design, and architecture..."
+                                value={projectDesc}
+                                onChange={(e) => setProjectDesc(e.target.value)}
+                                className="w-full px-4 py-2 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-sm font-semibold placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/25 dark:focus:ring-primary-500/15 focus:border-primary-500 text-dark-900 dark:text-white resize-none"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-dark-500 dark:text-dark-400 mb-1.5">
+                                    GitHub Link (Optional)
+                                </label>
+                                <input
+                                    type="url"
+                                    placeholder="https://github.com/..."
+                                    value={projectGithubLink}
+                                    onChange={(e) => setProjectGithubLink(e.target.value)}
+                                    className="w-full px-4 py-2 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-sm font-semibold placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/25 dark:focus:ring-primary-500/15 focus:border-primary-500 text-dark-900 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-dark-500 dark:text-dark-400 mb-1.5">
+                                    Live Demo Link (Optional)
+                                </label>
+                                <input
+                                    type="url"
+                                    placeholder="https://my-project.com"
+                                    value={projectLiveLink}
+                                    onChange={(e) => setProjectLiveLink(e.target.value)}
+                                    className="w-full px-4 py-2 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-sm font-semibold placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/25 dark:focus:ring-primary-500/15 focus:border-primary-500 text-dark-900 dark:text-white"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-dark-500 dark:text-dark-400 mb-1.5">
+                                Cover Image URL (Optional)
+                            </label>
+                            <input
+                                type="url"
+                                placeholder="https://images.unsplash.com/..."
+                                value={projectImage}
+                                onChange={(e) => setProjectImage(e.target.value)}
+                                className="w-full px-4 py-2 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-sm font-semibold placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/25 dark:focus:ring-primary-500/15 focus:border-primary-500 text-dark-900 dark:text-white"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-dark-500 dark:text-dark-400 mb-1.5">
+                                Tech Stack (Comma-separated)
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. React, Node.js, Socket.io, TailwindCSS"
+                                value={projectTechStack}
+                                onChange={(e) => setProjectTechStack(e.target.value)}
+                                className="w-full px-4 py-2 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-sm font-semibold placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/25 dark:focus:ring-primary-500/15 focus:border-primary-500 text-dark-900 dark:text-white"
+                            />
+                        </div>
+
+                        <div className="pt-4 border-t border-dark-100 dark:border-dark-850 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setProjectModalOpen(false)}
+                                className="px-4 py-2 text-dark-600 dark:text-dark-300 font-bold text-xs rounded-xl hover:bg-dark-50 dark:hover:bg-dark-850 transition-all cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={saving}
+                                className="px-5 py-2 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary-500/15 transition-all cursor-pointer flex items-center gap-1.5"
+                            >
+                                {saving ? 'Saving...' : 'Save Project'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
     );
 };
 

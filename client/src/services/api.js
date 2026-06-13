@@ -34,7 +34,10 @@ api.interceptors.response.use(
         // Handle concurrent session logout
         if (error.response?.status === 401 && error.response?.data?.code === 'SESSION_EXPIRED') {
             localStorage.removeItem('accessToken');
-            window.location.href = '/login?error=session_expired';
+            localStorage.removeItem('user');
+            if (!window.location.pathname.startsWith('/p/')) {
+                window.location.href = '/login?error=session_expired';
+            }
             return Promise.reject(error);
         }
 
@@ -62,9 +65,12 @@ api.interceptors.response.use(
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
-                // Refresh failed, clear tokens and redirect to login
+                // Refresh failed, clear tokens and redirect to login if not viewing public profile
                 localStorage.removeItem('accessToken');
-                window.location.href = '/login';
+                localStorage.removeItem('user');
+                if (!window.location.pathname.startsWith('/p/')) {
+                    window.location.href = '/login';
+                }
                 return Promise.reject(refreshError);
             }
         }
@@ -99,6 +105,8 @@ export const projectsAPI = {
     getUserProjects: (userId) => api.get(`/projects/user/${userId}`),
     importGithub: (githubLink) => api.post('/projects/import-github', { githubLink }),
     deleteUserProject: (id) => api.delete(`/projects/user/${id}`),
+    createUserProject: (data) => api.post('/projects/user', data),
+    updateUserProject: (id, data) => api.put(`/projects/user/${id}`, data),
 };
 
 // Certificates API
@@ -189,6 +197,12 @@ export const tasksAPI = {
 export const paymentAPI = {
     createOrder: (tier) => api.post('/payment/order', { tier }),
     verifyPayment: (paymentData) => api.post('/payment/verify', paymentData),
+};
+
+// Integrations API
+export const integrationsAPI = {
+    getGithub: (username) => api.get(`/integrations/github/${username}`),
+    getLeetcode: (username) => api.get(`/integrations/leetcode/${username}`),
 };
 
 export default api;

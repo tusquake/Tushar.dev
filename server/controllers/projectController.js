@@ -293,6 +293,99 @@ const deleteUserProject = async (req, res) => {
     }
 };
 
+// @desc    Create manual user project
+// @route   POST /api/projects/user
+// @access  Private
+const createUserProject = async (req, res) => {
+    try {
+        const { title, description, techStack, githubLink, liveDemo, image, featured } = req.body;
+        if (!title || !description) {
+            return res.status(400).json({
+                success: false,
+                message: 'Title and description are required'
+            });
+        }
+
+        const project = await Project.create({
+            userId: req.user._id,
+            title,
+            description,
+            techStack: techStack || [],
+            githubLink: githubLink || '',
+            liveDemo: liveDemo || '',
+            image: image || '',
+            featured: featured || false,
+            order: 0
+        });
+
+        // Award XP
+        const { awardXP } = require('../utils/gamification');
+        const xpResult = await awardXP(req.user._id, 'PROJECT_ADDED');
+
+        res.status(201).json({
+            success: true,
+            message: 'Project created successfully',
+            data: project,
+            xpResult
+        });
+    } catch (error) {
+        console.error('Create user project error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create project',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Update user's project
+// @route   PUT /api/projects/user/:id
+// @access  Private
+const updateUserProject = async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: 'Project not found'
+            });
+        }
+
+        if (project.userId?.toString() !== req.user._id.toString() && req.user.role !== 'ADMIN') {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to update this project'
+            });
+        }
+
+        const { title, description, techStack, githubLink, liveDemo, image, featured } = req.body;
+
+        if (title !== undefined) project.title = title;
+        if (description !== undefined) project.description = description;
+        if (techStack !== undefined) project.techStack = techStack;
+        if (githubLink !== undefined) project.githubLink = githubLink;
+        if (liveDemo !== undefined) project.liveDemo = liveDemo;
+        if (image !== undefined) project.image = image;
+        if (featured !== undefined) project.featured = featured;
+
+        await project.save();
+
+        res.json({
+            success: true,
+            message: 'Project updated successfully',
+            data: project
+        });
+    } catch (error) {
+        console.error('Update user project error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update project',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getProjects,
     getProject,
@@ -301,5 +394,7 @@ module.exports = {
     deleteProject,
     getUserProjects,
     importGithubProject,
-    deleteUserProject
+    deleteUserProject,
+    createUserProject,
+    updateUserProject
 };

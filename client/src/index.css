@@ -25,6 +25,7 @@
   --color-dark-100: var(--theme-color-dark-100);
   --color-dark-200: var(--theme-color-dark-200);
   --color-dark-300: var(--theme-color-dark-300);
+  --color-dark-350: var(--theme-color-dark-350);
   --color-dark-400: var(--theme-color-dark-400);
   --color-dark-500: var(--theme-color-dark-500);
   --color-dark-600: var(--theme-color-dark-600);
@@ -61,6 +62,7 @@
   --theme-color-dark-100: #ede9fe;
   --theme-color-dark-200: #ddd6fe;
   --theme-color-dark-300: #cbd5e1;
+  --theme-color-dark-350: #64748b;
   --theme-color-dark-400: #94a3b8;
   --theme-color-dark-500: #6b7280;
   --theme-color-dark-600: #4b5563;
@@ -97,6 +99,7 @@ html.dark {
   --theme-color-dark-100: #e6edf3;
   --theme-color-dark-200: #8b949e;
   --theme-color-dark-300: #e6edf3;
+  --theme-color-dark-350: #d1d5db;
   --theme-color-dark-400: #8b949e;
   --theme-color-dark-500: #8b949e;
   --theme-color-dark-600: #e6edf3;

@@ -8,7 +8,9 @@ const {
     deleteProject,
     getUserProjects,
     importGithubProject,
-    deleteUserProject
+    deleteUserProject,
+    createUserProject,
+    updateUserProject
 } = require('../controllers/projectController');
 const { protect, adminOnly } = require('../middlewares/authMiddleware');
 
@@ -18,6 +20,8 @@ router.get('/user/:userId', getUserProjects);
 router.get('/:id', getProject);
 
 // User specific private routes
+router.post('/user', protect, createUserProject);
+router.put('/user/:id', protect, updateUserProject);
 router.post('/import-github', protect, importGithubProject);
 router.delete('/user/:id', protect, deleteUserProject);
 
