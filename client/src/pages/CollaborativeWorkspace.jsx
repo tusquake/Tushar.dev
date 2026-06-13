@@ -938,11 +938,15 @@ export default function CollaborativeWorkspace() {
             {/* Exit Room */}
             <button
               onClick={() => {
-                const confirmed = window.confirm("Warning: Leaving this room will disconnect you from the editor, voice channel, and active workspace. Are you sure you want to exit?");
-                if (confirmed) {
-                  setInLobby(true);
-                  navigate('/code-editor');
-                }
+                setModalConfig({
+                  type: 'confirm',
+                  title: 'Leave Workspace?',
+                  message: 'Warning: Leaving this room will disconnect you from the editor, voice channel, and active workspace. Are you sure you want to exit?',
+                  onConfirm: () => {
+                    setInLobby(true);
+                    navigate('/code-editor');
+                  }
+                });
               }}
               className="px-3 py-1.5 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 text-xs text-rose-400 flex items-center gap-1.5 transition"
             >

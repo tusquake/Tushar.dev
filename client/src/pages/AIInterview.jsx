@@ -82,6 +82,7 @@ const AIInterview = () => {
     const [difficulty, setDifficulty] = useState('Medium');
     const [yoe, setYoe] = useState('1-3 years');
     const [targetRole, setTargetRole] = useState('Software Engineer');
+    const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
 
     useEffect(() => {
         const updateVoices = () => {
@@ -456,10 +457,12 @@ const AIInterview = () => {
     // Speech recognition helper
     const startListening = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert('Speech recognition not supported in this browser. Please use Google Chrome or Safari.');
+            setConfirmModal({
+                type: 'alert',
+                title: 'Speech Recognition Unsupported',
+                message: 'Speech recognition is not supported in this browser. Please use Google Chrome or Safari for the best experience.'
+            });
             return;
-        }
         
         window.speechSynthesis.cancel();
         setIsAiSpeaking(false);
@@ -535,27 +538,30 @@ const AIInterview = () => {
     };
 
     const handleExitSession = () => {
-        const confirmed = window.confirm("Warning: You are currently in an active interview session. Leaving will immediately terminate the interview, and all progress will be lost. Are you sure you want to exit?");
-        if (!confirmed) return;
-
-        window.speechSynthesis.cancel();
-        if (idleTimerRef.current) {
-            clearTimeout(idleTimerRef.current);
-            idleTimerRef.current = null;
-        }
-        if (recognitionRef.current) {
-            try {
-                recognitionRef.current.stop();
-            } catch (e) {
-                console.error(e);
+        setConfirmModal({
+            title: 'End Active Interview?',
+            message: 'Warning: You are currently in an active interview session. Leaving will immediately terminate the interview, and all progress will be lost. Are you sure you want to exit?',
+            onConfirm: () => {
+                window.speechSynthesis.cancel();
+                if (idleTimerRef.current) {
+                    clearTimeout(idleTimerRef.current);
+                    idleTimerRef.current = null;
+                }
+                if (recognitionRef.current) {
+                    try {
+                        recognitionRef.current.stop();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    recognitionRef.current = null;
+                }
+                setStage('idle');
+                setQuestion('');
+                setAnswer('');
+                setFeedback(null);
+                setSessionLogs([]);
             }
-            recognitionRef.current = null;
-        }
-        setStage('idle');
-        setQuestion('');
-        setAnswer('');
-        setFeedback(null);
-        setSessionLogs([]);
+        });
     };
 
     const generateQuestion = async () => {
@@ -1091,17 +1097,21 @@ JSON Evaluation:`;
     };
 
     const clearHistory = async () => {
-        if (window.confirm('Are you sure you want to clear your entire interview log history?')) {
-            try {
-                await interviewAPI.clear();
-                setHistory([]);
-                localStorage.removeItem('codeforge_interview_history');
-                showToast('Interview log history cleared');
-            } catch (err) {
-                console.error('Failed to clear interview logs from DB', err);
-                showToast('Failed to clear history. Try again.');
+        setConfirmModal({
+            title: 'Clear History?',
+            message: 'Are you sure you want to clear your entire interview log history? This action cannot be undone.',
+            onConfirm: async () => {
+                try {
+                    await interviewAPI.clear();
+                    setHistory([]);
+                    localStorage.removeItem('codeforge_interview_history');
+                    showToast('Interview log history cleared');
+                } catch (err) {
+                    console.error('Failed to clear interview logs from DB', err);
+                    showToast('Failed to clear history. Try again.');
+                }
             }
-        }
+        });
     };
 
     // Trigger evaluation when answer is set via useEffect
@@ -2095,6 +2105,46 @@ JSON Evaluation:`;
             onClose={() => setShowReviewModal(false)}
             defaultTriggerAction="interview"
         />
+
+        {confirmModal && (
+            <div className="fixed inset-0 z-[100] bg-dark-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+                <div className="max-w-md w-full bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+                    {/* Background design glow */}
+                    <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                    {/* Warning Icon */}
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-4 border border-amber-500/25 animate-bounce-slow">
+                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    
+                    <h3 className="text-lg font-bold text-dark-900 dark:text-white mb-2">{confirmModal.title}</h3>
+                    <p className="text-xs text-dark-550 dark:text-dark-400 mb-6 leading-relaxed">
+                        {confirmModal.message}
+                    </p>
+                    
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={() => setConfirmModal(null)}
+                            className="flex-1 py-3 rounded-xl border border-dark-200 dark:border-dark-850 hover:bg-dark-50 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={() => {
+                                confirmModal.onConfirm();
+                                setConfirmModal(null);
+                            }}
+                            className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-amber-500/10 transition-colors"
+                        >
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 };

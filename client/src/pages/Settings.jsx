@@ -9,6 +9,7 @@ const Settings = () => {
     const [customModel, setCustomModel] = useState('');
     const [saveLocal, setSaveLocal] = useState(true);
     const [toast, setToast] = useState('');
+    const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
 
     useEffect(() => {
         const savedGemini = localStorage.getItem('codeforge_gemini_api_key') || '';
@@ -43,11 +44,15 @@ const Settings = () => {
     };
 
     const handleClearData = () => {
-        if (window.confirm('Are you sure you want to clear all saved resume data and analysis reports? This cannot be undone.')) {
-            localStorage.removeItem('codeforge_resume');
-            localStorage.removeItem('codeforge_ats_report');
-            showToast('All saved resume and ATS data cleared!');
-        }
+        setConfirmModal({
+            title: 'Clear Stored Data?',
+            message: 'Are you sure you want to clear all saved resume data and analysis reports? This action cannot be undone.',
+            onConfirm: () => {
+                localStorage.removeItem('codeforge_resume');
+                localStorage.removeItem('codeforge_ats_report');
+                showToast('All saved resume and ATS data cleared!');
+            }
+        });
     };
 
     return (
@@ -192,6 +197,45 @@ const Settings = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
+                </div>
+            )}
+            {confirmModal && (
+                <div className="fixed inset-0 z-[100] bg-dark-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+                    <div className="max-w-md w-full bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+                        {/* Background design glow */}
+                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                        {/* Warning Icon */}
+                        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-4 border border-amber-500/25 animate-bounce-slow">
+                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        
+                        <h3 className="text-lg font-bold text-dark-900 dark:text-white mb-2">{confirmModal.title}</h3>
+                        <p className="text-xs text-dark-550 dark:text-dark-400 mb-6 leading-relaxed">
+                            {confirmModal.message}
+                        </p>
+                        
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setConfirmModal(null)}
+                                className="flex-1 py-3 rounded-xl border border-dark-200 dark:border-dark-850 hover:bg-dark-50 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold cursor-pointer transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    confirmModal.onConfirm();
+                                    setConfirmModal(null);
+                                }}
+                                className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-amber-500/10 transition-colors"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
