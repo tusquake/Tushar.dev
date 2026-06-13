@@ -360,25 +360,60 @@ const AIInterview = () => {
         
         let activeVoice = null;
         if (browserVoices.length > 0) {
-            // 1. Try to find matching language and name query
-            activeVoice = browserVoices.find(bv => {
-                const bvName = bv.name.toLowerCase();
-                const bvLang = bv.lang.toLowerCase();
-                return bvLang.startsWith(customVoice.lang.toLowerCase()) && 
-                       customVoice.baseQuery.some(q => bvName.includes(q));
-            });
+            // Find all voices matching the custom voice's target language
+            const langVoices = browserVoices.filter(bv => 
+                bv.lang.toLowerCase().replace('_', '-').startsWith(customVoice.lang.toLowerCase())
+            );
             
-            // 2. Try to find matching language start
+            if (langVoices.length > 0) {
+                // 1. Try to find a voice matching the specific name query (excluding generic brand names)
+                const specificQueries = customVoice.baseQuery.filter(q => 
+                    q !== 'google' && q !== 'microsoft' && q !== 'in' && q !== 'us' && q !== 'gb' && q !== 'uk' && q !== 'ca' && q !== 'au' && q !== 'ie' && q !== 'nz'
+                );
+                
+                activeVoice = langVoices.find(bv => {
+                    const bvName = bv.name.toLowerCase();
+                    return specificQueries.some(q => bvName.includes(q));
+                });
+                
+                // 2. Try to find matching gender within the language voices
+                if (!activeVoice) {
+                    const targetGender = customVoice.gender; // 'girlish' or 'boyish'
+                    const femaleKeywords = ['female', 'girl', 'woman', 'zira', 'samantha', 'aria', 'hazel', 'heera', 'neerja', 'ananya', 'diya', 'isha', 'lily', 'mia', 'amelia', 'matilda', 'harper', 'sophia', 'saoirse', 'kiwi'];
+                    const maleKeywords = ['male', 'boy', 'man', 'david', 'guy', 'aarav', 'rohan', 'kabir', 'tyler', 'leo', 'ethan', 'oliver', 'harry', 'charlie', 'liam', 'cooper', 'owen', 'connor', 'finn'];
+                    
+                    const genderMatchedVoices = langVoices.filter(bv => {
+                        const nameLower = bv.name.toLowerCase();
+                        if (targetGender === 'girlish') {
+                            return femaleKeywords.some(kw => nameLower.includes(kw)) && !maleKeywords.some(kw => nameLower.includes(kw));
+                        } else {
+                            return maleKeywords.some(kw => nameLower.includes(kw)) && !femaleKeywords.some(kw => nameLower.includes(kw));
+                        }
+                    });
+                    
+                    if (genderMatchedVoices.length > 0) {
+                        const charCodeSum = customVoice.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+                        activeVoice = genderMatchedVoices[charCodeSum % genderMatchedVoices.length];
+                    }
+                }
+                
+                // 3. Fallback to any voice of that language (hash/index index)
+                if (!activeVoice) {
+                    const charCodeSum = customVoice.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+                    activeVoice = langVoices[charCodeSum % langVoices.length];
+                }
+            }
+            
+            // 4. Fallback to any english voice matching gender/index
             if (!activeVoice) {
-                activeVoice = browserVoices.find(bv => bv.lang.toLowerCase().startsWith(customVoice.lang.toLowerCase()));
+                const englishVoices = browserVoices.filter(bv => bv.lang.toLowerCase().startsWith('en'));
+                if (englishVoices.length > 0) {
+                    const charCodeSum = customVoice.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+                    activeVoice = englishVoices[charCodeSum % englishVoices.length];
+                }
             }
 
-            // 3. Try standard English voice
-            if (!activeVoice) {
-                activeVoice = browserVoices.find(bv => bv.lang.toLowerCase().startsWith('en'));
-            }
-
-            // 4. Fallback to first available browser voice
+            // 5. Fallback to first available browser voice
             if (!activeVoice) {
                 activeVoice = browserVoices[0];
             }
@@ -549,13 +584,16 @@ The interview is conducted end-to-end based strictly on the candidate's resume, 
 Candidate Target Role/Title: "${targetRole}"
 Candidate Years of Experience (YoE): "${yoe}"
 Difficulty Level: "${difficulty}"
+Interview Duration: ${duration} minutes (approx. 10 questions total)
 
-Sequence of Questions Instruction:
-- The interview sequence should progress logically:
-  - Question 1 & 2: Ask the most frequently asked, most common, core, and most important questions for this role/experience level and key skills from their resume.
-  - Question 3 & 4: Ask moderately common, secondary skills, or scenario-based questions from their resume.
-  - Question 5 and onwards: Ask less frequently asked, niche, or deep-dive details from their resume.
-- We are currently on Question #${sessionLogs.length + 1} of this interview session. Generate the single next appropriate question matching this sequence stage.
+Sequence & Importance of Questions:
+You must strictly sequence questions from the most important and frequently asked to the least:
+- Question 1 to 3 (Core & High-Impact): Ask the absolute most critical, common, and important questions related to the candidate's primary skills, target role duties, and major projects. These should be the high-priority concepts or tools they must master.
+- Question 4 to 6 (Applied & Scenario-Based): Ask key situational, architectural, or scenario-based questions about how they implement their skills, handle trade-offs, or make design choices.
+- Question 7 to 9 (Secondary Skills & Behavioral): Ask about secondary tools mentioned in their resume, team collaboration, or behavioral scenarios relevant to their experience level.
+- Question 10 and onwards (Niche Deep-Dives): Ask about specific minor details, niche tools, or lesser-known details from their resume.
+
+We are currently on Question #${sessionLogs.length + 1} of this session. Generate the single next question that matches this sequence stage. Make sure the question is highly productive, allowing the candidate to learn the most important lessons first.
 
 Exclusions to avoid repetition:
 ${exclusionsPrompt}
