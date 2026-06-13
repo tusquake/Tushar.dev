@@ -1118,7 +1118,7 @@ const Dashboard = () => {
                                                                 setImagePreview(URL.createObjectURL(file));
                                                             } catch (error) {
                                                                 console.error('Upload failed:', error);
-                                                                alert('Failed to upload image');
+                                                                showToast('Failed to upload image');
                                                             } finally {
                                                                 setUploading(false);
                                                             }
@@ -1191,7 +1191,7 @@ const Dashboard = () => {
                                                                 setImagePreview(URL.createObjectURL(file));
                                                             } catch (error) {
                                                                 console.error('Upload failed:', error);
-                                                                alert('Failed to upload image');
+                                                                showToast('Failed to upload image');
                                                             } finally {
                                                                 setUploading(false);
                                                             }
