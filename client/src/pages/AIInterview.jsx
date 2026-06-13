@@ -298,11 +298,13 @@ const AIInterview = () => {
         setIsAiSpeaking(true);
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'en-US';
 
         const activeVoice = voices.find(v => v.name === selectedVoiceName) || voices.find(v => v.lang.startsWith('en-'));
         if (activeVoice) {
             utter.voice = activeVoice;
+            utter.lang = activeVoice.lang;
+        } else {
+            utter.lang = 'en-US';
         }
         utter.pitch = 1.05;
         utter.rate = 0.95; // Slightly faster to sound more natural
