@@ -425,6 +425,7 @@ const Learning = () => {
     const [wikiLoading, setWikiLoading] = useState(false);
     const [wikiError, setWikiError] = useState('');
     const [historyStack, setHistoryStack] = useState([]);
+    const [isWikiFullscreen, setIsWikiFullscreen] = useState(false);
 
     // Recursive Repo Tree Explorer States
     const [repoTree, setRepoTree] = useState(null);
@@ -1142,7 +1143,11 @@ const Learning = () => {
 
                         {/* Right Column: Markdown Reader Panel */}
                         <div className="flex-grow flex flex-col min-w-0">
-                            <Card className="p-6 md:p-8 lg:h-[75vh] min-h-[600px] flex flex-col shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden">
+                            <Card className={`p-6 md:p-8 flex flex-col shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden ${
+                                isWikiFullscreen 
+                                    ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none p-8 md:p-12 lg:p-16 dark:bg-dark-950' 
+                                    : 'lg:h-[75vh] min-h-[600px]'
+                            }`}>
                                 {/* Header / Path bar */}
                                 <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-dark-200 dark:border-dark-800 mb-4 text-sm flex-shrink-0">
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -1181,6 +1186,27 @@ const Learning = () => {
                                             </svg>
                                             GitHub Repo
                                         </a>
+                                        <button
+                                            onClick={() => setIsWikiFullscreen(!isWikiFullscreen)}
+                                            className="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors"
+                                            title={isWikiFullscreen ? "Exit Fullscreen" : "Fullscreen Reading Mode"}
+                                        >
+                                            {isWikiFullscreen ? (
+                                                <>
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 14h6v6m0-6l-6 6m16-6h-6v6m0-6l6 6M4 10h6V4m0 6L4 4m16 6h-6V4m0 6l6-6" />
+                                                    </svg>
+                                                    Exit Fullscreen
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4h4M4 16v4h4m8-16h4v4m-4 12h4v-4m-12-4h8v8" />
+                                                    </svg>
+                                                    Fullscreen
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
 
@@ -1211,7 +1237,7 @@ const Learning = () => {
                                     ) : (
                                         <div
                                             onClick={handleMarkdownClick}
-                                            className="markdown-body text-dark-800 dark:text-dark-200 leading-relaxed text-sm select-text"
+                                            className={`markdown-body text-dark-800 dark:text-dark-200 leading-relaxed text-sm select-text ${isWikiFullscreen ? 'max-w-4xl mx-auto w-full' : ''}`}
                                             dangerouslySetInnerHTML={{ __html: parseMarkdown(markdownContent) }}
                                         />
                                     )}

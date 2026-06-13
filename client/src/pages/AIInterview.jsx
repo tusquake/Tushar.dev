@@ -460,12 +460,14 @@ const AIInterview = () => {
     // Speech recognition helper
     const startListening = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
             setConfirmModal({
                 type: 'alert',
                 title: 'Speech Recognition Unsupported',
                 message: 'Speech recognition is not supported in this browser. Please use Google Chrome or Safari for the best experience.'
             });
             return;
+        }
         
         window.speechSynthesis.cancel();
         setIsAiSpeaking(false);
