@@ -39,10 +39,15 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
     const [selectedBank, setSelectedBank] = useState('');
     const [otp, setOtp] = useState('');
     const [mockPaymentId, setMockPaymentId] = useState('');
+    const [validationError, setValidationError] = useState('');
 
     useEffect(() => {
         setLocalUser(user);
     }, [user]);
+
+    useEffect(() => {
+        setValidationError('');
+    }, [gatewayMethod, gatewayStep]);
 
     if (!isOpen) return null;
 
@@ -113,7 +118,7 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                         }
                     } catch (error) {
                         console.error('Payment verification failed:', error);
-                        alert('Payment verification failed. Please contact support.');
+                        setValidationError('Payment verification failed. Please contact support.');
                         setShowGateway(false);
                         setLoading(false);
                     }
@@ -182,36 +187,37 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
 
     const handleProcessPayment = (e) => {
         e.preventDefault();
+        setValidationError('');
         
         if (gatewayMethod === 'card') {
             if (cardNumber.replace(/\s/g, '').length < 16) {
-                alert('Please enter a valid 16-digit card number.');
+                setValidationError('Please enter a valid 16-digit card number.');
                 return;
             }
             if (!cardExpiry.includes('/') || cardExpiry.length < 5) {
-                alert('Please enter a valid expiry date (MM/YY).');
+                setValidationError('Please enter a valid expiry date (MM/YY).');
                 return;
             }
             if (cardCvv.length < 3) {
-                alert('Please enter a valid CVV.');
+                setValidationError('Please enter a valid CVV.');
                 return;
             }
             if (!cardName.trim()) {
-                alert('Please enter the cardholder name.');
+                setValidationError('Please enter the cardholder name.');
                 return;
             }
             // Transition to OTP verification step
             setGatewayStep('otp');
         } else if (gatewayMethod === 'upi') {
             if (!upiId.includes('@') || upiId.length < 5) {
-                alert('Please enter a valid UPI ID (e.g. name@upi).');
+                setValidationError('Please enter a valid UPI ID (e.g. name@upi).');
                 return;
             }
             // UPI goes straight to processing
             simulateTransaction();
         } else if (gatewayMethod === 'netbanking') {
             if (!selectedBank) {
-                alert('Please select a bank to proceed.');
+                setValidationError('Please select a bank to proceed.');
                 return;
             }
             // Netbanking goes straight to processing
@@ -221,8 +227,9 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
 
     const handleOtpSubmit = (e) => {
         e.preventDefault();
+        setValidationError('');
         if (otp.length < 6) {
-            alert('Please enter the 6-digit OTP code.');
+            setValidationError('Please enter the 6-digit OTP code.');
             return;
         }
         simulateTransaction();
@@ -259,7 +266,7 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
             }
         } catch (error) {
             console.error('Payment gateway sync error:', error);
-            alert('Backend activation failed. Please check server connections and try again.');
+            setValidationError('Backend activation failed. Please check server connections and try again.');
             setGatewayStep('input');
         }
     };
@@ -615,6 +622,15 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                                         {gatewayMethod === 'netbanking' && 'Choose Bank Login'}
                                     </h3>
 
+                                    {validationError && (
+                                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-semibold mb-4 animate-fade-in flex items-center gap-2">
+                                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>{validationError}</span>
+                                        </div>
+                                    )}
+
                                     <form onSubmit={handleProcessPayment} className="space-y-4">
                                         {/* Card Input Form */}
                                         {gatewayMethod === 'card' && (
@@ -785,6 +801,15 @@ const SubscriptionModal = ({ isOpen, onClose, requiredTier = 'basic' }) => {
                                     <p className="text-xs text-dark-400 mb-6 leading-relaxed">
                                         Please enter the 6-digit One-Time Password (OTP) sent to your mobile device registered with your bank card ending in **{cardNumber.slice(-4)}.
                                     </p>
+
+                                    {validationError && (
+                                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-semibold mb-4 animate-fade-in flex items-center justify-center gap-2">
+                                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>{validationError}</span>
+                                        </div>
+                                    )}
 
                                     <form onSubmit={handleOtpSubmit} className="space-y-4">
                                         <input
