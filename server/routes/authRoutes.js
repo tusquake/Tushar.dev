@@ -55,7 +55,7 @@ router.get('/me', protect, (req, res) => {
 router.post('/subscribe', protect, async (req, res) => {
     try {
         const { tier } = req.body;
-        if (!['none', 'day', 'basic', 'premium'].includes(tier)) {
+        if (!['none', 'day', 'basic', 'premium', 'lifetime'].includes(tier)) {
             return res.status(400).json({ success: false, message: 'Invalid subscription tier' });
         }
         req.user.subscriptionTier = tier;
@@ -64,7 +64,14 @@ router.post('/subscribe', protect, async (req, res) => {
             req.user.subscriptionExpiresAt = null;
         } else {
             req.user.subscriptionStartedAt = new Date();
-            const duration = tier === 'day' ? 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+            let duration;
+            if (tier === 'day') {
+                duration = 24 * 60 * 60 * 1000;
+            } else if (tier === 'lifetime') {
+                duration = 100 * 365 * 24 * 60 * 60 * 1000; // 100 years
+            } else {
+                duration = 30 * 24 * 60 * 60 * 1000; // basic/premium
+            }
             req.user.subscriptionExpiresAt = new Date(Date.now() + duration);
         }
         await req.user.save();

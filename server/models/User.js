@@ -95,7 +95,7 @@ const userSchema = new mongoose.Schema({
     },
     subscriptionTier: {
         type: String,
-        enum: ['none', 'day', 'basic', 'premium'],
+        enum: ['none', 'day', 'basic', 'premium', 'lifetime'],
         default: 'none'
     },
     trialStartedAt: {

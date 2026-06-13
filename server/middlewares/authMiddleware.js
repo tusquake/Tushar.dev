@@ -94,15 +94,16 @@ const checkSubscription = (tierRequired) => {
             return next();
         }
 
-        // Check subscription tier
-        const userTier = req.user.subscriptionTier || 'none';
+        // Check subscription expiration
+        const isExpired = req.user.subscriptionExpiresAt && new Date(req.user.subscriptionExpiresAt).getTime() < Date.now();
+        const userTier = isExpired ? 'none' : (req.user.subscriptionTier || 'none');
 
         if (tierRequired === 'basic') {
-            if (userTier === 'day' || userTier === 'basic' || userTier === 'premium') {
+            if (userTier === 'day' || userTier === 'basic' || userTier === 'premium' || userTier === 'lifetime') {
                 return next();
             }
         } else if (tierRequired === 'premium') {
-            if (userTier === 'day' || userTier === 'premium') {
+            if (userTier === 'day' || userTier === 'premium' || userTier === 'lifetime') {
                 return next();
             }
         }

@@ -6,6 +6,7 @@ const getPlanPrice = (tier) => {
     if (tier === 'day') return 19;
     if (tier === 'basic') return 79;
     if (tier === 'premium') return 109;
+    if (tier === 'lifetime') return 499;
     return 0;
 };
 
@@ -15,7 +16,7 @@ const getPlanPrice = (tier) => {
 exports.createOrder = async (req, res) => {
     try {
         const { tier } = req.body;
-        if (!['day', 'basic', 'premium'].includes(tier)) {
+        if (!['day', 'basic', 'premium', 'lifetime'].includes(tier)) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid subscription tier selected'
@@ -103,6 +104,8 @@ exports.verifyPayment = async (req, res) => {
         const expiresAt = new Date();
         if (tier === 'day') {
             expiresAt.setDate(expiresAt.getDate() + 1); // 24 hours
+        } else if (tier === 'lifetime') {
+            expiresAt.setFullYear(expiresAt.getFullYear() + 100); // 100 years
         } else {
             expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
         }

@@ -585,7 +585,9 @@ const Profile = () => {
                                     <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-1">Active Plan</span>
                                     <div className="flex items-center gap-2">
                                         <span className={`text-[10px] font-extrabold px-3 py-1 rounded-lg border uppercase tracking-wider ${
-                                            user.subscriptionTier === 'premium' 
+                                            user.subscriptionTier === 'lifetime'
+                                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                : user.subscriptionTier === 'premium' 
                                                 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
                                                 : user.subscriptionTier === 'basic'
                                                 ? 'bg-primary-500/10 text-primary-400 border-primary-500/20'
@@ -593,6 +595,7 @@ const Profile = () => {
                                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                 : 'bg-dark-100 dark:bg-dark-850 text-dark-400 border-dark-200 dark:border-dark-800'
                                         }`}>
+                                            {user.subscriptionTier === 'lifetime' && 'Lifetime Pass'}
                                             {user.subscriptionTier === 'premium' && 'Premium Pass'}
                                             {user.subscriptionTier === 'basic' && 'Basic Pass'}
                                             {user.subscriptionTier === 'day' && 'Daily Pass'}
@@ -618,7 +621,7 @@ const Profile = () => {
                                         )}
 
                                         {/* Expiry Date */}
-                                        {user.subscriptionExpiresAt && (
+                                        {user.subscriptionExpiresAt && user.subscriptionTier !== 'lifetime' && (
                                             <div>
                                                 <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Expires On</span>
                                                 <span className="text-xs text-dark-700 dark:text-dark-300 font-semibold font-mono">
@@ -627,6 +630,14 @@ const Profile = () => {
                                                         month: 'long', 
                                                         day: 'numeric'
                                                     })}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {user.subscriptionTier === 'lifetime' && (
+                                            <div>
+                                                <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Expires On</span>
+                                                <span className="text-xs text-amber-500 font-semibold font-mono">
+                                                    Never Expires
                                                 </span>
                                             </div>
                                         )}

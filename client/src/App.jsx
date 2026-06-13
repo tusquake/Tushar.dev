@@ -52,6 +52,8 @@ const AppContent = () => {
   const [requiredTier, setRequiredTier] = useState('basic');
   const [timeLeft, setTimeLeft] = useState(null);
 
+  const isSubscriptionExpired = user && user.subscriptionTier !== 'none' && user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() < Date.now();
+
   // Listen for API 402 subscription errors
   useEffect(() => {
     const handleSubRequired = (e) => {
@@ -66,7 +68,7 @@ const AppContent = () => {
 
   // Track 5 minutes trial timer
   useEffect(() => {
-    if (!isAuthenticated || !user || user.subscriptionTier !== 'none' || user.role === 'ADMIN') {
+    if (!isAuthenticated || !user || user.subscriptionTier !== 'none' || user.role === 'ADMIN' || isSubscriptionExpired) {
       setTimeLeft(null);
       setSubModalOpen(false);
       return;
@@ -90,7 +92,7 @@ const AppContent = () => {
     checkTime();
     const interval = setInterval(checkTime, 1000);
     return () => clearInterval(interval);
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, isSubscriptionExpired]);
 
   const formatTime = (ms) => {
     if (ms === null || ms <= 0) return '0:00';
@@ -103,7 +105,7 @@ const AppContent = () => {
   return (
     <>
       {/* Floating trial timer widget */}
-      {isAuthenticated && user && user.role !== 'ADMIN' && user.subscriptionTier === 'none' && timeLeft !== null && timeLeft > 0 && (
+      {isAuthenticated && user && user.role !== 'ADMIN' && user.subscriptionTier === 'none' && timeLeft !== null && timeLeft > 0 && !isSubscriptionExpired && (
         <div className="fixed bottom-4 right-4 z-[9999] bg-dark-900 border border-primary-500/30 text-white px-4 py-2.5 rounded-xl flex items-center gap-3 shadow-2xl font-mono text-[10px]">
           <span className="w-2 h-2 rounded-full bg-primary-500 animate-ping" />
           <span>Trial Access: <strong className="text-primary-400">{formatTime(timeLeft)}</strong> left</span>
@@ -120,7 +122,7 @@ const AppContent = () => {
       )}
 
       {/* trial expired blocker lock screen */}
-      {isAuthenticated && user && user.role !== 'ADMIN' && user.subscriptionTier === 'none' && timeLeft === 0 && (
+      {isAuthenticated && user && user.role !== 'ADMIN' && user.subscriptionTier === 'none' && timeLeft === 0 && !isSubscriptionExpired && (
         <div className="fixed inset-0 z-[9998] bg-dark-950/90 backdrop-blur-lg flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-dark-900 border border-dark-800 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden">
             {/* Design accents */}
@@ -153,7 +155,55 @@ const AppContent = () => {
               
               <button 
                 onClick={() => {
-                  localStorage.removeItem('token');
+                  localStorage.removeItem('accessToken');
+                  localStorage.removeItem('user');
+                  window.location.href = '/login';
+                }}
+                className="w-full py-3.5 rounded-xl border border-dark-850 hover:border-dark-750 text-dark-400 hover:text-white font-bold text-xs tracking-wider transition-all duration-150 cursor-pointer"
+              >
+                Log Out / Switch Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* subscription expired blocker lock screen */}
+      {isAuthenticated && user && user.role !== 'ADMIN' && isSubscriptionExpired && (
+        <div className="fixed inset-0 z-[9998] bg-dark-950/90 backdrop-blur-lg flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-dark-900 border border-dark-800 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden animate-tab-switch">
+            {/* Design accents */}
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-orange-500/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-6 text-red-400">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            
+            <h2 className="text-2xl font-extrabold text-white mb-2 font-display">
+              Subscription Expired
+            </h2>
+            <p className="text-sm text-dark-350 mb-6 leading-relaxed">
+              Your subscription pass expired on <strong className="text-red-400 font-bold">{new Date(user.subscriptionExpiresAt).toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'})}</strong>. Please renew your plan to continue using CodeForge workstation.
+            </p>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={() => {
+                  setRequiredTier('basic');
+                  setSubModalOpen(true);
+                }}
+                className="w-full py-3.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs tracking-wider transition-all duration-150 shadow-lg shadow-primary-500/20 cursor-pointer"
+              >
+                Renew Subscription Plan
+              </button>
+              
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('accessToken');
+                  localStorage.removeItem('user');
                   window.location.href = '/login';
                 }}
                 className="w-full py-3.5 rounded-xl border border-dark-850 hover:border-dark-750 text-dark-400 hover:text-white font-bold text-xs tracking-wider transition-all duration-150 cursor-pointer"
