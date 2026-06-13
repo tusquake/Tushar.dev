@@ -9,6 +9,7 @@ import Loading from '../components/common/Loading';
 import Heatmap from '../components/common/Heatmap';
 import AssessmentArena from '../components/learning/AssessmentArena';
 import SystemDesignCanvas from '../components/learning/SystemDesignCanvas';
+import { callLlm, parseJsonResponse } from '../utils/ai';
 
 // Configure marked options
 marked.setOptions({
@@ -348,22 +349,35 @@ const buildFileTree = (files) => {
 };
 
 // Recursive file tree component
-const FileTreeItem = ({ item, level, selectedPath, onFileClick, expandedFolders, toggleFolder }) => {
+const FileTreeItem = ({ item, level, selectedPath, onFileClick, expandedFolders, toggleFolder, completedArticles, repoId }) => {
     if (item.type === 'file') {
         const isSelected = selectedPath === item.path;
+        const fullPath = `${repoId}/${item.path}`;
+        const isCompleted = completedArticles && completedArticles.includes(fullPath);
         return (
             <div
                 onClick={() => onFileClick(item.path)}
                 style={{ paddingLeft: `${level * 12 + 8}px` }}
-                className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${isSelected
+                className={`flex items-center justify-between py-1.5 pr-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${isSelected
                     ? 'bg-primary-500/10 text-primary-500 font-semibold'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-100/40 dark:hover:bg-dark-900/40'
                     }`}
             >
-                <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="truncate">{item.name}</span>
+                <div className="flex items-center gap-2 truncate">
+                    {isCompleted ? (
+                        <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <svg className="w-3.5 h-3.5 opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    )}
+                    <span className="truncate">{item.name}</span>
+                </div>
+                {isCompleted && (
+                    <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded flex-shrink-0">Read</span>
+                )}
             </div>
         );
     }
@@ -400,6 +414,8 @@ const FileTreeItem = ({ item, level, selectedPath, onFileClick, expandedFolders,
                             onFileClick={onFileClick}
                             expandedFolders={expandedFolders}
                             toggleFolder={toggleFolder}
+                            completedArticles={completedArticles}
+                            repoId={repoId}
                         />
                     ))}
                 </div>
@@ -426,6 +442,113 @@ const Learning = () => {
     const [wikiError, setWikiError] = useState('');
     const [historyStack, setHistoryStack] = useState([]);
     const [isWikiFullscreen, setIsWikiFullscreen] = useState(false);
+
+    // Wiki Progress & Quiz States
+    const [completedArticles, setCompletedArticles] = useState(() => {
+        try {
+            const stored = localStorage.getItem('wiki_completed_articles');
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('wiki_completed_articles', JSON.stringify(completedArticles));
+    }, [completedArticles]);
+
+    const [quizInviteTopic, setQuizInviteTopic] = useState(null);
+    const [activeQuiz, setActiveQuiz] = useState(null);
+    const [quizLoading, setQuizLoading] = useState(false);
+    const [quizError, setQuizError] = useState('');
+
+    const toggleArticleCompletion = (path) => {
+        const fullPath = `${selectedRepo.id}/${path}`;
+        const isCompleted = completedArticles.includes(fullPath);
+        if (isCompleted) {
+            setCompletedArticles(prev => prev.filter(p => p !== fullPath));
+        } else {
+            setCompletedArticles(prev => [...prev, fullPath]);
+            setQuizInviteTopic({
+                repoId: selectedRepo.id,
+                filePath: path,
+                fullPath
+            });
+        }
+    };
+
+    const countTreeFiles = (node) => {
+        if (!node) return 0;
+        if (node.type === 'file') return 1;
+        let count = 0;
+        if (node.children) {
+            Object.keys(node.children).forEach(key => {
+                count += countTreeFiles(node.children[key]);
+            });
+        }
+        return count;
+    };
+
+    const getRepoProgress = () => {
+        if (!repoTree) return { completed: 0, total: 0, percentage: 0 };
+        const total = countTreeFiles(repoTree);
+        if (total === 0) return { completed: 0, total: 0, percentage: 0 };
+        
+        let completed = 0;
+        const prefix = `${selectedRepo.id}/`;
+        completedArticles.forEach(path => {
+            if (path.startsWith(prefix)) {
+                completed++;
+            }
+        });
+        
+        const percentage = Math.round((completed / total) * 100);
+        return { completed, total, percentage };
+    };
+
+    const startQuizGeneration = async (topic) => {
+        setQuizInviteTopic(null);
+        setQuizLoading(true);
+        setQuizError('');
+        setActiveQuiz(null);
+
+        const prompt = `You are an expert technical interviewer. Generate a quick quiz with 3 multiple-choice questions (MCQs) to test the user's understanding of the following topic: "${topic.filePath}" from repository "${topic.repoId}".
+Here is the markdown content of the topic:
+---
+${markdownContent.substring(0, 8000)}
+---
+Provide the quiz in JSON format with the following schema:
+[
+  {
+    "question": "The question text here...",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctIndex": 0,
+    "explanation": "A detailed explanation of why this option is correct."
+  }
+]
+Only return the raw JSON array, without any other markdown tags or wrapping content.`;
+
+        try {
+            const rawResponse = await callLlm(prompt);
+            const questions = parseJsonResponse(rawResponse);
+            if (!Array.isArray(questions) || questions.length === 0) {
+                throw new Error("Failed to parse valid quiz questions.");
+            }
+            setActiveQuiz({
+                questions,
+                currentQuestionIndex: 0,
+                selectedOptionIndex: null,
+                isAnswerSubmitted: false,
+                score: 0,
+                userAnswers: []
+            });
+        } catch (err) {
+            console.error('Quiz generation failed:', err);
+            setQuizError('Failed to generate quiz questions via LLM. Please check your AI API key or connection and try again.');
+        } finally {
+            setQuizLoading(false);
+        }
+    };
 
     // Recursive Repo Tree Explorer States
     const [repoTree, setRepoTree] = useState(null);
@@ -1070,10 +1193,28 @@ const Learning = () => {
 
                             {/* File Explorer Tree */}
                             <Card className="p-4 flex flex-col h-[40vh] min-h-[300px]">
-                                <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-3 flex items-center justify-between flex-shrink-0">
+                                <h3 className="text-xs font-bold text-dark-900 dark:text-white uppercase tracking-wider mb-2 flex items-center justify-between flex-shrink-0">
                                     <span>Repository Files</span>
                                     {treeLoading && <span className="text-[10px] text-primary-500 animate-pulse">Scanning...</span>}
                                 </h3>
+
+                                {/* Repo Progress Bar */}
+                                {repoTree && !treeLoading && (
+                                    <div className="mb-3 p-2 bg-dark-50/50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-800/40 rounded-xl flex-shrink-0">
+                                        <div className="flex justify-between items-center text-[10px] font-bold text-dark-500 dark:text-dark-400 mb-1">
+                                            <span>PROGRESS</span>
+                                            <span className="text-emerald-500 dark:text-emerald-400">
+                                                {getRepoProgress().completed}/{getRepoProgress().total} ({getRepoProgress().percentage}%)
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-1.5 bg-dark-100 dark:bg-dark-800 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-emerald-500 transition-all duration-500" 
+                                                style={{ width: `${getRepoProgress().percentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="border border-dark-200/50 dark:border-dark-800 rounded-xl p-2.5 overflow-y-auto bg-dark-50/20 dark:bg-dark-900/10 flex-grow min-h-0">
                                     {treeLoading ? (
@@ -1102,6 +1243,8 @@ const Learning = () => {
                                                     onFileClick={handleFileClick}
                                                     expandedFolders={expandedFolders}
                                                     toggleFolder={toggleFolder}
+                                                    completedArticles={completedArticles}
+                                                    repoId={selectedRepo.id}
                                                 />
                                             ))}
                                         </div>
@@ -1175,6 +1318,31 @@ const Learning = () => {
                                                 Home README
                                             </button>
                                         )}
+                                        {/* Mark as Completed / Unread Toggle */}
+                                        <button
+                                            onClick={() => toggleArticleCompletion(currentFilePath)}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                                                completedArticles.includes(`${selectedRepo.id}/${currentFilePath}`)
+                                                    ? 'bg-emerald-500/10 border-emerald-500/35 hover:bg-emerald-500/20 text-emerald-500'
+                                                    : 'bg-dark-50 dark:bg-dark-800 hover:bg-dark-100 dark:hover:bg-dark-750 text-dark-650 dark:text-dark-300 border-dark-200 dark:border-dark-800'
+                                            }`}
+                                        >
+                                            {completedArticles.includes(`${selectedRepo.id}/${currentFilePath}`) ? (
+                                                <>
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Completed
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    Mark as Completed
+                                                </>
+                                            )}
+                                        </button>
                                         <a
                                             href={`https://github.com/tusquake/${selectedRepo.id}`}
                                             target="_blank"
@@ -1787,6 +1955,249 @@ const Learning = () => {
                                 >
                                     Dismiss Cabinet
                                 </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Quiz Invite Modal */}
+            {quizInviteTopic && (
+                <div className="fixed inset-0 z-[10000] bg-dark-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+                    <div className="max-w-md w-full bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                        
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-4 border border-emerald-500/25">
+                            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 113.536 0V21h-2v-3.3a5 5 0 00-3.536 0z" />
+                            </svg>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-dark-900 dark:text-white mb-2">Topic Completed!</h3>
+                        <p className="text-xs text-dark-550 dark:text-dark-400 mb-6 leading-relaxed">
+                            Congratulations on completing <strong className="text-emerald-500 dark:text-emerald-400 font-semibold">{quizInviteTopic.filePath.split('/').pop()}</strong>. 
+                            Would you like to generate a quick 3-question AI quiz to test your understanding?
+                        </p>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setQuizInviteTopic(null)}
+                                className="flex-1 py-3 rounded-xl border border-dark-200 dark:border-dark-850 hover:bg-dark-50 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold cursor-pointer transition-colors"
+                            >
+                                Skip Quiz
+                            </button>
+                            <button
+                                onClick={() => startQuizGeneration(quizInviteTopic)}
+                                className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-emerald-500/10 transition-colors"
+                            >
+                                Generate Quiz
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Active Quiz / Loading / Error Modal */}
+            {(quizLoading || quizError || activeQuiz) && (
+                <div className="fixed inset-0 z-[10000] bg-dark-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+                    <div className="max-w-lg w-full bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                        {/* Close button */}
+                        {!quizLoading && (
+                            <button 
+                                onClick={() => {
+                                    setActiveQuiz(null);
+                                    setQuizError('');
+                                }}
+                                className="absolute top-4 right-4 text-dark-400 hover:text-dark-600 dark:hover:text-white transition-colors cursor-pointer"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
+
+                        {quizLoading && (
+                            <div className="py-12 text-center">
+                                <svg className="animate-spin h-10 w-10 text-primary-500 mb-4 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <h3 className="text-base font-bold text-dark-900 dark:text-white mb-2">Generating AI Quiz...</h3>
+                                <p className="text-xs text-dark-500 dark:text-dark-400 max-w-xs mx-auto">
+                                    Analyzing topic content to generate 3 customized multiple choice questions.
+                                </p>
+                            </div>
+                        )}
+
+                        {quizError && (
+                            <div className="py-8 text-center">
+                                <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto mb-3">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-base font-bold text-dark-900 dark:text-white mb-2">Failed to Generate Quiz</h3>
+                                <p className="text-xs text-rose-500 max-w-sm mx-auto mb-6 leading-relaxed">{quizError}</p>
+                                <button
+                                    onClick={() => {
+                                        setActiveQuiz(null);
+                                        setQuizError('');
+                                    }}
+                                    className="px-5 py-2.5 bg-dark-100 hover:bg-dark-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-dark-800 dark:text-dark-200 font-bold rounded-xl text-xs cursor-pointer transition-colors"
+                                >
+                                    Back to Article
+                                </button>
+                            </div>
+                        )}
+
+                        {activeQuiz && (
+                            <div>
+                                <div className="flex items-center justify-between mb-4 border-b border-dark-200 dark:border-dark-800 pb-3 flex-shrink-0">
+                                    <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">
+                                        AI Topic Review Quiz
+                                    </span>
+                                    <span className="text-xs font-bold text-dark-500 dark:text-dark-400">
+                                        Question {activeQuiz.currentQuestionIndex + 1} of {activeQuiz.questions.length}
+                                    </span>
+                                </div>
+
+                                {activeQuiz.currentQuestionIndex < activeQuiz.questions.length ? (
+                                    <div>
+                                        <h4 className="text-sm font-bold text-dark-900 dark:text-white mb-4 leading-relaxed">
+                                            {activeQuiz.questions[activeQuiz.currentQuestionIndex].question}
+                                        </h4>
+
+                                        <div className="space-y-2.5 mb-6">
+                                            {activeQuiz.questions[activeQuiz.currentQuestionIndex].options.map((option, idx) => {
+                                                const isSelected = activeQuiz.selectedOptionIndex === idx;
+                                                const isCorrect = activeQuiz.questions[activeQuiz.currentQuestionIndex].correctIndex === idx;
+                                                
+                                                let optionStyle = "border-dark-200 dark:border-dark-800 hover:bg-dark-50 dark:hover:bg-dark-850/50 text-dark-700 dark:text-dark-300";
+                                                if (activeQuiz.isAnswerSubmitted) {
+                                                    if (isCorrect) {
+                                                        optionStyle = "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold";
+                                                    } else if (isSelected) {
+                                                        optionStyle = "bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400";
+                                                    } else {
+                                                        optionStyle = "opacity-55 border-dark-200 dark:border-dark-800 text-dark-400 dark:text-dark-500";
+                                                    }
+                                                } else if (isSelected) {
+                                                    optionStyle = "border-primary-500 bg-primary-500/5 text-primary-600 dark:text-primary-400 font-semibold ring-2 ring-primary-500/20";
+                                                }
+
+                                                return (
+                                                    <button
+                                                        key={idx}
+                                                        disabled={activeQuiz.isAnswerSubmitted}
+                                                        onClick={() => setActiveQuiz(prev => ({ ...prev, selectedOptionIndex: idx }))}
+                                                        className={`w-full text-left p-3.5 rounded-xl border text-xs leading-relaxed transition-all flex items-center justify-between gap-3 ${
+                                                            !activeQuiz.isAnswerSubmitted ? 'cursor-pointer' : 'cursor-default'
+                                                        } ${optionStyle}`}
+                                                    >
+                                                        <span className="flex-grow">{option}</span>
+                                                        {activeQuiz.isAnswerSubmitted && isCorrect && (
+                                                            <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                        {activeQuiz.isAnswerSubmitted && isSelected && !isCorrect && (
+                                                            <svg className="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {activeQuiz.isAnswerSubmitted && (
+                                            <div className="mb-6 p-4 rounded-2xl bg-dark-50 dark:bg-dark-850/80 border border-dark-200 dark:border-dark-800 animate-fade-in">
+                                                <div className="flex items-center gap-2 mb-1.5">
+                                                    {activeQuiz.selectedOptionIndex === activeQuiz.questions[activeQuiz.currentQuestionIndex].correctIndex ? (
+                                                        <span className="text-emerald-500 text-xs font-bold">
+                                                            🎉 Correct!
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-rose-500 text-xs font-bold">
+                                                            ❌ Incorrect
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-dark-600 dark:text-dark-450 leading-relaxed">
+                                                    {activeQuiz.questions[activeQuiz.currentQuestionIndex].explanation}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        <div className="flex justify-end">
+                                            {!activeQuiz.isAnswerSubmitted ? (
+                                                <button
+                                                    disabled={activeQuiz.selectedOptionIndex === null}
+                                                    onClick={() => setActiveQuiz(prev => {
+                                                        const isCorrect = prev.questions[prev.currentQuestionIndex].correctIndex === prev.selectedOptionIndex;
+                                                        return {
+                                                            ...prev,
+                                                            isAnswerSubmitted: true,
+                                                            score: isCorrect ? prev.score + 1 : prev.score
+                                                        };
+                                                    })}
+                                                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-lg transition-all duration-200 ${
+                                                        activeQuiz.selectedOptionIndex === null
+                                                            ? 'bg-dark-300 dark:bg-dark-800 cursor-not-allowed opacity-50'
+                                                            : 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/10 cursor-pointer'
+                                                    }`}
+                                                >
+                                                    Submit Answer
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setActiveQuiz(prev => {
+                                                        const nextIndex = prev.currentQuestionIndex + 1;
+                                                        return {
+                                                            ...prev,
+                                                            currentQuestionIndex: nextIndex,
+                                                            selectedOptionIndex: null,
+                                                            isAnswerSubmitted: false
+                                                        };
+                                                    })}
+                                                    className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-primary-500/10 cursor-pointer transition-colors"
+                                                >
+                                                    {activeQuiz.currentQuestionIndex === activeQuiz.questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-6 animate-fade-in">
+                                        <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+                                            {activeQuiz.score === activeQuiz.questions.length ? (
+                                                <span className="text-2xl">🏆</span>
+                                            ) : (
+                                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                                </svg>
+                                            )}
+                                        </div>
+
+                                        <h3 className="text-lg font-bold text-dark-900 dark:text-white mb-1">
+                                            {activeQuiz.score === activeQuiz.questions.length ? 'Mastered! Perfect Score!' : 'Quiz Completed!'}
+                                        </h3>
+                                        <p className="text-xs text-dark-550 dark:text-dark-400 mb-6">
+                                            You scored <strong className="text-primary-500 font-bold">{activeQuiz.score}</strong> out of <strong className="font-semibold">{activeQuiz.questions.length}</strong>.
+                                        </p>
+
+                                        <div className="flex gap-3 justify-center">
+                                            <button
+                                                onClick={() => setActiveQuiz(null)}
+                                                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-primary-500/10 cursor-pointer transition-colors"
+                                            >
+                                                Done
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
