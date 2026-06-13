@@ -101,6 +101,7 @@ const AIInterview = () => {
     const recognitionRef = useRef(null);
     const idleTimerRef = useRef(null);
     const accumulatedTranscriptRef = useRef('');
+    const speechSeqIdRef = useRef(0);
 
     useEffect(() => {
         let interval = null;
@@ -351,38 +352,63 @@ const AIInterview = () => {
     };
 
     // Speech synthesis helper with a more natural interviewer-like voice configuration
-    const speak = (text, onEndCallback) => {
-        if (typeof window === 'undefined' || !window.speechSynthesis) {
+    // Helper to split text into chunks of clean sentences/phrases
+    const chunkText = (text) => {
+        if (!text) return [];
+        // Split by sentence punctuation while keeping them together
+        const sentences = text.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+(\s|$)/g) || [text];
+        const chunks = [];
+        let currentChunk = "";
+
+        for (const sentence of sentences) {
+            const trimmed = sentence.trim();
+            if (!trimmed) continue;
+            if (currentChunk.length + trimmed.length > 150) {
+                if (currentChunk) chunks.push(currentChunk.trim());
+                currentChunk = trimmed;
+            } else {
+                currentChunk = currentChunk ? `${currentChunk} ${trimmed}` : trimmed;
+            }
+        }
+        if (currentChunk) {
+            chunks.push(currentChunk.trim());
+        }
+        return chunks;
+    };
+
+    const speakChunks = (chunks, index, onEndCallback, currentSeqId) => {
+        // If the speech sequence ID has changed, stop immediately
+        if (currentSeqId !== speechSeqIdRef.current) {
+            setIsAiSpeaking(false);
+            return;
+        }
+
+        if (index >= chunks.length) {
+            setIsAiSpeaking(false);
             if (onEndCallback) onEndCallback();
             return;
         }
-        setIsAiSpeaking(true);
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
 
+        const utter = new SpeechSynthesisUtterance(chunks[index]);
         const customVoice = CUSTOM_INTERVIEWER_VOICES.find(cv => cv.id === selectedVoiceId) || CUSTOM_INTERVIEWER_VOICES[0];
         
         let activeVoice = null;
         if (browserVoices.length > 0) {
-            // Find all voices matching the custom voice's target language
             const langVoices = browserVoices.filter(bv => 
                 bv.lang.toLowerCase().replace('_', '-').startsWith(customVoice.lang.toLowerCase())
             );
             
             if (langVoices.length > 0) {
-                // 1. Try to find a voice matching the specific name query (excluding generic brand names)
                 const specificQueries = customVoice.baseQuery.filter(q => 
                     q !== 'google' && q !== 'microsoft' && q !== 'in' && q !== 'us' && q !== 'gb' && q !== 'uk' && q !== 'ca' && q !== 'au' && q !== 'ie' && q !== 'nz'
                 );
-                
                 activeVoice = langVoices.find(bv => {
                     const bvName = bv.name.toLowerCase();
                     return specificQueries.some(q => bvName.includes(q));
                 });
                 
-                // 2. Try to find matching gender within the language voices
                 if (!activeVoice) {
-                    const targetGender = customVoice.gender; // 'girlish' or 'boyish'
+                    const targetGender = customVoice.gender;
                     const femaleKeywords = ['female', 'girl', 'woman', 'zira', 'samantha', 'aria', 'hazel', 'heera', 'neerja', 'ananya', 'diya', 'isha', 'lily', 'mia', 'amelia', 'matilda', 'harper', 'sophia', 'saoirse', 'kiwi'];
                     const maleKeywords = ['male', 'boy', 'man', 'david', 'guy', 'aarav', 'rohan', 'kabir', 'tyler', 'leo', 'ethan', 'oliver', 'harry', 'charlie', 'liam', 'cooper', 'owen', 'connor', 'finn'];
                     
@@ -401,14 +427,12 @@ const AIInterview = () => {
                     }
                 }
                 
-                // 3. Fallback to any voice of that language (hash/index index)
                 if (!activeVoice) {
                     const charCodeSum = customVoice.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
                     activeVoice = langVoices[charCodeSum % langVoices.length];
                 }
             }
             
-            // 4. Fallback to any english voice matching gender/index
             if (!activeVoice) {
                 const englishVoices = browserVoices.filter(bv => bv.lang.toLowerCase().startsWith('en'));
                 if (englishVoices.length > 0) {
@@ -417,7 +441,6 @@ const AIInterview = () => {
                 }
             }
 
-            // 5. Fallback to first available browser voice
             if (!activeVoice) {
                 activeVoice = browserVoices[0];
             }
@@ -434,17 +457,40 @@ const AIInterview = () => {
         utter.rate = customVoice.rate;
 
         utter.onend = () => {
-            setIsAiSpeaking(false);
-            if (onEndCallback) onEndCallback();
+            if (currentSeqId === speechSeqIdRef.current) {
+                speakChunks(chunks, index + 1, onEndCallback, currentSeqId);
+            }
         };
 
         utter.onerror = (e) => {
-            console.error('Speech synthesis error', e);
-            setIsAiSpeaking(false);
-            if (onEndCallback) onEndCallback();
+            console.error('Speech synthesis chunk error', e);
+            if (currentSeqId === speechSeqIdRef.current) {
+                speakChunks(chunks, index + 1, onEndCallback, currentSeqId);
+            }
         };
 
         window.speechSynthesis.speak(utter);
+    };
+
+    const speak = (text, onEndCallback) => {
+        if (typeof window === 'undefined' || !window.speechSynthesis) {
+            if (onEndCallback) onEndCallback();
+            return;
+        }
+        setIsAiSpeaking(true);
+        window.speechSynthesis.cancel();
+        
+        speechSeqIdRef.current += 1;
+        const currentSeqId = speechSeqIdRef.current;
+        
+        const chunks = chunkText(text);
+        if (chunks.length === 0) {
+            setIsAiSpeaking(false);
+            if (onEndCallback) onEndCallback();
+            return;
+        }
+
+        speakChunks(chunks, 0, onEndCallback, currentSeqId);
     };
 
     // Handle idle timer for auto-stopping after 5 seconds of silence
@@ -502,7 +548,7 @@ const AIInterview = () => {
         };
 
         recognizer.onerror = (e) => {
-            if (e.error !== 'no-speech') {
+            if (e.error !== 'no-speech' && e.error !== 'aborted') {
                 console.error('Speech recognition error', e);
                 setError('Microphone access issue or timeout. Please check microphone settings.');
                 setStage('asking');
