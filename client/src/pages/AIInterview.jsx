@@ -120,6 +120,9 @@ const AIInterview = () => {
                 });
             }, 1000);
         }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
     }, [timerActive, isPaused, timeRemaining, stage]);
 
     // Handle session blocking warnings during active interview stages
@@ -2126,21 +2129,32 @@ JSON Evaluation:`;
                     </p>
                     
                     <div className="flex gap-3">
-                        <button 
-                            onClick={() => setConfirmModal(null)}
-                            className="flex-1 py-3 rounded-xl border border-dark-200 dark:border-dark-850 hover:bg-dark-50 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold cursor-pointer transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            onClick={() => {
-                                confirmModal.onConfirm();
-                                setConfirmModal(null);
-                            }}
-                            className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-amber-500/10 transition-colors"
-                        >
-                            Confirm
-                        </button>
+                        {confirmModal.type === 'alert' ? (
+                            <button 
+                                onClick={() => setConfirmModal(null)}
+                                className="flex-1 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-primary-500/10 transition-colors"
+                            >
+                                OK
+                            </button>
+                        ) : (
+                            <>
+                                <button 
+                                    onClick={() => setConfirmModal(null)}
+                                    className="flex-1 py-3 rounded-xl border border-dark-200 dark:border-dark-850 hover:bg-dark-50 dark:hover:bg-dark-800 text-dark-700 dark:text-dark-300 text-xs font-semibold cursor-pointer transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        if (confirmModal.onConfirm) confirmModal.onConfirm();
+                                        setConfirmModal(null);
+                                    }}
+                                    className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-amber-500/10 transition-colors"
+                                >
+                                    Confirm
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
