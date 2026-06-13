@@ -46,6 +46,103 @@ const getLevelTitle = (lvl) => {
     return 'Cloud Archmage';
 };
 
+const renderAchievementIcon = (id, sizeClass = "w-7 h-7 sm:w-8 sm:h-8") => {
+    const iconClass = `${sizeClass} text-primary-500 transition-transform duration-500 group-hover:scale-110`;
+    switch (id) {
+        case 'welcome':
+            return (
+                <svg className={`${iconClass} animate-[bounce_2s_infinite]`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            );
+        case 'profile_customizer':
+            return (
+                <svg className={`${iconClass} animate-[pulse_2.5s_infinite]`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+            );
+        case 'dsa_novice':
+            return (
+                <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                    <circle cx="12" cy="12" r="6" strokeWidth="2" />
+                    <circle cx="12" cy="12" r="2" strokeWidth="2" fill="currentColor" />
+                </svg>
+            );
+        case 'dsa_adept':
+            return (
+                <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            );
+        case 'dsa_master':
+            return (
+                <svg className={`${iconClass} animate-[bounce_1.5s_infinite]`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+            );
+        case 'topic_scholar':
+            return (
+                <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+            );
+        case 'resume_craftsman':
+            return (
+                <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            );
+        case 'interview_novice':
+            return (
+                <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            );
+        case 'interview_veteran':
+            return (
+                <svg className={`${iconClass} animate-[pulse_2s_infinite]`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+            );
+        default:
+            return (
+                <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                </svg>
+            );
+    }
+};
+
+const renderRankBadge = (index) => {
+    if (index === 0) {
+        return (
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-dark-900 font-extrabold flex items-center justify-center text-xs shadow-md shadow-amber-500/20">
+                1st
+            </span>
+        );
+    }
+    if (index === 1) {
+        return (
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 text-dark-900 font-extrabold flex items-center justify-center text-xs shadow-md shadow-slate-400/20">
+                2nd
+            </span>
+        );
+    }
+    if (index === 2) {
+        return (
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 text-white font-extrabold flex items-center justify-center text-xs shadow-md shadow-amber-800/20">
+                3rd
+            </span>
+        );
+    }
+    return (
+        <span className="w-8 text-center font-display font-extrabold text-sm text-dark-500 dark:text-dark-400">
+            #{index + 1}
+        </span>
+    );
+};
+
 const Profile = () => {
     const navigate = useNavigate();
     const { user, refreshUser, logout } = useAuth();
@@ -723,7 +820,9 @@ const Profile = () => {
                                                         }`}
                                                         title={`${ach.name}: ${ach.desc}`}
                                                     >
-                                                        <span className="text-2xl sm:text-3xl mb-1.5">{ach.icon}</span>
+                                                        <div className="mb-2">
+                                                            {renderAchievementIcon(ach.id)}
+                                                        </div>
                                                         <span className="text-[10px] font-bold text-dark-900 dark:text-white leading-tight">{ach.name}</span>
                                                         <span className="text-[8px] text-emerald-500 dark:text-emerald-400 font-extrabold uppercase mt-1">
                                                             {isUnlocked ? 'Unlocked' : 'Locked'}
@@ -1018,8 +1117,8 @@ const Profile = () => {
                                                         : 'bg-dark-100/50 dark:bg-dark-950/20 border-dark-200/40 dark:border-dark-900/50 opacity-45 grayscale'
                                                 }`}
                                             >
-                                                <div className="w-12 h-12 bg-dark-50 dark:bg-dark-900 rounded-full flex items-center justify-center text-3xl shadow-sm">
-                                                    {ach.icon}
+                                                <div className="w-12 h-12 bg-dark-50 dark:bg-dark-900 rounded-full flex items-center justify-center shadow-sm">
+                                                    {renderAchievementIcon(ach.id, "w-6 h-6")}
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex items-center justify-between">
@@ -1064,11 +1163,7 @@ const Profile = () => {
                                             >
                                                 <div className="flex items-center gap-4">
                                                     {/* Rank Indicator */}
-                                                    <span className={`w-8 text-center font-display font-extrabold text-lg ${
-                                                        index === 0 ? 'text-amber-500' : index === 1 ? 'text-dark-400' : index === 2 ? 'text-amber-600' : 'text-dark-500'
-                                                    }`}>
-                                                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                                                    </span>
+                                                    {renderRankBadge(index)}
 
                                                     {/* Avatar */}
                                                     <img

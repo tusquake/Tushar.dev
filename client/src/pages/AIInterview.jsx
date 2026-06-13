@@ -32,11 +32,12 @@ const AIInterview = () => {
     const [isAiSpeaking, setIsAiSpeaking] = useState(false);
     const [voices, setVoices] = useState([]);
     const [selectedVoiceName, setSelectedVoiceName] = useState('');
+    const [isVoiceDropdownOpen, setIsVoiceDropdownOpen] = useState(false);
 
     useEffect(() => {
         const updateVoices = () => {
             const availableVoices = window.speechSynthesis.getVoices().filter(v => 
-                v.lang.startsWith('en') || v.lang.startsWith('hi')
+                v.lang.startsWith('en')
             );
             setVoices(availableVoices);
             
@@ -1124,7 +1125,7 @@ JSON Evaluation:`;
 
                             {/* Voice Style Selector */}
                             {voices.length > 0 && (
-                                <div className="space-y-1">
+                                <div className="space-y-1 relative">
                                     <label className="label font-bold flex items-center justify-between text-xs text-dark-500">
                                         <span>Interviewer Voice (Human-like Edge/Chrome/Safari voices)</span>
                                         <button
@@ -1138,40 +1139,120 @@ JSON Evaluation:`;
                                             Listen / Test Voice
                                         </button>
                                     </label>
-                                    <select
-                                        className="input text-xs"
-                                        value={selectedVoiceName}
-                                        onChange={(e) => setSelectedVoiceName(e.target.value)}
-                                    >
-                                        {voices.map((v, idx) => {
-                                            const name = v.name;
-                                            const lang = v.lang.toLowerCase();
-                                            let label = "";
-                                            if (lang.includes('in')) {
-                                                label += "🇮🇳 India - ";
-                                            } else if (lang.includes('us')) {
-                                                label += "🇺🇸 US - ";
-                                            } else if (lang.includes('gb') || lang.includes('uk')) {
-                                                label += "🇬🇧 UK - ";
-                                            } else if (lang.includes('ca')) {
-                                                label += "🇨🇦 CA - ";
-                                            } else if (lang.includes('au')) {
-                                                label += "🇦🇺 AU - ";
-                                            } else {
-                                                label += `🌐 (${v.lang}) - `;
-                                            }
 
-                                            label += name;
-                                            if (name.includes('Natural') || name.includes('Online') || name.includes('Google') || name.includes('Neerja') || name.includes('Prabhat') || name.includes('Aria') || name.includes('Guy')) {
-                                                label += " ✨ Natural Voice";
-                                            }
-                                            return (
-                                                <option key={idx} value={v.name}>
-                                                    {label}
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
+                                    {/* Custom Dropdown Trigger */}
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsVoiceDropdownOpen(!isVoiceDropdownOpen)}
+                                            className="w-full input text-xs flex items-center justify-between gap-2 text-left cursor-pointer"
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                                </svg>
+                                                <span className="truncate">
+                                                    {selectedVoiceName || "Select Interviewer Voice"}
+                                                </span>
+                                            </span>
+                                            <svg className={`w-4 h-4 text-dark-400 transition-transform ${isVoiceDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+
+                                        {/* Dropdown Menu */}
+                                        {isVoiceDropdownOpen && (
+                                            <>
+                                                <div 
+                                                    className="fixed inset-0 z-40" 
+                                                    onClick={() => setIsVoiceDropdownOpen(false)}
+                                                />
+                                                <div className="absolute left-0 right-0 mt-1.5 max-h-60 overflow-y-auto rounded-xl bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800 shadow-2xl z-50 py-1">
+                                                    {voices.map((v, idx) => {
+                                                        const name = v.name;
+                                                        const lang = v.lang.toLowerCase();
+                                                        let regionText = "International";
+                                                        let flagIcon = (
+                                                            <svg className="w-3.5 h-3.5 text-dark-450" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                                            </svg>
+                                                        );
+
+                                                        if (lang.includes('in')) {
+                                                            regionText = "India";
+                                                            flagIcon = (
+                                                                <span className="w-5 h-3.5 flex items-center justify-center font-bold text-[8px] bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded border border-amber-500/20 px-1 py-0.5">
+                                                                    IND
+                                                                </span>
+                                                            );
+                                                        } else if (lang.includes('us')) {
+                                                            regionText = "US";
+                                                            flagIcon = (
+                                                                <span className="w-5 h-3.5 flex items-center justify-center font-bold text-[8px] bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded border border-blue-500/20 px-1 py-0.5">
+                                                                    USA
+                                                                </span>
+                                                            );
+                                                        } else if (lang.includes('gb') || lang.includes('uk')) {
+                                                            regionText = "UK";
+                                                            flagIcon = (
+                                                                <span className="w-5 h-3.5 flex items-center justify-center font-bold text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 px-1 py-0.5">
+                                                                    GBR
+                                                                </span>
+                                                            );
+                                                        } else if (lang.includes('ca')) {
+                                                            regionText = "Canada";
+                                                            flagIcon = (
+                                                                <span className="w-5 h-3.5 flex items-center justify-center font-bold text-[8px] bg-red-500/10 text-red-600 dark:text-red-400 rounded border border-red-500/20 px-1 py-0.5">
+                                                                    CAN
+                                                                </span>
+                                                            );
+                                                        } else if (lang.includes('au')) {
+                                                            regionText = "Australia";
+                                                            flagIcon = (
+                                                                <span className="w-5 h-3.5 flex items-center justify-center font-bold text-[8px] bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded border border-purple-500/20 px-1 py-0.5">
+                                                                    AUS
+                                                                </span>
+                                                            );
+                                                        }
+
+                                                        const isPremium = name.includes('Natural') || name.includes('Online') || name.includes('Google') || name.includes('Neerja') || name.includes('Prabhat') || name.includes('Aria') || name.includes('Guy');
+
+                                                        return (
+                                                            <button
+                                                                key={idx}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedVoiceName(name);
+                                                                    setIsVoiceDropdownOpen(false);
+                                                                }}
+                                                                className={`w-full px-3 py-2.5 flex items-center justify-between gap-3 text-xs text-left transition-colors hover:bg-dark-50 dark:hover:bg-dark-850 cursor-pointer ${
+                                                                    selectedVoiceName === name 
+                                                                        ? 'bg-primary-500/5 text-primary-500 font-bold' 
+                                                                        : 'text-dark-700 dark:text-dark-300'
+                                                                }`}
+                                                            >
+                                                                <span className="flex items-center gap-2 min-w-0">
+                                                                    {flagIcon}
+                                                                    <span className="truncate">{name}</span>
+                                                                </span>
+                                                                <span className="flex items-center gap-1.5 flex-shrink-0">
+                                                                    <span className="text-[9px] text-dark-450 dark:text-dark-500">{regionText}</span>
+                                                                    {isPremium && (
+                                                                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider flex items-center gap-0.5">
+                                                                            <svg className="w-2.5 h-2.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                            </svg>
+                                                                            Natural
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
