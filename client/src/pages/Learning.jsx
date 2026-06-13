@@ -457,6 +457,18 @@ const Learning = () => {
         localStorage.setItem('wiki_completed_articles', JSON.stringify(completedArticles));
     }, [completedArticles]);
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setIsWikiFullscreen(false);
+            }
+        };
+        if (isWikiFullscreen) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isWikiFullscreen]);
+
     const [quizInviteTopic, setQuizInviteTopic] = useState(null);
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizLoading, setQuizLoading] = useState(false);
@@ -1012,6 +1024,123 @@ Only return the raw JSON array, without any other markdown tags or wrapping cont
         }
     };
 
+    if (isWikiFullscreen) {
+        return (
+            <div className="fixed inset-0 bg-white dark:bg-dark-950 z-[99999] p-6 md:p-10 flex flex-col animate-fade-in text-dark-800 dark:text-white select-none">
+                {/* Fullscreen Header */}
+                <div className="flex items-center justify-between border-b border-dark-200 dark:border-dark-800 pb-4 mb-4">
+                    <div className="flex items-center gap-3">
+                        <span className="font-bold text-lg text-primary-500">{selectedRepo.name}</span>
+                        <span className="text-dark-350 dark:text-dark-600">/</span>
+                        <span className="font-mono text-sm px-3 py-1 rounded bg-dark-100 dark:bg-dark-800/80 text-dark-650 dark:text-dark-300">
+                            {currentFilePath}
+                        </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                        {historyStack.length > 0 && (
+                            <button
+                                onClick={handleGoBack}
+                                className="px-3 py-1.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-xs font-semibold rounded-lg cursor-pointer text-dark-650 dark:text-dark-350 transition-colors"
+                            >
+                                ← Back
+                            </button>
+                        )}
+                        {currentFilePath !== 'README.md' && (
+                            <button
+                                onClick={handleResetToReadme}
+                                className="px-3 py-1.5 border border-dark-200 dark:border-dark-800 hover:bg-dark-100 dark:hover:bg-dark-800 text-xs font-semibold rounded-lg cursor-pointer text-dark-650 dark:text-dark-350 transition-colors"
+                            >
+                                Home README
+                            </button>
+                        )}
+                        {/* Mark as Completed / Unread Toggle */}
+                        <button
+                            onClick={() => toggleArticleCompletion(currentFilePath)}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                                completedArticles.includes(`${selectedRepo.id}/${currentFilePath}`)
+                                    ? 'bg-emerald-500/10 border-emerald-500/35 hover:bg-emerald-500/20 text-emerald-500'
+                                    : 'bg-dark-50 dark:bg-dark-800 hover:bg-dark-100 dark:hover:bg-dark-750 text-dark-650 dark:text-dark-300 border-dark-200 dark:border-dark-800'
+                            }`}
+                        >
+                            {completedArticles.includes(`${selectedRepo.id}/${currentFilePath}`) ? (
+                                <>
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Completed
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Mark as Completed
+                                </>
+                            )}
+                        </button>
+                        <a
+                            href={`https://github.com/tusquake/${selectedRepo.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-dark-900 hover:bg-dark-950 text-white dark:bg-dark-800 dark:hover:bg-dark-700 text-xs font-semibold rounded-lg flex items-center gap-1.5"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                            </svg>
+                            GitHub Repo
+                        </a>
+                        <button
+                            onClick={() => setIsWikiFullscreen(false)}
+                            className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors"
+                            title="Exit Fullscreen"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 14h6v6m0-6l-6 6m16-6h-6v6m0-6l6 6M4 10h6V4m0 6L4 4m16 6h-6V4m0 6l6-6" />
+                            </svg>
+                            Exit Fullscreen
+                        </button>
+                    </div>
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-grow overflow-y-auto px-4 md:px-12 py-6 min-h-0 select-text">
+                    <div className="max-w-4xl mx-auto w-full">
+                        {wikiLoading ? (
+                            <div className="flex-grow flex flex-col justify-center items-center py-40">
+                                <svg className="animate-spin h-8 w-8 text-primary-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span className="text-xs text-dark-500 font-semibold uppercase tracking-wider">Syncing raw markdown content...</span>
+                            </div>
+                        ) : wikiError ? (
+                            <div className="flex-grow flex flex-col justify-center items-center text-center py-20">
+                                <svg className="w-12 h-12 text-rose-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <h4 className="font-bold text-dark-900 dark:text-white mb-2">Failed to load content</h4>
+                                <p className="text-xs text-dark-500 dark:text-dark-400 max-w-md mb-4">{wikiError}</p>
+                                <button
+                                    onClick={() => fetchRepoFile(selectedRepo.id, currentFilePath)}
+                                    className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white dark:text-dark-950 font-bold rounded-xl text-xs cursor-pointer transition-all"
+                                >
+                                    Retry Fetch
+                                </button>
+                            </div>
+                        ) : (
+                            <div
+                                onClick={handleMarkdownClick}
+                                className="markdown-body text-dark-800 dark:text-dark-200 leading-relaxed text-sm"
+                                dangerouslySetInnerHTML={{ __html: parseMarkdown(markdownContent) }}
+                            />
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-dark-50 dark:bg-dark-950/20 flex flex-col py-12 px-4">
             <div className="w-full flex-grow flex flex-col max-w-7xl mx-auto">
@@ -1286,11 +1415,7 @@ Only return the raw JSON array, without any other markdown tags or wrapping cont
 
                         {/* Right Column: Markdown Reader Panel */}
                         <div className="flex-grow flex flex-col min-w-0">
-                            <Card className={`p-6 md:p-8 flex flex-col shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden ${
-                                isWikiFullscreen 
-                                    ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none p-8 md:p-12 lg:p-16 dark:bg-dark-950' 
-                                    : 'lg:h-[75vh] min-h-[600px]'
-                            }`}>
+                            <Card hover={false} className="p-6 md:p-8 flex flex-col shadow-sm border border-dark-200 dark:border-dark-800 bg-white dark:bg-dark-900 overflow-hidden lg:h-[75vh] min-h-[600px]">
                                 {/* Header / Path bar */}
                                 <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-dark-200 dark:border-dark-800 mb-4 text-sm flex-shrink-0">
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -1405,7 +1530,7 @@ Only return the raw JSON array, without any other markdown tags or wrapping cont
                                     ) : (
                                         <div
                                             onClick={handleMarkdownClick}
-                                            className={`markdown-body text-dark-800 dark:text-dark-200 leading-relaxed text-sm select-text ${isWikiFullscreen ? 'max-w-4xl mx-auto w-full' : ''}`}
+                                            className="markdown-body text-dark-800 dark:text-dark-200 leading-relaxed text-sm select-text"
                                             dangerouslySetInnerHTML={{ __html: parseMarkdown(markdownContent) }}
                                         />
                                     )}
