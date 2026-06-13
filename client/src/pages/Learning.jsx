@@ -518,13 +518,27 @@ const Learning = () => {
         return { completed, total, percentage };
     };
 
+    const getCleanTopicName = (filePath) => {
+        if (!filePath) return '';
+        const parts = filePath.split('/');
+        if (parts.length > 1) {
+            const fileName = parts[parts.length - 1];
+            if (fileName.toLowerCase() === 'readme.md') {
+                return parts[parts.length - 2];
+            }
+        }
+        const baseName = parts[parts.length - 1];
+        return baseName.replace(/\.[^/.]+$/, "");
+    };
+
     const startQuizGeneration = async (topic) => {
         setQuizInviteTopic(null);
         setQuizLoading(true);
         setQuizError('');
         setActiveQuiz(null);
 
-        const prompt = `You are an expert technical interviewer. Generate a quick quiz with 3 multiple-choice questions (MCQs) to test the user's understanding of the following topic: "${topic.filePath}" from repository "${topic.repoId}".
+        const topicName = getCleanTopicName(topic.filePath);
+        const prompt = `You are an expert technical interviewer. Generate a quick quiz with 5 multiple-choice questions (MCQs) to test the user's understanding of the following topic: "${topicName}" from repository "${topic.repoId}".
 Here is the markdown content of the topic:
 ---
 ${markdownContent.substring(0, 8000)}
@@ -2100,8 +2114,8 @@ Only return the raw JSON array, without any other markdown tags or wrapping cont
 
                         <h3 className="text-lg font-bold text-dark-900 dark:text-white mb-2">Topic Completed!</h3>
                         <p className="text-xs text-dark-550 dark:text-dark-400 mb-6 leading-relaxed">
-                            Congratulations on completing <strong className="text-emerald-500 dark:text-emerald-400 font-semibold">{quizInviteTopic.filePath.split('/').pop()}</strong>. 
-                            Would you like to generate a quick 3-question AI quiz to test your understanding?
+                            Congratulations on completing <strong className="text-emerald-500 dark:text-emerald-400 font-semibold">{getCleanTopicName(quizInviteTopic.filePath)}</strong>. 
+                            Would you like to generate a quick 5-question AI quiz to test your understanding?
                         </p>
 
                         <div className="flex gap-3">
@@ -2183,9 +2197,11 @@ Only return the raw JSON array, without any other markdown tags or wrapping cont
                                     <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">
                                         AI Topic Review Quiz
                                     </span>
-                                    <span className="text-xs font-bold text-dark-500 dark:text-dark-400">
-                                        Question {activeQuiz.currentQuestionIndex + 1} of {activeQuiz.questions.length}
-                                    </span>
+                                    {activeQuiz.currentQuestionIndex < activeQuiz.questions.length && (
+                                        <span className="text-xs font-bold text-dark-500 dark:text-dark-400">
+                                            Question {activeQuiz.currentQuestionIndex + 1} of {activeQuiz.questions.length}
+                                        </span>
+                                    )}
                                 </div>
 
                                 {activeQuiz.currentQuestionIndex < activeQuiz.questions.length ? (
