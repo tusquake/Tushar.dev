@@ -302,6 +302,78 @@ const getProfile = async (req, res) => {
     }
 };
 
+// @desc    Get user public profile
+// @route   GET /api/auth/profile/public/:userId
+// @access  Public
+const getPublicProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const DsaProgress = require('../models/DsaProgress');
+        const Learning = require('../models/Learning');
+        const InterviewLog = require('../models/InterviewLog');
+        const Activity = require('../models/Activity');
+        const Project = require('../models/Project');
+        const Resume = require('../models/Resume');
+
+        // Fetch user data
+        const [dsaRes, completedTopicsCount, interviewCount, activities, projects, hasResume] = await Promise.all([
+            DsaProgress.findOne({ user: userId }),
+            Learning.countDocuments({ user: userId, status: 'completed' }),
+            InterviewLog.countDocuments({ user: userId }),
+            Activity.find({ user: userId }).sort({ date: -1 }).limit(50),
+            Project.find({ userId }).sort({ order: 1, createdAt: -1 }),
+            Resume.findOne({ user: userId })
+        ]);
+
+        const completedDsaCount = dsaRes?.completedQuestions?.length || 0;
+
+        res.json({
+            success: true,
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    title: user.title,
+                    bio: user.bio,
+                    location: user.location,
+                    targetRole: user.targetRole,
+                    skills: user.skills || [],
+                    socials: user.socials || {},
+                    themeColor: user.themeColor || 'purple',
+                    avatar: user.avatar,
+                    xp: user.xp || 0,
+                    level: user.level || 1,
+                    achievements: user.achievements || [],
+                    widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true },
+                    createdAt: user.createdAt
+                },
+                stats: {
+                    dsaSolved: completedDsaCount,
+                    topicsCompleted: completedTopicsCount,
+                    interviewsTaken: interviewCount,
+                    resumesBuilt: hasResume ? 1 : 0,
+                    activities: activities.reverse()
+                },
+                projects
+            }
+        });
+    } catch (error) {
+        console.error('Get public profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch public profile'
+        });
+    }
+};
+
 // @desc    Forgot password
 // @route   POST /api/auth/forgot-password
 // @access  Public
@@ -550,6 +622,7 @@ module.exports = {
     refreshAccessToken,
     logout,
     getProfile,
+    getPublicProfile,
     forgotPassword,
     resetPassword,
     updateProfile,

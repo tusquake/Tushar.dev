@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { authAPI, learningAPI, dsaProgressAPI, interviewAPI, resumeAPI, uploadAPI } from '../services/api';
+import { authAPI, learningAPI, dsaProgressAPI, interviewAPI, resumeAPI, uploadAPI, projectsAPI } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Loading from '../components/common/Loading';
+
+const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
 const PRESET_AVATARS = [
     { name: 'Code Samurai', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=samurai&backgroundColor=b6e3f4' },
@@ -114,6 +116,60 @@ const renderAchievementIcon = (id, sizeClass = "w-7 h-7 sm:w-8 sm:h-8") => {
     }
 };
 
+const ProjectCover = ({ project }) => {
+    const hashString = (str) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return Math.abs(hash);
+    };
+
+    const seed = hashString(project.title);
+    const hue1 = seed % 360;
+    const hue2 = (seed + 120) % 360;
+    const hue3 = (seed + 240) % 360;
+
+    const gradientStyle = {
+        background: `radial-gradient(circle at 20% 30%, hsl(${hue1}, 75%, 30%), transparent 60%),
+                    radial-gradient(circle at 80% 70%, hsl(${hue2}, 70%, 20%), transparent 65%),
+                    radial-gradient(circle at 50% 50%, hsl(${hue3}, 65%, 15%), transparent 70%),
+                    #0b0f19`
+    };
+
+    return (
+        <div 
+            className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-500" 
+            style={gradientStyle}
+        >
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex justify-between items-start z-10 w-full">
+                <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-white/10 text-white/95 backdrop-blur-md border border-white/10">
+                    {project.techStack?.[0] || 'System Design'}
+                </span>
+            </div>
+
+            <div className="flex justify-center items-center z-10 py-1">
+                <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform duration-300">
+                    <span className="text-lg font-bold text-white uppercase select-none">
+                        {project.title ? project.title.substring(0, 2) : 'PR'}
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex gap-1.5 flex-wrap z-10 w-full">
+                {project.techStack?.slice(0, 3).map((tech, tIdx) => (
+                    <span key={tIdx} className="text-[9px] font-medium text-white/60">
+                        #{tech}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const renderRankBadge = (index) => {
     if (index === 0) {
         return (
@@ -143,8 +199,9 @@ const renderRankBadge = (index) => {
     );
 };
 
-const Profile = () => {
+const Profile = ({ isPublic = false }) => {
     const navigate = useNavigate();
+    const { userId } = useParams();
     const { user, refreshUser, logout } = useAuth();
 
     const handleLogout = async () => {
@@ -159,6 +216,13 @@ const Profile = () => {
     const [toast, setToast] = useState('');
     const [uploadingImage, setUploadingImage] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [publicUser, setPublicUser] = useState(null);
+    const [projects, setProjects] = useState([]);
+    const [githubLink, setGithubLink] = useState('');
+    const [importingProject, setImportingProject] = useState(false);
+    const [projectError, setProjectError] = useState('');
+
+    const profileUser = isPublic ? publicUser : user;
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -215,7 +279,14 @@ const Profile = () => {
     const [newSkillLevel, setNewSkillLevel] = useState(50);
 
     useEffect(() => {
-        if (user && !isInitialized) {
+        if (isPublic || user) {
+            fetchData();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isPublic, userId, user]);
+
+    useEffect(() => {
+        if (!isPublic && user) {
             setFormData({
                 title: user.title || 'Software Explorer',
                 bio: user.bio || 'Learning, coding, and building cool things.',
@@ -233,47 +304,72 @@ const Profile = () => {
                 avatar: user.avatar || PRESET_AVATARS[0].url,
                 widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
             });
-            setIsInitialized(true);
-            fetchData();
         }
-    }, [user, isInitialized]);
+    }, [isPublic, user]);
 
     const fetchData = async () => {
         setLoading(true);
-        // Safety timeout to prevent the loader from hanging forever
         const safetyTimeout = setTimeout(() => {
             setLoading(false);
-        }, 4000);
+        }, 5000);
 
         try {
-            // Fetch stats from various endpoints and refresh the user context to grab latest level/XP
-            const [topicsRes, dsaRes, activitiesRes, interviewRes, resumeRes, leaderboardRes, updatedUser] = await Promise.all([
-                learningAPI.getAll(),
-                dsaProgressAPI.getProgress(),
-                learningAPI.getActivityHistory(),
-                interviewAPI.getAll(),
-                resumeAPI.get(),
-                authAPI.getLeaderboard(),
-                refreshUser()
-            ]);
+            if (isPublic) {
+                const res = await authAPI.getPublicProfile(userId);
+                if (res.data.success) {
+                    const { user: fetchedUser, stats: fetchedStats, projects: fetchedProjects } = res.data.data;
+                    setPublicUser(fetchedUser);
+                    setStats(fetchedStats);
+                    setProjects(fetchedProjects || []);
+                    
+                    setFormData({
+                        title: fetchedUser.title || 'Software Explorer',
+                        bio: fetchedUser.bio || 'Learning, coding, and building cool things.',
+                        location: fetchedUser.location || '',
+                        targetRole: fetchedUser.targetRole || '',
+                        skills: fetchedUser.skills || [],
+                        socials: {
+                            github: fetchedUser.socials?.github || '',
+                            linkedin: fetchedUser.socials?.linkedin || '',
+                            twitter: fetchedUser.socials?.twitter || '',
+                            website: fetchedUser.socials?.website || '',
+                            leetcode: fetchedUser.socials?.leetcode || '',
+                        },
+                        themeColor: fetchedUser.themeColor || 'purple',
+                        avatar: fetchedUser.avatar || PRESET_AVATARS[0].url,
+                        widgets: fetchedUser.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
+                    });
+                }
+            } else {
+                const [topicsRes, dsaRes, activitiesRes, interviewRes, resumeRes, leaderboardRes, projectsRes] = await Promise.all([
+                    learningAPI.getAll(),
+                    dsaProgressAPI.getProgress(),
+                    learningAPI.getActivityHistory(),
+                    interviewAPI.getAll(),
+                    resumeAPI.get(),
+                    authAPI.getLeaderboard(),
+                    projectsAPI.getUserProjects(user.id || user._id)
+                ]);
 
-            const topics = topicsRes.data.data || [];
-            const completedTopicsCount = topics.filter(t => t.status === 'completed').length;
-            const completedDsaCount = dsaRes.data.completedQuestions?.length || 0;
-            const interviewCount = interviewRes.data.data?.length || 0;
-            const hasResume = !!resumeRes.data.data;
+                const topics = topicsRes.data.data || [];
+                const completedTopicsCount = topics.filter(t => t.status === 'completed').length;
+                const completedDsaCount = dsaRes.data.completedQuestions?.length || 0;
+                const interviewCount = interviewRes.data.data?.length || 0;
+                const hasResume = !!resumeRes.data.data;
 
-            setStats({
-                dsaSolved: completedDsaCount,
-                topicsCompleted: completedTopicsCount,
-                interviewsTaken: interviewCount,
-                resumesBuilt: hasResume ? 1 : 0,
-                activities: (activitiesRes.data.data || []).reverse(), // Show latest first
-            });
+                setStats({
+                    dsaSolved: completedDsaCount,
+                    topicsCompleted: completedTopicsCount,
+                    interviewsTaken: interviewCount,
+                    resumesBuilt: hasResume ? 1 : 0,
+                    activities: (activitiesRes.data.data || []).reverse(),
+                });
 
-            setLeaderboard(leaderboardRes.data.data || []);
+                setProjects(projectsRes.data.data || []);
+                setLeaderboard(leaderboardRes.data.data || []);
+            }
         } catch (error) {
-            console.error('Failed to load profile statistics:', error);
+            console.error('Failed to load profile details:', error);
         } finally {
             clearTimeout(safetyTimeout);
             setLoading(false);
@@ -337,6 +433,49 @@ const Profile = () => {
         }));
     };
 
+    const handleImportProject = async (e) => {
+        if (e) e.preventDefault();
+        if (!githubLink.trim()) return;
+        
+        let targetLink = githubLink.trim();
+        if (!targetLink.startsWith('https://github.com/')) {
+            setProjectError('Please enter a valid GitHub repository link (e.g., https://github.com/username/repo)');
+            return;
+        }
+
+        setImportingProject(true);
+        setProjectError('');
+        try {
+            const res = await projectsAPI.importGithub(targetLink);
+            if (res.data.success) {
+                setGithubLink('');
+                setProjects(prev => [...prev, res.data.data]);
+                showToast('Project imported successfully! +30 XP');
+                await refreshUser();
+            }
+        } catch (error) {
+            console.error('Failed to import project:', error);
+            setProjectError(error.response?.data?.message || 'Failed to import project. Make sure repository is public.');
+        } finally {
+            setImportingProject(false);
+        }
+    };
+
+    const handleDeleteProject = async (projectId) => {
+        if (!window.confirm('Are you sure you want to remove this project?')) return;
+        try {
+            const res = await projectsAPI.delete(projectId);
+            if (res.data.success) {
+                setProjects(prev => prev.filter(p => p._id !== projectId));
+                showToast('Project deleted successfully.');
+                await refreshUser();
+            }
+        } catch (error) {
+            console.error('Failed to delete project:', error);
+            showToast('Failed to delete project.');
+        }
+    };
+
     const showToast = (msg) => {
         setToast(msg);
         setTimeout(() => setToast(''), 3500);
@@ -348,13 +487,13 @@ const Profile = () => {
         return theme;
     };
 
-    if (loading || !user) return <Loading fullScreen />;
+    if (loading || !profileUser) return <Loading fullScreen />;
 
     const currentTheme = getThemeStyles();
     
     // Level progress calculations
-    const userLevel = Number(user?.level) || 1;
-    const userXP = Number(user?.xp) || 0;
+    const userLevel = Number(profileUser?.level) || 1;
+    const userXP = Number(profileUser?.xp) || 0;
     const xpNeeded = userLevel * 200;
     const baseXPForCurrentLevel = (userLevel - 1) * 200;
     const xpEarnedInLevel = Math.max(0, userXP - baseXPForCurrentLevel);
@@ -386,20 +525,37 @@ const Profile = () => {
                             <div className="relative group">
                                 <img
                                     src={formData.avatar}
-                                    alt={user.name}
+                                    alt={profileUser.name}
                                     className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/80 bg-dark-900/40 p-1.5 shadow-2xl transition-transform duration-300 hover:scale-105"
                                 />
                                 <span className="absolute -bottom-1 -right-1 bg-dark-900 border border-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow">
-                                    Lvl {user.level}
+                                    Lvl {profileUser.level}
                                 </span>
                             </div>
-
+ 
                             <div className="text-center sm:text-left">
                                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                                    <h1 className="text-3xl font-display font-extrabold tracking-tight">{user.name}</h1>
+                                    <h1 className="text-3xl font-display font-extrabold tracking-tight">{profileUser.name}</h1>
                                     <span className="bg-white/25 backdrop-blur-md text-white border border-white/20 px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider">
-                                        {getLevelTitle(user.level)}
+                                        {getLevelTitle(profileUser.level)}
                                     </span>
+                                    {!isPublic && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const shareLink = `${window.location.origin}/p/${profileUser.id || profileUser._id}`;
+                                                navigator.clipboard.writeText(shareLink);
+                                                showToast('Public profile link copied to clipboard!');
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 hover:bg-white/35 backdrop-blur-md border border-white/25 text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-white/5"
+                                            title="Copy shareable link"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 10.742l4.028-2.014m0 0a3 3 0 10-2.243-4.077L7.33 6.91a3 3 0 102.243 4.077m4.242 4.15l-4.16 2.08a3 3 0 11-2.243-4.077L9.54 11.23a3 3 0 112.244 4.077z" />
+                                            </svg>
+                                            Share Profile
+                                        </button>
+                                    )}
                                 </div>
                                 <p className="text-white/95 font-medium mt-1 text-base sm:text-lg">{formData.title}</p>
                                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-2.5 text-xs text-white/80 font-medium">
@@ -422,7 +578,7 @@ const Profile = () => {
                                             Target: {formData.targetRole}
                                         </span>
                                     )}
-                                    <span>Joined: {new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}</span>
+                                    <span>Joined: {new Date(profileUser.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}</span>
                                 </div>
                             </div>
                         </div>
@@ -431,7 +587,7 @@ const Profile = () => {
                         <div className="bg-dark-950/35 backdrop-blur-md border border-white/10 rounded-2xl p-4 sm:p-5 w-full md:w-80 shadow-inner">
                             <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-white/90 mb-2 font-mono">
                                 <span>Level Progress</span>
-                                <span>{user.xp} / {xpNeeded} XP</span>
+                                <span>{profileUser.xp} / {xpNeeded} XP</span>
                             </div>
                             <div className="w-full bg-white/20 h-3.5 rounded-full overflow-hidden p-0.5 border border-white/5">
                                 <div
@@ -440,72 +596,74 @@ const Profile = () => {
                                 />
                             </div>
                             <p className="text-[11px] text-white/80 font-medium text-right mt-1.5 font-mono">
-                                {xpNeeded - user.xp} XP to Level {user.level + 1}
+                                {xpNeeded - profileUser.xp} XP to Level {profileUser.level + 1}
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Sub Navigation Tabs */}
-                <div className="flex flex-wrap gap-2 mb-8 border-b border-dark-200 dark:border-dark-800 pb-px">
-                    <button
-                        onClick={() => handleTabSwitch('overview', false)}
-                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'overview' && !editMode
-                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
-                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
-                            }`}
-                    >
-                        <span className="flex items-center gap-1.5">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            Profile Hub
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => handleTabSwitch('overview', true)}
-                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${editMode
-                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
-                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
-                            }`}
-                    >
-                        <span className="flex items-center gap-1.5">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Customize Profile
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => handleTabSwitch('achievements', false)}
-                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'achievements'
-                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
-                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
-                            }`}
-                    >
-                        <span className="flex items-center gap-1.5">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                            </svg>
-                            Badges & Trophies
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => handleTabSwitch('leaderboard', false)}
-                        className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'leaderboard'
-                            ? 'text-primary-500 font-bold border-b-2 border-primary-500'
-                            : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
-                            }`}
-                    >
-                        <span className="flex items-center gap-1.5">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            Leaderboard
-                        </span>
-                    </button>
-                </div>
+                {!isPublic && (
+                    <div className="flex flex-wrap gap-2 mb-8 border-b border-dark-200 dark:border-dark-800 pb-px">
+                        <button
+                            onClick={() => handleTabSwitch('overview', false)}
+                            className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'overview' && !editMode
+                                ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                                }`}
+                        >
+                            <span className="flex items-center gap-1.5">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                Profile Hub
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => handleTabSwitch('overview', true)}
+                            className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${editMode
+                                ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                                }`}
+                        >
+                            <span className="flex items-center gap-1.5">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Customize Profile
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => handleTabSwitch('achievements', false)}
+                            className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'achievements'
+                                ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                                }`}
+                        >
+                            <span className="flex items-center gap-1.5">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
+                                Badges & Trophies
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => handleTabSwitch('leaderboard', false)}
+                            className={`px-5 py-3 font-medium transition-all relative cursor-pointer text-sm ${activeTab === 'leaderboard'
+                                ? 'text-primary-500 font-bold border-b-2 border-primary-500'
+                                : 'text-dark-500 hover:text-dark-700 dark:hover:text-dark-350'
+                                }`}
+                        >
+                            <span className="flex items-center gap-1.5">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Leaderboard
+                            </span>
+                        </button>
+                    </div>
+                )}
 
                 {/* MAIN CONTENT PANELS */}
                 <div className="grid lg:grid-cols-3 gap-8">
@@ -568,189 +726,195 @@ const Profile = () => {
                         </Card>
 
                         {/* Subscription Details Card */}
-                        <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 relative overflow-hidden" hover={false}>
-                            {/* Graphic background highlights */}
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary-500/5 rounded-full blur-xl pointer-events-none" />
-                            
-                            <h3 className="font-bold text-dark-900 dark:text-white font-display mb-4 flex items-center gap-2 text-sm sm:text-base">
-                                <svg className="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z" />
-                                </svg>
-                                Subscription Details
-                            </h3>
-                            
-                            <div className="space-y-4">
-                                {/* Tier Info */}
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-1">Active Plan</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-[10px] font-extrabold px-3 py-1 rounded-lg border uppercase tracking-wider ${
-                                            user.subscriptionTier === 'lifetime'
-                                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                : user.subscriptionTier === 'premium' 
-                                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
-                                                : user.subscriptionTier === 'basic'
-                                                ? 'bg-primary-500/10 text-primary-400 border-primary-500/20'
-                                                : user.subscriptionTier === 'day'
-                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                : 'bg-dark-100 dark:bg-dark-850 text-dark-400 border-dark-200 dark:border-dark-800'
-                                        }`}>
-                                            {user.subscriptionTier === 'lifetime' && 'Lifetime Pass'}
-                                            {user.subscriptionTier === 'premium' && 'Premium Pass'}
-                                            {user.subscriptionTier === 'basic' && 'Basic Pass'}
-                                            {user.subscriptionTier === 'day' && 'Daily Pass'}
-                                            {user.subscriptionTier === 'none' && 'Free Trial'}
-                                        </span>
+                        {!isPublic && (
+                            <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 relative overflow-hidden" hover={false}>
+                                {/* Graphic background highlights */}
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary-500/5 rounded-full blur-xl pointer-events-none" />
+                                
+                                <h3 className="font-bold text-dark-900 dark:text-white font-display mb-4 flex items-center gap-2 text-sm sm:text-base">
+                                    <svg className="w-4 h-4 text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z" />
+                                    </svg>
+                                    Subscription Details
+                                </h3>
+                                
+                                <div className="space-y-4">
+                                    {/* Tier Info */}
+                                    <div>
+                                        <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-1">Active Plan</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-[10px] font-extrabold px-3 py-1 rounded-lg border uppercase tracking-wider ${
+                                                user.subscriptionTier === 'lifetime'
+                                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    : user.subscriptionTier === 'premium' 
+                                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+                                                    : user.subscriptionTier === 'basic'
+                                                    ? 'bg-primary-500/10 text-primary-400 border-primary-500/20'
+                                                    : user.subscriptionTier === 'day'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                    : 'bg-dark-100 dark:bg-dark-850 text-dark-400 border-dark-200 dark:border-dark-800'
+                                            }`}>
+                                                {user.subscriptionTier === 'lifetime' && 'Lifetime Pass'}
+                                                {user.subscriptionTier === 'premium' && 'Premium Pass'}
+                                                {user.subscriptionTier === 'basic' && 'Basic Pass'}
+                                                {user.subscriptionTier === 'day' && 'Daily Pass'}
+                                                {user.subscriptionTier === 'none' && 'Free Trial'}
+                                            </span>
+                                        </div>
                                     </div>
+
+                                    {user.subscriptionTier !== 'none' ? (
+                                        <>
+                                            {/* Purchase Date */}
+                                            {user.subscriptionStartedAt && (
+                                                <div>
+                                                    <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Purchased On</span>
+                                                    <span className="text-xs text-dark-700 dark:text-dark-300 font-semibold font-mono">
+                                                        {new Date(user.subscriptionStartedAt).toLocaleDateString(undefined, { 
+                                                            year: 'numeric', 
+                                                            month: 'long', 
+                                                            day: 'numeric'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Expiry Date */}
+                                            {user.subscriptionExpiresAt && user.subscriptionTier !== 'lifetime' && (
+                                                <div>
+                                                    <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Expires On</span>
+                                                    <span className="text-xs text-dark-700 dark:text-dark-300 font-semibold font-mono">
+                                                        {new Date(user.subscriptionExpiresAt).toLocaleDateString(undefined, { 
+                                                            year: 'numeric', 
+                                                            month: 'long', 
+                                                            day: 'numeric'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {user.subscriptionTier === 'lifetime' && (
+                                                <div>
+                                                    <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Expires On</span>
+                                                    <span className="text-xs text-amber-500 font-semibold font-mono">
+                                                        Never Expires
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="pt-2">
+                                            <p className="text-xs text-dark-500 dark:text-dark-400 leading-normal mb-3">
+                                                Upgrade to access algorithmic sandboxes, ATS resume checker, LaTeX templates, and mock AI interviews.
+                                            </p>
+                                            <button 
+                                                onClick={() => {
+                                                    window.dispatchEvent(new CustomEvent('subscription-required', { detail: { requiredTier: 'basic' } }));
+                                                }}
+                                                className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs tracking-wider transition-all duration-150 cursor-pointer shadow-lg shadow-primary-500/10 text-center"
+                                            >
+                                                Upgrade Workspace
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-
-                                {user.subscriptionTier !== 'none' ? (
-                                    <>
-                                        {/* Purchase Date */}
-                                        {user.subscriptionStartedAt && (
-                                            <div>
-                                                <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Purchased On</span>
-                                                <span className="text-xs text-dark-700 dark:text-dark-300 font-semibold font-mono">
-                                                    {new Date(user.subscriptionStartedAt).toLocaleDateString(undefined, { 
-                                                        year: 'numeric', 
-                                                        month: 'long', 
-                                                        day: 'numeric'
-                                                    })}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Expiry Date */}
-                                        {user.subscriptionExpiresAt && user.subscriptionTier !== 'lifetime' && (
-                                            <div>
-                                                <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Expires On</span>
-                                                <span className="text-xs text-dark-700 dark:text-dark-300 font-semibold font-mono">
-                                                    {new Date(user.subscriptionExpiresAt).toLocaleDateString(undefined, { 
-                                                        year: 'numeric', 
-                                                        month: 'long', 
-                                                        day: 'numeric'
-                                                    })}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {user.subscriptionTier === 'lifetime' && (
-                                            <div>
-                                                <span className="text-[10px] uppercase font-bold text-dark-400 dark:text-dark-500 block tracking-wider mb-0.5">Expires On</span>
-                                                <span className="text-xs text-amber-500 font-semibold font-mono">
-                                                    Never Expires
-                                                </span>
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="pt-2">
-                                        <p className="text-xs text-dark-500 dark:text-dark-400 leading-normal mb-3">
-                                            Upgrade to access algorithmic sandboxes, ATS resume checker, LaTeX templates, and mock AI interviews.
-                                        </p>
-                                        <button 
-                                            onClick={() => {
-                                                window.dispatchEvent(new CustomEvent('subscription-required', { detail: { requiredTier: 'basic' } }));
-                                            }}
-                                            className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs tracking-wider transition-all duration-150 cursor-pointer shadow-lg shadow-primary-500/10 text-center"
-                                        >
-                                            Upgrade Workspace
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
+                            </Card>
+                        )}
 
                         {/* Interactive Widget Configuration Panel (Customizable Layout) */}
-                        <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
-                            <h3 className="font-bold text-dark-900 dark:text-white font-display mb-3">Custom Dashboard Widgets</h3>
-                            <p className="text-xs text-dark-400 mb-4">Choose which modules are displayed on your profile layout.</p>
-                            
-                            <div className="space-y-3">
-                                <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
-                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        Statistics Grid
-                                    </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.widgets.showStats}
-                                        onChange={() => handleToggleWidget('showStats')}
-                                        className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
-                                    />
-                                </label>
+                        {!isPublic && (
+                            <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                <h3 className="font-bold text-dark-900 dark:text-white font-display mb-3">Custom Dashboard Widgets</h3>
+                                <p className="text-xs text-dark-400 mb-4">Choose which modules are displayed on your profile layout.</p>
+                                
+                                <div className="space-y-3">
+                                    <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
+                                        <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                            <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                            Statistics Grid
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.widgets.showStats}
+                                            onChange={() => handleToggleWidget('showStats')}
+                                            className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
+                                        />
+                                    </label>
 
-                                <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
-                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                        </svg>
-                                        Badges Shelf
-                                    </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.widgets.showAchievements}
-                                        onChange={() => handleToggleWidget('showAchievements')}
-                                        className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
-                                    />
-                                </label>
+                                    <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
+                                        <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                            <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                            </svg>
+                                            Badges Shelf
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.widgets.showAchievements}
+                                            onChange={() => handleToggleWidget('showAchievements')}
+                                            className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
+                                        />
+                                    </label>
 
-                                <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
-                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
-                                        </svg>
-                                        Skill Levels
-                                    </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.widgets.showSkills}
-                                        onChange={() => handleToggleWidget('showSkills')}
-                                        className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
-                                    />
-                                </label>
+                                    <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
+                                        <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                            <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+                                            </svg>
+                                            Skill Levels
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.widgets.showSkills}
+                                            onChange={() => handleToggleWidget('showSkills')}
+                                            className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
+                                        />
+                                    </label>
 
-                                <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
-                                    <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
-                                        <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        Activity Stream
-                                    </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.widgets.showActivity}
-                                        onChange={() => handleToggleWidget('showActivity')}
-                                        className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
-                                    />
-                                </label>
-                            </div>
+                                    <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
+                                        <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                            <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Activity Stream
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.widgets.showActivity}
+                                            onChange={() => handleToggleWidget('showActivity')}
+                                            className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
+                                        />
+                                    </label>
+                                </div>
 
-                            {/* Save widgets config fast link */}
-                            <button
-                                onClick={handleSaveProfile}
-                                className="w-full mt-4 py-2 border border-primary-500/20 text-primary-500 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 rounded-xl text-xs font-bold transition-all"
-                            >
-                                Apply Widgets Layout
-                            </button>
-                        </Card>
+                                {/* Save widgets config fast link */}
+                                <button
+                                    onClick={handleSaveProfile}
+                                    className="w-full mt-4 py-2 border border-primary-500/20 text-primary-500 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 rounded-xl text-xs font-bold transition-all font-sans cursor-pointer"
+                                >
+                                    Apply Widgets Layout
+                                </button>
+                            </Card>
+                        )}
 
                         {/* Account Actions */}
-                        <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
-                            <h3 className="font-bold text-dark-900 dark:text-white font-display mb-2">Account Actions</h3>
-                            <p className="text-xs text-dark-400 mb-4">Manage your session or sign out of your account on this device.</p>
-                            
-                            <button
-                                onClick={handleLogout}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 dark:border-red-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                            >
-                                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                Log Out of Account
-                            </button>
-                        </Card>
+                        {!isPublic && (
+                            <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                <h3 className="font-bold text-dark-900 dark:text-white font-display mb-2">Account Actions</h3>
+                                <p className="text-xs text-dark-400 mb-4">Manage your session or sign out of your account on this device.</p>
+                                
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 dark:border-red-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                                >
+                                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Log Out of Account
+                                </button>
+                            </Card>
+                        )}
                     </div>
 
                     {/* RIGHT PANEL: Dynamic view based on Active Tab */}
@@ -777,7 +941,7 @@ const Profile = () => {
                                         </Card>
                                         <Card className="p-4 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800 flex flex-col justify-between" hover={false}>
                                             <span className="text-xs font-semibold text-dark-400 dark:text-dark-500 uppercase">XP Gained</span>
-                                            <span className="text-2xl font-black text-primary-500 mt-2 font-display">{user.xp}</span>
+                                            <span className="text-2xl font-black text-primary-500 mt-2 font-display">{profileUser.xp}</span>
                                         </Card>
                                     </div>
                                 )}
@@ -808,19 +972,152 @@ const Profile = () => {
                                     </Card>
                                 )}
 
+                                {/* Projects Showcase Card */}
+                                <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-dark-100 dark:border-dark-850">
+                                        <div>
+                                            <h3 className="font-bold text-dark-900 dark:text-white font-display text-lg">Featured Projects</h3>
+                                            <p className="text-xs text-dark-400 mt-0.5">Showcase of software engineering work imported from GitHub</p>
+                                        </div>
+                                        
+                                        {/* Import Form (if not public) */}
+                                        {!isPublic && (
+                                            <form onSubmit={handleImportProject} className="flex flex-col sm:flex-row gap-2 max-w-md w-full">
+                                                <div className="flex-1 relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Paste GitHub Repository link..."
+                                                        value={githubLink}
+                                                        onChange={(e) => setGithubLink(e.target.value)}
+                                                        className="w-full px-3.5 py-1.5 bg-dark-50 dark:bg-dark-950 border border-dark-200 dark:border-dark-800 rounded-xl text-xs font-semibold placeholder-dark-450 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    disabled={importingProject}
+                                                    className="px-4 py-1.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-primary-500/15 transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
+                                                >
+                                                    {importingProject ? (
+                                                        <>
+                                                            <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                            </svg>
+                                                            Importing...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                                                            </svg>
+                                                            Import Repo
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </form>
+                                        )}
+                                    </div>
+
+                                    {projectError && (
+                                        <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-medium flex items-center gap-2">
+                                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>{projectError}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Projects Grid */}
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        {projects.map((project) => (
+                                            <Card key={project._id} className="group overflow-hidden bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 hover:border-primary-500/30 flex flex-col h-[280px]" hover={true}>
+                                                {/* Colorful seed cover background */}
+                                                <div className="h-32 w-full overflow-hidden relative">
+                                                    <ProjectCover project={project} />
+                                                    
+                                                    {/* Delete option if owner */}
+                                                    {!isPublic && (
+                                                        <button
+                                                            onClick={() => handleDeleteProject(project._id)}
+                                                            className="absolute top-3 right-3 p-1.5 bg-dark-950/80 hover:bg-red-500 text-white rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-lg"
+                                                            title="Delete Project"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <div className="p-4 flex flex-col flex-1 justify-between">
+                                                    <div>
+                                                        <div className="flex justify-between items-start gap-2">
+                                                            <h4 className="font-bold text-sm text-dark-900 dark:text-white line-clamp-1 group-hover:text-primary-500 transition-colors">
+                                                                {project.title}
+                                                            </h4>
+                                                            {project.githubUrl && (
+                                                                <a
+                                                                    href={project.githubUrl}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-dark-400 hover:text-dark-900 dark:hover:text-white flex-shrink-0"
+                                                                    title="Open Github Repo"
+                                                                >
+                                                                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                                                        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+                                                                    </svg>
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-dark-500 mt-1.5 line-clamp-2 leading-relaxed">
+                                                            {project.description || 'No description provided for this project repository.'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-dark-200/40 dark:border-dark-850/50 text-[11px] font-semibold text-dark-500">
+                                                        <div className="flex gap-3">
+                                                            {project.stars !== undefined && (
+                                                                <span className="flex items-center gap-1">
+                                                                    ★ {project.stars}
+                                                                </span>
+                                                            )}
+                                                            {project.forks !== undefined && (
+                                                                <span className="flex items-center gap-1">
+                                                                    ⑂ {project.forks}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="font-bold text-primary-500">
+                                                            {project.techStack?.[0] || 'Repository'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </Card>
+                                        ))}
+                                        {projects.length === 0 && (
+                                            <div className="col-span-2 text-center py-10 border-2 border-dashed border-dark-200 dark:border-dark-800 rounded-3xl">
+                                                <p className="text-sm text-dark-400 italic">No featured projects imported yet.</p>
+                                                {!isPublic && (
+                                                    <p className="text-xs text-dark-450 mt-1">Paste a GitHub link above to add your first project.</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Card>
+
                                 {/* Achievements Badge Shelf */}
                                 {formData.widgets.showAchievements && (
                                     <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
                                         <div className="flex justify-between items-center mb-5">
                                             <h3 className="font-bold text-dark-900 dark:text-white font-display">Trophy & Achievements shelf</h3>
                                             <span className="text-xs font-semibold px-2 py-0.5 rounded bg-dark-100 dark:bg-dark-850 text-dark-600 dark:text-dark-400">
-                                                {user.achievements?.length || 0} / {ACHIEVEMENT_LIST.length} Unlocked
+                                                {profileUser.achievements?.length || 0} / {ACHIEVEMENT_LIST.length} Unlocked
                                             </span>
                                         </div>
 
                                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                                             {ACHIEVEMENT_LIST.map((ach) => {
-                                                const isUnlocked = user.achievements?.includes(ach.id);
+                                                const isUnlocked = profileUser.achievements?.includes(ach.id);
                                                 return (
                                                     <div
                                                         key={ach.id}

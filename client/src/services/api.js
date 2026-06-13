@@ -80,6 +80,7 @@ export const authAPI = {
     logout: () => api.post('/auth/logout'),
     refreshToken: () => api.post('/auth/refresh'),
     getProfile: () => api.get('/user/profile'),
+    getPublicProfile: (userId) => api.get(`/auth/profile/public/${userId}`),
     forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
     resetPassword: (token, password) => api.post(`/auth/reset-password/${token}`, { password }),
     getMe: () => api.get('/auth/me'),
@@ -95,6 +96,9 @@ export const projectsAPI = {
     create: (data) => api.post('/projects', data),
     update: (id, data) => api.put(`/projects/${id}`, data),
     delete: (id) => api.delete(`/projects/${id}`),
+    getUserProjects: (userId) => api.get(`/projects/user/${userId}`),
+    importGithub: (githubLink) => api.post('/projects/import-github', { githubLink }),
+    deleteUserProject: (id) => api.delete(`/projects/user/${id}`),
 };
 
 // Certificates API

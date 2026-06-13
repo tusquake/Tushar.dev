@@ -304,6 +304,7 @@ const AppContent = () => {
           <Route path="collaborative" element={<ProtectedRoute><CollaborativeWorkspace /></ProtectedRoute>} />
           <Route path="workspace/:roomId" element={<ProtectedRoute><CollaborativeWorkspace /></ProtectedRoute>} />
           <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="p/:userId" element={<Profile isPublic={true} />} />
         </Route>
 
         {/* 404 - Not Found */}

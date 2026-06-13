@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-const { register, login, refreshAccessToken, logout, getProfile, forgotPassword, resetPassword, updateProfile, getLeaderboard } = require('../controllers/authController');
+const { register, login, refreshAccessToken, logout, getProfile, getPublicProfile, forgotPassword, resetPassword, updateProfile, getLeaderboard } = require('../controllers/authController');
 const { loginLimiter, registerLimiter } = require('../middlewares/rateLimiter');
 const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtils');
 const { protect } = require('../middlewares/authMiddleware');
@@ -206,12 +206,13 @@ router.get('/github/callback', (req, res, next) => {
             return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
         } catch (error) {
             console.error('GitHub OAuth Callback Redirection Error:', error);
-            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=RedirectionError&msg=${encodeURIComponent(error.message)}`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
         }
     })(req, res, next);
 });
 
 // User profile route (public)
 router.get('/profile', getProfile);
+router.get('/profile/public/:userId', getPublicProfile);
 
 module.exports = router;
