@@ -78,6 +78,11 @@ const AIInterview = () => {
     const [isVoiceDropdownOpen, setIsVoiceDropdownOpen] = useState(false);
     const [browserVoices, setBrowserVoices] = useState([]);
 
+    const [interviewMode, setInterviewMode] = useState('resume'); // 'topic' or 'resume'
+    const [difficulty, setDifficulty] = useState('Medium');
+    const [yoe, setYoe] = useState('1-3 years');
+    const [targetRole, setTargetRole] = useState('Software Engineer');
+
     useEffect(() => {
         const updateVoices = () => {
             if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -534,10 +539,41 @@ const AIInterview = () => {
 
         const previouslyAsked = sessionLogs.map(log => log.question);
         const exclusionsPrompt = previouslyAsked.length > 0
-            ? `To ensure variety and progression, DO NOT ask any of the following questions that have already been asked in this session:\n${previouslyAsked.map(q => `- ${q}`).join('\n')}\nPlease choose a different sub-topic or specific question.`
+            ? `To ensure variety and progression, DO NOT ask any of the following questions that have already been asked in this session:\n${previouslyAsked.map(q => `- ${q}`).join('\n')}\nPlease choose a different aspect or question.`
             : '';
 
-        const prompt = `You are an expert technical interviewer conducting a mock interview.
+        let prompt = '';
+        if (interviewMode === 'resume') {
+            prompt = `You are an expert professional interviewer conducting a mock interview.
+The interview is conducted end-to-end based strictly on the candidate's resume, skills, and background.
+Candidate Target Role/Title: "${targetRole}"
+Candidate Years of Experience (YoE): "${yoe}"
+Difficulty Level: "${difficulty}"
+
+Sequence of Questions Instruction:
+- The interview sequence should progress logically:
+  - Question 1 & 2: Ask the most frequently asked, most common, core, and most important questions for this role/experience level and key skills from their resume.
+  - Question 3 & 4: Ask moderately common, secondary skills, or scenario-based questions from their resume.
+  - Question 5 and onwards: Ask less frequently asked, niche, or deep-dive details from their resume.
+- We are currently on Question #${sessionLogs.length + 1} of this interview session. Generate the single next appropriate question matching this sequence stage.
+
+Exclusions to avoid repetition:
+${exclusionsPrompt}
+
+Tone Instructions:
+- You must adopt a tone that is extremely polite, humble, encouraging, and friendly.
+- Start the response with a very brief, warm, conversational greeting or transition (e.g., "Hi! Let's take a look at a question about...", "Awesome, I'd love to discuss...", "I hope you are ready for a fun question regarding...") to make the candidate feel comfortable.
+- Avoid sounding strict, robotic, or overly formal. Keep it supportive like a mentor.
+- DO NOT restrict yourself to software engineering or SDE unless the resume/target role is SDE. Adapt to ANY domain (marketing, design, product, finance, HR, etc.) described in the resume!
+
+Respond with ONLY the conversational spoken text itself. No meta-commentary, no markdown formatting.
+
+Candidate Resume Context:
+${resumeText}
+
+Question:`;
+        } else {
+            prompt = `You are an expert technical interviewer conducting a mock interview.
 The candidate has selected the topic: "${topic}".
 Generate ONE highly relevant, specific, and challenging interview question strictly about "${topic}".
 Use the candidate's resume context below ONLY to calibrate the experience level (Junior, Mid, Senior) and the context of the question. 
@@ -555,6 +591,8 @@ Candidate Resume Context:
 ${resumeText}
 
 Question:`;
+        }
+
         try {
             const response = await callLlm(prompt);
             const trimmedQ = response.trim();
@@ -636,7 +674,7 @@ JSON Evaluation:`;
                                lowerAnswer.includes("unsure") || 
                                answer.trim().length < 5;
 
-            if (didNotKnow) {
+            if (didNotKnow && interviewMode !== 'resume') {
                 const topicsList = [
                     'Data Structures & Algorithms',
                     'System Design',
@@ -648,11 +686,13 @@ JSON Evaluation:`;
                 const newTopic = otherTopics[Math.floor(Math.random() * otherTopics.length)];
                 setTopic(newTopic);
                 showToast(`Pivoting next question topic to: ${newTopic}`);
+            } else if (didNotKnow && interviewMode === 'resume') {
+                showToast("Moving to another area of your resume.");
             }
 
             // Log this session in database history
             const payload = {
-                topic,
+                topic: interviewMode === 'resume' ? `Resume-Based (${targetRole})` : topic,
                 question,
                 answer,
                 correct: parsed.correct,
@@ -945,8 +985,8 @@ JSON Evaluation:`;
                         </div>
                         <div class="stat-list">
                             <div class="stat-row">
-                                <span class="stat-label">Focus Area Topic:</span>
-                                <span class="stat-val">${topic}</span>
+                                <span class="stat-label">${interviewMode === 'resume' ? 'Target Role:' : 'Focus Area Topic:'}</span>
+                                <span class="stat-val">${interviewMode === 'resume' ? `${targetRole} (${yoe})` : topic}</span>
                             </div>
                             <div class="stat-row">
                                 <span class="stat-label">Total Questions Evaluated:</span>
@@ -1179,34 +1219,133 @@ JSON Evaluation:`;
                                 </div>
                             )}
 
-                            {/* Topic & Duration Selector */}
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="label">Topic to Prepare</label>
-                                    <select
-                                        className="input"
-                                        value={topic}
-                                        onChange={(e) => setTopic(e.target.value)}
+                            {/* Interview Mode Choice */}
+                            <div className="space-y-2">
+                                <label className="label font-bold text-xs uppercase tracking-wider text-dark-500">Interview Mode</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setInterviewMode('resume'); setError(''); }}
+                                        className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                                            interviewMode === 'resume'
+                                                ? 'bg-primary-500/10 border-primary-500 shadow-sm text-primary-950 dark:text-primary-100 font-semibold'
+                                                : 'bg-white dark:bg-dark-900 border-dark-200 dark:border-dark-800 text-dark-700 dark:text-dark-300 hover:border-dark-300 dark:hover:border-dark-700'
+                                        }`}
                                     >
-                                        <option>Data Structures & Algorithms</option>
-                                        <option>System Design</option>
-                                        <option>Backend Development (NodeJS/Database)</option>
-                                        <option>Frontend Development (React/JS/CSS)</option>
-                                        <option>General Technical & Behavioral</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="label">Interview Duration (mins)</label>
-                                    <input
-                                        type="number"
-                                        className="input"
-                                        min={3}
-                                        max={30}
-                                        value={duration}
-                                        onChange={(e) => setDuration(parseInt(e.target.value, 10) || 10)}
-                                    />
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <span className="text-sm font-extrabold">Resume-Based</span>
+                                        </div>
+                                        <p className="text-[10px] text-dark-450 dark:text-dark-500 leading-relaxed">
+                                            End-to-end questions tailored to your resume details, skills, target role, and YoE.
+                                        </p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => { setInterviewMode('topic'); setError(''); }}
+                                        className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                                            interviewMode === 'topic'
+                                                ? 'bg-primary-500/10 border-primary-500 shadow-sm text-primary-950 dark:text-primary-100 font-semibold'
+                                                : 'bg-white dark:bg-dark-900 border-dark-200 dark:border-dark-800 text-dark-700 dark:text-dark-300 hover:border-dark-300 dark:hover:border-dark-700'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                            </svg>
+                                            <span className="text-sm font-extrabold">Topic-Based</span>
+                                        </div>
+                                        <p className="text-[10px] text-dark-450 dark:text-dark-500 leading-relaxed">
+                                            Focused conceptual deep dive into DSA, System Design, Frontend, or Backend.
+                                        </p>
+                                    </button>
                                 </div>
                             </div>
+
+                            {/* Dynamic Parameters Based on Mode */}
+                            {interviewMode === 'resume' ? (
+                                <div className="grid md:grid-cols-2 gap-4 animate-fade-in">
+                                    <div className="space-y-1">
+                                        <label className="label">Target Role / Job Title</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="input"
+                                            placeholder="e.g. Product Manager, Marketing Lead, Software Engineer"
+                                            value={targetRole}
+                                            onChange={(e) => setTargetRole(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="label">Years of Experience (YoE)</label>
+                                        <select
+                                            className="input"
+                                            value={yoe}
+                                            onChange={(e) => setYoe(e.target.value)}
+                                        >
+                                            <option value="Fresher (< 1 year)">Fresher (&lt; 1 year)</option>
+                                            <option value="1-3 years">1-3 years</option>
+                                            <option value="3-5 years">3-5 years</option>
+                                            <option value="5-8 years">5-8 years</option>
+                                            <option value="8+ years">8+ years</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="label">Difficulty Level</label>
+                                        <select
+                                            className="input"
+                                            value={difficulty}
+                                            onChange={(e) => setDifficulty(e.target.value)}
+                                        >
+                                            <option value="Easy">Easy (Conceptual & Core Tasks)</option>
+                                            <option value="Medium">Medium (Scenarios & Trade-offs)</option>
+                                            <option value="Hard">Hard (Deep Dives & Architecture)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="label">Interview Duration (mins)</label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            min={3}
+                                            max={30}
+                                            value={duration}
+                                            onChange={(e) => setDuration(parseInt(e.target.value, 10) || 10)}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid md:grid-cols-2 gap-4 animate-fade-in">
+                                    <div className="space-y-1">
+                                        <label className="label">Topic to Prepare</label>
+                                        <select
+                                            className="input"
+                                            value={topic}
+                                            onChange={(e) => setTopic(e.target.value)}
+                                        >
+                                            <option>Data Structures & Algorithms</option>
+                                            <option>System Design</option>
+                                            <option>Backend Development (NodeJS/Database)</option>
+                                            <option>Frontend Development (React/JS/CSS)</option>
+                                            <option>General Technical & Behavioral</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="label">Interview Duration (mins)</label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            min={3}
+                                            max={30}
+                                            value={duration}
+                                            onChange={(e) => setDuration(parseInt(e.target.value, 10) || 10)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Voice Style Selector */}
                             {typeof window !== 'undefined' && window.speechSynthesis && (
@@ -1376,7 +1515,13 @@ JSON Evaluation:`;
 
                             {/* Start Button */}
                             <button
-                                onClick={generateQuestion}
+                                onClick={() => {
+                                    if (interviewMode === 'resume' && !targetRole.trim()) {
+                                        setError('Please enter a target role/job title for the resume interview.');
+                                        return;
+                                    }
+                                    generateQuestion();
+                                }}
                                 disabled={loading || !resumeText.trim()}
                                 className="btn-primary w-full py-3 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
@@ -1453,7 +1598,7 @@ JSON Evaluation:`;
                         <div className="space-y-6 animate-fade-in">
                             <div className="flex items-center justify-between">
                                 <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 rounded-lg text-xs font-bold uppercase tracking-wider">
-                                    Topic: {topic}
+                                    {interviewMode === 'resume' ? `Resume: ${targetRole} (${yoe})` : `Topic: ${topic}`}
                                 </span>
                                 <span className="text-xs text-dark-500 dark:text-dark-400 font-medium">
                                     Session Duration: {duration} mins
@@ -1769,7 +1914,9 @@ JSON Evaluation:`;
                                     </div>
                                 </div>
                                 <div className="space-y-1 text-center sm:text-left">
-                                    <h3 className="font-bold text-dark-950 dark:text-white">Focus Topic: {topic}</h3>
+                                    <h3 className="font-bold text-dark-950 dark:text-white">
+                                        {interviewMode === 'resume' ? `Target Role: ${targetRole} (${yoe})` : `Focus Topic: ${topic}`}
+                                    </h3>
                                     <p className="text-sm text-dark-500 dark:text-dark-400">Total Questions Answered: {sessionLogs.length}</p>
                                     <p className="text-sm text-dark-500 dark:text-dark-400">Correct Answers: {sessionLogs.filter(l => l.correct).length} | Needs Improvement: {sessionLogs.filter(l => !l.correct).length}</p>
                                 </div>
