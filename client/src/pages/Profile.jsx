@@ -499,6 +499,78 @@ const Profile = ({ isPublic = false }) => {
     const xpEarnedInLevel = Math.max(0, userXP - baseXPForCurrentLevel);
     const xpProgressPercent = Math.min(Math.round((xpEarnedInLevel / 200) * 100), 100);
 
+    const getCellColor = (count, themeName) => {
+        if (count === 0) {
+            return 'bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-transparent';
+        }
+        
+        const colorMap = {
+            purple: {
+                1: 'bg-purple-500/20 text-purple-400 border border-purple-500/10',
+                2: 'bg-purple-500/45 text-purple-300 border border-purple-500/20',
+                3: 'bg-purple-500/80 text-white border border-purple-500/30'
+            },
+            blue: {
+                1: 'bg-blue-500/20 text-blue-400 border border-blue-500/10',
+                2: 'bg-blue-500/45 text-blue-300 border border-blue-500/20',
+                3: 'bg-blue-500/80 text-white border border-blue-500/30'
+            },
+            emerald: {
+                1: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/10',
+                2: 'bg-emerald-500/45 text-emerald-300 border border-emerald-500/20',
+                3: 'bg-emerald-500/80 text-white border border-emerald-500/30'
+            },
+            amber: {
+                1: 'bg-amber-500/20 text-amber-400 border border-amber-500/10',
+                2: 'bg-amber-500/45 text-amber-300 border border-amber-500/20',
+                3: 'bg-amber-500/80 text-white border border-amber-500/30'
+            },
+            rose: {
+                1: 'bg-rose-500/20 text-rose-400 border border-rose-500/10',
+                2: 'bg-rose-500/45 text-rose-300 border border-rose-500/20',
+                3: 'bg-rose-500/80 text-white border border-rose-500/30'
+            }
+        };
+        
+        const themeColors = colorMap[themeName] || colorMap.purple;
+        if (count === 1) return themeColors[1];
+        if (count === 2) return themeColors[2];
+        return themeColors[3];
+    };
+
+    const getHeatmapCells = () => {
+        const activityMap = {};
+        const activitiesList = stats?.activities || [];
+        activitiesList.forEach(act => {
+            if (act.date) {
+                const dateStr = new Date(act.date).toISOString().split('T')[0];
+                activityMap[dateStr] = (activityMap[dateStr] || 0) + 1;
+            }
+        });
+
+        const cells = [];
+        const today = new Date();
+        
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - 125);
+        
+        const startDay = startDate.getDay();
+        startDate.setDate(startDate.getDate() - startDay);
+
+        const current = new Date(startDate);
+        while (current <= today) {
+            const dateStr = current.toISOString().split('T')[0];
+            cells.push({
+                dateStr,
+                count: activityMap[dateStr] || 0,
+                dayOfWeek: current.getDay(),
+                month: current.toLocaleString('default', { month: 'short' })
+            });
+            current.setDate(current.getDate() + 1);
+        }
+        return cells;
+    };
+
     return (
         <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 bg-dark-50 dark:bg-dark-950/20">
             <div className="max-w-7xl mx-auto">
@@ -678,7 +750,7 @@ const Profile = ({ isPublic = false }) => {
                             </p>
                             
                             {/* Social Icons Linkouts */}
-                            <div className="flex items-center gap-3 mt-6 pt-5 border-t border-dark-100 dark:border-dark-800">
+                            <div className="flex flex-wrap items-center gap-3 mt-6 pt-5 border-t border-dark-100 dark:border-dark-800">
                                 {formData.socials.github && (
                                     <a href={formData.socials.github} target="_blank" rel="noopener noreferrer" className="p-2 bg-dark-100 dark:bg-dark-850 hover:bg-dark-200 dark:hover:bg-dark-800 border border-dark-200/60 dark:border-dark-800 rounded-lg text-dark-600 dark:text-dark-300 transition-colors flex items-center gap-1.5" title="GitHub">
                                         <svg className="w-4 h-4 text-dark-500 fill-current" viewBox="0 0 24 24">
@@ -886,6 +958,21 @@ const Profile = ({ isPublic = false }) => {
                                             className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
                                         />
                                     </label>
+
+                                    <label className="flex items-center justify-between p-2 rounded-lg bg-dark-50 dark:bg-dark-950/40 border border-dark-200/40 dark:border-dark-850 cursor-pointer">
+                                        <span className="text-xs font-semibold text-dark-700 dark:text-dark-300 flex items-center gap-1.5">
+                                            <svg className="w-3.5 h-3.5 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            Activity Heatmap
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.widgets.showHeatmap !== false}
+                                            onChange={() => handleToggleWidget('showHeatmap')}
+                                            className="rounded border-dark-300 dark:border-dark-700 text-primary-500 focus:ring-primary-500"
+                                        />
+                                    </label>
                                 </div>
 
                                 {/* Save widgets config fast link */}
@@ -944,6 +1031,60 @@ const Profile = ({ isPublic = false }) => {
                                             <span className="text-2xl font-black text-primary-500 mt-2 font-display">{profileUser.xp}</span>
                                         </Card>
                                     </div>
+                                )}
+
+                                {/* Activity Heatmap Widget */}
+                                {(formData.widgets.showHeatmap !== false) && (
+                                    <Card className="p-6 bg-white dark:bg-dark-900 border border-dark-200/50 dark:border-dark-800" hover={false}>
+                                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4">
+                                            <div>
+                                                <h3 className="font-bold text-dark-900 dark:text-white font-display text-sm sm:text-base">Activity Heatmap</h3>
+                                                <p className="text-xs text-dark-400 mt-0.5">Your study and challenge activity history over the last 4 months</p>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-dark-500 font-mono">
+                                                <span>Less</span>
+                                                <div className="w-2.5 h-2.5 rounded-sm bg-dark-100 dark:bg-dark-850" />
+                                                <div className={`w-2.5 h-2.5 rounded-sm ${getCellColor(1, currentTheme.name)}`} />
+                                                <div className={`w-2.5 h-2.5 rounded-sm ${getCellColor(2, currentTheme.name)}`} />
+                                                <div className={`w-2.5 h-2.5 rounded-sm ${getCellColor(3, currentTheme.name)}`} />
+                                                <span>More</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="overflow-x-auto pb-1 select-none">
+                                            <div className="flex gap-2 min-w-[550px]">
+                                                {/* Day labels column */}
+                                                <div className="grid grid-rows-7 gap-1 text-[9px] font-bold text-dark-400 dark:text-dark-500 uppercase h-[98px] pr-1 pt-1 font-mono justify-items-end select-none">
+                                                    <span>Sun</span>
+                                                    <span />
+                                                    <span>Tue</span>
+                                                    <span />
+                                                    <span>Thu</span>
+                                                    <span />
+                                                    <span>Sat</span>
+                                                </div>
+
+                                                {/* Calendar Grid */}
+                                                <div className="grid grid-flow-col grid-rows-7 gap-1 flex-1">
+                                                    {getHeatmapCells().map((cell, idx) => {
+                                                        const colorClass = getCellColor(cell.count, currentTheme.name);
+                                                        const formattedDate = new Date(cell.dateStr).toLocaleDateString(undefined, { 
+                                                            month: 'short', 
+                                                            day: 'numeric', 
+                                                            year: 'numeric' 
+                                                        });
+                                                        return (
+                                                            <div
+                                                                key={idx}
+                                                                className={`w-[11px] h-[11px] rounded-sm transition-all duration-300 hover:scale-125 cursor-pointer ${colorClass}`}
+                                                                title={`${cell.count} activities on ${formattedDate}`}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
                                 )}
 
                                 {/* Skills Levels Slider Widget */}
