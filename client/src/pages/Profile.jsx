@@ -737,7 +737,8 @@ const Profile = ({ isPublic = false }) => {
     };
 
     return (
-        <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 bg-dark-50 dark:bg-dark-950/20">
+        <>
+            <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 bg-dark-50 dark:bg-dark-950/20">
             <div className="max-w-7xl mx-auto">
                 {/* Toast Notification */}
                 {toast && (
@@ -2382,6 +2383,7 @@ const Profile = ({ isPublic = false }) => {
                 </div>
             </div>
         )}
+        </>
     );
 };
 
