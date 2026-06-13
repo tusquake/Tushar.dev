@@ -54,6 +54,52 @@ const AppContent = () => {
 
   const isSubscriptionExpired = user && user.subscriptionTier !== 'none' && user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() < Date.now();
 
+  // Intercept navigation links and popstate events if an active session blocker is registered
+  useEffect(() => {
+    const handleDocumentClick = (e) => {
+      const anchor = e.target.closest('a');
+      if (anchor && window.activeSessionBlocker) {
+        const href = anchor.getAttribute('href');
+        if (href && (href.startsWith('/') || href.startsWith(window.location.origin))) {
+          const targetPath = href.replace(window.location.origin, '');
+          if (targetPath === window.location.pathname) return;
+
+          const confirmed = window.confirm(window.activeSessionBlocker.message);
+          if (!confirmed) {
+            e.preventDefault();
+            e.stopPropagation();
+          } else {
+            if (typeof window.activeSessionBlocker.onConfirm === 'function') {
+              window.activeSessionBlocker.onConfirm();
+            }
+            window.activeSessionBlocker = null;
+          }
+        }
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (window.activeSessionBlocker) {
+        const confirmed = window.confirm(window.activeSessionBlocker.message);
+        if (!confirmed) {
+          window.history.pushState(null, null, window.location.pathname);
+        } else {
+          if (typeof window.activeSessionBlocker.onConfirm === 'function') {
+            window.activeSessionBlocker.onConfirm();
+          }
+          window.activeSessionBlocker = null;
+        }
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, true);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   // Listen for API 402 subscription errors
   useEffect(() => {
     const handleSubRequired = (e) => {

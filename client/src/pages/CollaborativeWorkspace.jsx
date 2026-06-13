@@ -404,14 +404,35 @@ export default function CollaborativeWorkspace() {
     };
   }, [socket]);
 
+  // Handle session blocking warnings when in active collaborative workspace room
   useEffect(() => {
-    return () => {
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => track.stop());
+    const handleBeforeUnload = (e) => {
+      if (!inLobby) {
+        e.preventDefault();
+        e.returnValue = '';
       }
-      Object.values(peerConnectionsRef.current).forEach(pc => pc.close());
     };
-  }, []);
+
+    if (!inLobby) {
+      window.activeSessionBlocker = {
+        message: "Warning: You are currently in an active collaborative coding session. Leaving this room will disconnect you from the editor, voice channel, and active workspace. Are you sure you want to navigate away?",
+        onConfirm: () => {
+          if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => track.stop());
+          }
+          Object.values(peerConnectionsRef.current).forEach(pc => pc.close());
+        }
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    } else {
+      window.activeSessionBlocker = null;
+    }
+
+    return () => {
+      window.activeSessionBlocker = null;
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [inLobby]);
 
   const joinVoice = async () => {
     try {
@@ -917,8 +938,11 @@ export default function CollaborativeWorkspace() {
             {/* Exit Room */}
             <button
               onClick={() => {
-                setInLobby(true);
-                navigate('/code-editor');
+                const confirmed = window.confirm("Warning: Leaving this room will disconnect you from the editor, voice channel, and active workspace. Are you sure you want to exit?");
+                if (confirmed) {
+                  setInLobby(true);
+                  navigate('/code-editor');
+                }
               }}
               className="px-3 py-1.5 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 text-xs text-rose-400 flex items-center gap-1.5 transition"
             >

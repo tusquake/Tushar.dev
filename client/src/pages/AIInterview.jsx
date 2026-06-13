@@ -114,10 +114,44 @@ const AIInterview = () => {
                 });
             }, 1000);
         }
-        return () => {
-            if (interval) clearInterval(interval);
-        };
     }, [timerActive, isPaused, timeRemaining, stage]);
+
+    // Handle session blocking warnings during active interview stages
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (stage !== 'idle' && stage !== 'session_summary') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+
+        if (stage !== 'idle' && stage !== 'session_summary') {
+            window.activeSessionBlocker = {
+                message: "Warning: You are currently in an active interview session. Leaving this page will immediately terminate the interview, and all progress will be lost. Are you sure you want to navigate away?",
+                onConfirm: () => {
+                    window.speechSynthesis.cancel();
+                    if (idleTimerRef.current) {
+                        clearTimeout(idleTimerRef.current);
+                    }
+                    if (recognitionRef.current) {
+                        try {
+                            recognitionRef.current.stop();
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                }
+            };
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        } else {
+            window.activeSessionBlocker = null;
+        }
+
+        return () => {
+            window.activeSessionBlocker = null;
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [stage]);
 
     useEffect(() => {
         if (inputMode === 'code') {
@@ -461,6 +495,9 @@ const AIInterview = () => {
     };
 
     const handleExitSession = () => {
+        const confirmed = window.confirm("Warning: You are currently in an active interview session. Leaving will immediately terminate the interview, and all progress will be lost. Are you sure you want to exit?");
+        if (!confirmed) return;
+
         window.speechSynthesis.cancel();
         if (idleTimerRef.current) {
             clearTimeout(idleTimerRef.current);
