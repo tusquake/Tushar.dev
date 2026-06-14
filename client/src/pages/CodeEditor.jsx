@@ -80,6 +80,215 @@ public class Solution {
 }`
 };
 
+const SNIPPETS = {
+    javascript: {
+        binarySearch: `// Binary Search Algorithm
+function binarySearch(arr, target) {
+    let left = 0;
+    let right = arr.length - 1;
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        if (arr[mid] === target) return mid;
+        if (arr[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+    return -1;
+}
+
+const data = [1, 3, 5, 7, 9, 11, 13, 15];
+console.log("Index of 9:", binarySearch(data, 9));`,
+        quicksort: `// Quicksort Implementation
+function quickSort(arr) {
+    if (arr.length <= 1) return arr;
+    const pivot = arr[arr.length - 1];
+    const left = [];
+    const right = [];
+    for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] < pivot) left.push(arr[i]);
+        else right.push(arr[i]);
+    }
+    return [...quickSort(left), pivot, ...quickSort(right)];
+}
+
+const unsorted = [34, 7, 23, 32, 5, 62];
+console.log("Sorted array:", quickSort(unsorted));`,
+        fetchApi: `// Fetch API Wrapper example
+async function fetchUserData(userId) {
+    console.log("Fetching user data for:", userId);
+    try {
+        const response = await fetch(\`https://jsonplaceholder.typicode.com/users/\${userId}\`);
+        if (!response.ok) throw new Error("Network response was not ok");
+        const data = await response.json();
+        console.log("User retrieved:", data.name, "-", data.email);
+        return data;
+    } catch (error) {
+        console.error("Fetch failed:", error.message);
+    }
+}
+
+fetchUserData(1);`,
+        debounce: `// Debounce decorator utility
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+const log = debounce(() => console.log("Debounced callback fired!"), 300);
+log(); log(); log(); // Only fires once after 300ms`
+    },
+    python: {
+        binarySearch: `# Python Binary Search
+def binary_search(arr, target):
+    left, right = 0, len(arr) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1
+
+data = [1, 3, 5, 7, 9, 11, 13, 15]
+print("Index of 9:", binary_search(data, 9))`,
+        quicksort: `# Python Quicksort
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[-1]
+    left = [x for x in arr[:-1] if x < pivot]
+    right = [x for x in arr[:-1] if x >= pivot]
+    return quicksort(left) + [pivot] + quicksort(right)
+
+unsorted = [34, 7, 23, 32, 5, 62]
+print("Sorted array:", quicksort(unsorted))`,
+        fibonacci: `# Dynamic Programming Fibonacci
+def fib_dp(n):
+    if n <= 0: return 0
+    if n == 1: return 1
+    dp = [0] * (n + 1)
+    dp[1] = 1
+    for i in range(2, n + 1):
+        dp[i] = dp[i-1] + dp[i-2]
+    return dp[n]
+
+print("Fibonacci 10th number:", fib_dp(10))`
+    },
+    cpp: {
+        binarySearch: `// C++ Binary Search
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int binarySearch(const vector<int>& arr, int target) {
+    int left = 0, right = arr.size() - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (arr[mid] == target) return mid;
+        if (arr[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+    return -1;
+}
+
+int main() {
+    vector<int> data = {1, 3, 5, 7, 9, 11, 13, 15};
+    cout << "Index of 9: " << binarySearch(data, 9) << endl;
+    return 0;
+}`,
+        quicksort: `// C++ Quicksort implementation
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void quickSort(vector<int>& arr, int low, int high) {
+    if (low >= high) return;
+    int pivot = arr[high];
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    int p = i + 1;
+    
+    quickSort(arr, low, p - 1);
+    quickSort(arr, p + 1, high);
+}
+
+int main() {
+    vector<int> data = {34, 7, 23, 32, 5, 62};
+    quickSort(data, 0, data.size() - 1);
+    cout << "Sorted array: ";
+    for (int x : data) cout << x << " ";
+    cout << endl;
+    return 0;
+}`
+    },
+    java: {
+        binarySearch: `// Java Binary Search
+import java.util.*;
+
+public class Solution {
+    public static int binarySearch(int[] arr, int target) {
+        int left = 0, right = arr.length - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (arr[mid] == target) return mid;
+            if (arr[mid] < target) left = mid + 1;
+            else right = mid - 1;
+        }
+        return -1;
+    }
+    
+    public static void main(String[] args) {
+        int[] data = {1, 3, 5, 7, 9, 11, 13, 15};
+        System.out.println("Index of 9: " + binarySearch(data, 9));
+    }
+}`,
+        quicksort: `// Java Quicksort
+import java.util.*;
+
+public class Solution {
+    public static void quickSort(int[] arr, int low, int high) {
+        if (low >= high) return;
+        int pivot = arr[high];
+        int i = low - 1;
+        for (int j = low; j < high; j++) {
+            if (arr[j] < pivot) {
+                i++;
+                int temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+            }
+        }
+        int temp = arr[i + 1];
+        arr[i + 1] = arr[high];
+        arr[high] = temp;
+        int p = i + 1;
+        
+        quickSort(arr, low, p - 1);
+        quickSort(arr, p + 1, high);
+    }
+    
+    public static void main(String[] args) {
+        int[] data = {34, 7, 23, 32, 5, 62};
+        quickSort(data, 0, data.length - 1);
+        System.out.println("Sorted array: " + Arrays.toString(data));
+    }
+}`
+    }
+};
+
 export default function CodeEditor() {
     const navigate = useNavigate();
     const [language, setLanguage] = useState('javascript');
@@ -91,6 +300,17 @@ export default function CodeEditor() {
         const saved = localStorage.getItem('isHeaderVisible');
         return saved !== null ? JSON.parse(saved) : true;
     });
+    const [isZenMode, setIsZenMode] = useState(() => {
+        const saved = localStorage.getItem('isZenMode');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
+    const [executionHistory, setExecutionHistory] = useState(() => {
+        const saved = localStorage.getItem('executionHistory');
+        return saved !== null ? JSON.parse(saved) : [];
+    });
+    const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+    const [benchmarkData, setBenchmarkData] = useState(null);
+    const [activeTerminalTab, setActiveTerminalTab] = useState('console'); // 'console' | 'history' | 'profiler'
     const [aiIntellisense, setAiIntellisense] = useState(true);
     const [isRunning, setIsRunning] = useState(false);
 
@@ -99,14 +319,35 @@ export default function CodeEditor() {
     }, [isHeaderVisible]);
 
     useEffect(() => {
-        const handleKeyDownHeader = (e) => {
+        localStorage.setItem('isZenMode', JSON.stringify(isZenMode));
+        // Dispatch custom event to hide/show navbar matching zen mode state
+        window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: !isZenMode }));
+    }, [isZenMode]);
+
+    useEffect(() => {
+        localStorage.setItem('executionHistory', JSON.stringify(executionHistory));
+    }, [executionHistory]);
+
+    useEffect(() => {
+        const handleKeyDownShortcuts = (e) => {
+            // Ctrl + Shift + H (Header Toggle)
             if (e.key.toLowerCase() === 'h' && e.ctrlKey && e.shiftKey) {
                 e.preventDefault();
                 setIsHeaderVisible(prev => !prev);
             }
+            // Ctrl + Shift + Z (Zen Mode Toggle)
+            if (e.key.toLowerCase() === 'z' && e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                setIsZenMode(prev => !prev);
+            }
+            // Ctrl + Shift + K (Cheat Sheet Toggle)
+            if (e.key.toLowerCase() === 'k' && e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                setIsShortcutsOpen(prev => !prev);
+            }
         };
-        window.addEventListener('keydown', handleKeyDownHeader);
-        return () => window.removeEventListener('keydown', handleKeyDownHeader);
+        window.addEventListener('keydown', handleKeyDownShortcuts);
+        return () => window.removeEventListener('keydown', handleKeyDownShortcuts);
     }, []);
 
     // Handle body overflow and Escape key to close fullscreen
@@ -130,6 +371,129 @@ export default function CodeEditor() {
         window.addEventListener('keydown', handleKeyDownEscape);
         return () => window.removeEventListener('keydown', handleKeyDownEscape);
     }, []);
+
+    // Load shared code from URL query parameter
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const codeParam = params.get('code');
+        const langParam = params.get('lang');
+        if (codeParam) {
+            try {
+                const decoded = decodeURIComponent(escape(atob(codeParam)));
+                setCode(decoded);
+                if (langParam) setLanguage(langParam);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (e) {
+                console.error("Failed to decode share URL code content", e);
+            }
+        }
+    }, []);
+
+    const recordHistory = (isSuccess, runTime, runMemory) => {
+        const newRecord = {
+            id: Date.now(),
+            timestamp: new Date().toLocaleTimeString(),
+            language,
+            code,
+            time: runTime,
+            memory: runMemory,
+            success: isSuccess
+        };
+        setExecutionHistory(prev => [newRecord, ...prev].slice(0, 50));
+    };
+
+    const runProfilerBenchmark = () => {
+        setIsRunning(true);
+        setTerminalOutput(prev => [
+            ...prev,
+            { type: 'info', text: `\n$ profile-benchmark --lang=${language} --iterations=4` }
+        ]);
+
+        setTimeout(() => {
+            let complexity = 'O(N)';
+            let explanation = 'Linear search/loop detected in buffer.';
+            const codeLower = code.toLowerCase();
+            if (codeLower.includes('sort(') || codeLower.includes('quicksort') || codeLower.includes('mergesort')) {
+                complexity = 'O(N log N)';
+                explanation = 'Sorting operation detected in source buffer.';
+            } else if (codeLower.includes('binarysearch') || codeLower.includes('binary_search') || codeLower.includes('while (left <= right)')) {
+                complexity = 'O(log N)';
+                explanation = 'Logarithmic search space halving detected.';
+            } else if (codeLower.includes('for') && codeLower.split('for').length > 3) {
+                complexity = 'O(N^2)';
+                explanation = 'Nested loops detected in search buffer.';
+            } else if (!codeLower.includes('for') && !codeLower.includes('while') && !codeLower.includes('map(') && !codeLower.includes('forEach')) {
+                complexity = 'O(1)';
+                explanation = 'Constant time execution with no iterative loops.';
+            }
+
+            const mockRuns = [
+                { inputSize: 10, timeMs: complexity === 'O(1)' ? 0.05 : complexity === 'O(log N)' ? 0.1 : complexity === 'O(N)' ? 0.2 : complexity === 'O(N log N)' ? 0.3 : 0.5 },
+                { inputSize: 100, timeMs: complexity === 'O(1)' ? 0.05 : complexity === 'O(log N)' ? 0.15 : complexity === 'O(N)' ? 1.2 : complexity === 'O(N log N)' ? 2.4 : 15.0 },
+                { inputSize: 1000, timeMs: complexity === 'O(1)' ? 0.05 : complexity === 'O(log N)' ? 0.22 : complexity === 'O(N)' ? 10.5 : complexity === 'O(N log N)' ? 32.0 : 1200.0 },
+                { inputSize: 10000, timeMs: complexity === 'O(1)' ? 0.06 : complexity === 'O(log N)' ? 0.31 : complexity === 'O(N)' ? 105.0 : complexity === 'O(N log N)' ? 420.0 : 125000.0 }
+            ];
+
+            setBenchmarkData({
+                complexity,
+                explanation,
+                runs: mockRuns
+            });
+            setActiveTerminalTab('profiler');
+            setTerminalOutput(prev => [
+                ...prev,
+                { type: 'system', text: `Benchmark profile generated. Algorithmic Complexity: ${complexity}` }
+            ]);
+            setIsRunning(false);
+        }, 1200);
+    };
+
+    const handleDownloadCode = () => {
+        const extensions = { javascript: 'js', python: 'py', cpp: 'cpp', java: 'java' };
+        const ext = extensions[language] || 'txt';
+        const filename = `codeforge_solution.${ext}`;
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+        setTerminalOutput(prev => [
+            ...prev,
+            { type: 'system', text: `Downloaded code buffer to file ${filename}` }
+        ]);
+    };
+
+    const handleShareCode = () => {
+        try {
+            const encoded = btoa(unescape(encodeURIComponent(code)));
+            const shareUrl = `${window.location.origin}${window.location.pathname}?code=${encoded}&lang=${language}`;
+            navigator.clipboard.writeText(shareUrl);
+            setTerminalOutput(prev => [
+                ...prev,
+                { type: 'system', text: `Shareable URL copied to clipboard! (Link contains encoded code buffer)` }
+            ]);
+        } catch (e) {
+            navigator.clipboard.writeText(code);
+            setTerminalOutput(prev => [
+                ...prev,
+                { type: 'system', text: `Code contents copied directly to clipboard.` }
+            ]);
+        }
+    };
+
+    const handleInsertSnippet = (snippetKey) => {
+        if (!snippetKey) return;
+        const snippetText = SNIPPETS[language]?.[snippetKey];
+        if (snippetText) {
+            setCode(snippetText);
+            setTerminalOutput(prev => [
+                ...prev,
+                { type: 'system', text: `Loaded snippet [${snippetKey}] into ${language} buffer.` }
+            ]);
+        }
+    };
     const [terminalOutput, setTerminalOutput] = useState([
         { type: 'system', text: 'Welcome to CodeForge IDE v1.0.0 Terminal' },
         { type: 'system', text: 'Select a programming language and click [Run Code] to compile.' }
@@ -241,10 +605,13 @@ export default function CodeEditor() {
                     ...newOutputs,
                     { type: 'system', text: `Process finished with exit code ${success ? 0 : 1}` }
                 ]);
+                const runtimeTime = parseFloat(diffTime);
+                const runtimeMem = Math.floor(Math.random() * 800) + 120;
                 setPerformanceMetrics({
-                    time: parseFloat(diffTime),
-                    memory: Math.floor(Math.random() * 800) + 120 // mock JS engine heap
+                    time: runtimeTime,
+                    memory: runtimeMem
                 });
+                recordHistory(success, runtimeTime, runtimeMem);
                 setIsRunning(false);
             }, 600);
         } else {
@@ -289,16 +656,20 @@ JSON Response:`;
                     ...formatOutputs,
                     { type: 'system', text: `Process finished with exit code ${parsed.success ? 0 : 1}` }
                 ]);
+                const runtimeTime = parsed.executionTimeMs || 10;
+                const runtimeMem = parsed.memoryKb || 512;
                 setPerformanceMetrics({
-                    time: parsed.executionTimeMs || 10,
-                    memory: parsed.memoryKb || 512
+                    time: runtimeTime,
+                    memory: runtimeMem
                 });
+                recordHistory(parsed.success, runtimeTime, runtimeMem);
             } catch (err) {
                 console.error(err);
                 setTerminalOutput(prev => [
                     ...prev,
                     { type: 'stderr', text: 'Simulation Error: Failed to compile code in the virtual sandbox.' }
                 ]);
+                recordHistory(false, 0, 0);
             } finally {
                 setIsRunning(false);
             }
@@ -772,7 +1143,7 @@ Schema:
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     
                     {/* Left Code Area Column (Editor) */}
-                    <div className="lg:col-span-8 flex flex-col gap-5">
+                    <div className={`${isZenMode ? 'lg:col-span-12' : 'lg:col-span-8'} flex flex-col gap-5 transition-all duration-300`}>
                         
                         {/* Editor Block */}
                         {(() => {
@@ -909,20 +1280,89 @@ Schema:
                             </div>
 
                             {/* Editor Bottom Actions */}
-                            <div className="p-4 bg-dark-100/5 dark:bg-dark-900/10 border-t border-dark-800/10 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                            <div className="p-4 bg-dark-100/5 dark:bg-dark-900/10 border-t border-dark-800/10 flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <button
                                         onClick={handleResetCode}
-                                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-350 dark:border-dark-800 text-dark-600 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-900 transition"
+                                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-350 dark:border-dark-800 text-dark-600 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-900 transition cursor-pointer"
+                                        title="Reset Code to default boilerplate"
                                     >
                                         Reset Template
                                     </button>
+
+                                    {/* Snippets Injector Dropdown */}
+                                    <select
+                                        onChange={(e) => {
+                                            handleInsertSnippet(e.target.value);
+                                            e.target.value = ""; // reset select index
+                                        }}
+                                        className="px-2 py-1.5 rounded-lg text-xs bg-white dark:bg-dark-900 border border-dark-350 dark:border-dark-800 text-dark-700 dark:text-dark-200 outline-none cursor-pointer focus:border-primary-500"
+                                        defaultValue=""
+                                    >
+                                        <option value="" disabled>Load Algorithm...</option>
+                                        <option value="binarySearch">Binary Search</option>
+                                        <option value="quicksort">Quicksort</option>
+                                        {language === 'javascript' && <option value="fetchApi">Fetch API Wrapper</option>}
+                                        {language === 'javascript' && <option value="debounce">Debounce decorator</option>}
+                                        {language === 'python' && <option value="fibonacci">DP Fibonacci</option>}
+                                    </select>
+
+                                    {/* Download Button */}
+                                    <button
+                                        onClick={handleDownloadCode}
+                                        className="p-1.5 rounded-lg border border-dark-350 dark:border-dark-800 text-dark-600 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-900 transition cursor-pointer flex items-center justify-center"
+                                        title="Download Source Code File"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                    </button>
+
+                                    {/* Share Button */}
+                                    <button
+                                        onClick={handleShareCode}
+                                        className="p-1.5 rounded-lg border border-dark-350 dark:border-dark-800 text-dark-600 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-900 transition cursor-pointer flex items-center justify-center"
+                                        title="Copy Shareable URL (Contains Encoded Buffer)"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 10.742l4.632-2.316m0 0a3 3 0 10-2.684-4.053L6.002 6.69m4.632 1.737L6 13.31M19 19a3 3 0 11-6 0 3 3 0 016 0zM6 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </button>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                
+                                <div className="flex items-center gap-2">
+                                    {/* Focus/Zen Mode Toggle */}
+                                    <button
+                                        onClick={() => setIsZenMode(!isZenMode)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${
+                                            isZenMode 
+                                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/40 hover:bg-purple-500/20' 
+                                                : 'border-dark-350 dark:border-dark-800 text-dark-600 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-900'
+                                        }`}
+                                        title="Zen Mode / Distraction Free Focus Space (Ctrl+Shift+Z)"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <span>Focus Mode</span>
+                                    </button>
+
+                                    {/* Keyboard Guide Toggle */}
+                                    <button
+                                        onClick={() => setIsShortcutsOpen(true)}
+                                        className="p-1.5 rounded-lg border border-dark-350 dark:border-dark-800 text-dark-600 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-900 transition cursor-pointer flex items-center justify-center"
+                                        title="Keyboard Shortcuts Cheat Sheet (Ctrl+Shift+K)"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+
                                     <button
                                         onClick={handleRunCode}
                                         disabled={isRunning}
-                                        className={`px-6 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-2 shadow-lg cursor-pointer ${
+                                        className={`px-6 py-2 rounded-xl font-medium text-sm transition flex items-center gap-2 shadow-lg cursor-pointer ${
                                             isRunning ? 'bg-primary-500/50 cursor-not-allowed text-white' : styles.button
                                         }`}
                                     >
@@ -951,217 +1391,350 @@ Schema:
                     </div>
 
                     {/* Right Sidebar Column (AI Copilot & Terminal) */}
-                    <div className="lg:col-span-4 flex flex-col gap-5">
-                        
-                        {/* Right AI Intellisense Drawer Card */}
-                        {aiIntellisense && (() => {
-                            const aiBoxProps = getBoxStyleProps(boxStyle, styles);
-                            return (
-                                <div 
-                                    className={`p-5 rounded-2xl border flex flex-col justify-between flex-shrink-0 transition-all duration-300 ${aiBoxProps.className} ${
-                                        fullscreenBox === 'ai' 
-                                            ? 'fixed inset-0 z-[100] m-0 rounded-none w-screen h-screen bg-white dark:bg-dark-900/95 p-6 md:p-8 overflow-y-auto' 
-                                            : ''
-                                    }`}
-                                    style={{
-                                        ...aiBoxProps.style,
-                                        ...(fullscreenBox === 'ai' ? { borderRadius: '0' } : {})
-                                    }}
-                                >
-                                    <div className="flex items-center justify-between mb-4 border-b border-dark-100 dark:border-dark-800/80 pb-3">
-                                        <h2 className="font-bold text-dark-900 dark:text-white flex items-center gap-1.5">
-                                            <svg className="w-4 h-4 text-primary-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                            AI Copilot Coprocessor
-                                        </h2>
-                                        <div className="flex items-center gap-2">
-                                            <span className="bg-[#10b981]/15 text-[#10b981] dark:bg-[#10b981]/25 dark:text-[#10b981] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Active</span>
-                                            <button
-                                                onClick={() => setFullscreenBox(fullscreenBox === 'ai' ? null : 'ai')}
-                                                className="p-1 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded transition cursor-pointer flex items-center justify-center"
-                                                title={fullscreenBox === 'ai' ? "Exit Fullscreen (Esc)" : "Fullscreen AI Copilot"}
-                                            >
-                                                {fullscreenBox === 'ai' ? (
-                                                    <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v-6m0 6l7 7" />
-                                                    </svg>
-                                                ) : (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-5V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                                                    </svg>
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Copilot Action Buttons */}
-                                    <div className="grid grid-cols-2 gap-2 mb-4">
-                                        <button
-                                            onClick={() => handleCopilotAction('explain')}
-                                            disabled={aiLoading}
-                                            className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
-                                        >
-                                            Explain
-                                        </button>
-                                        <button
-                                            onClick={() => handleCopilotAction('optimize')}
-                                            disabled={aiLoading}
-                                            className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
-                                        >
-                                            Optimize
-                                        </button>
-                                        <button
-                                            onClick={() => handleCopilotAction('fix_bugs')}
-                                            disabled={aiLoading}
-                                            className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
-                                        >
-                                            Audit Bugs
-                                        </button>
-                                        <button
-                                            onClick={() => handleCopilotAction('custom')}
-                                            disabled={aiLoading || !aiQuery.trim()}
-                                            className="py-2.5 px-2 text-xs font-semibold rounded-xl bg-primary-500/10 hover:bg-primary-500/20 text-primary-500 border border-primary-500/20 transition cursor-pointer text-center disabled:opacity-50"
-                                        >
-                                            Submit
-                                        </button>
-                                    </div>
-
-                                    {/* Custom Copilot Prompt Field */}
-                                    <div className="mb-4">
-                                        <textarea
-                                            value={aiQuery}
-                                            onChange={(e) => setAiQuery(e.target.value)}
-                                            placeholder="Ask AI to complete, edit, or customize..."
-                                            className="w-full p-3 text-xs rounded-xl bg-dark-50 dark:bg-dark-900 border border-dark-250 dark:border-dark-800 text-dark-750 dark:text-dark-200 focus:outline-none focus:border-primary-500 min-h-[60px] resize-none"
-                                        />
-                                    </div>
-
-                                    {/* AI suggestions output panel */}
-                                    <div className="flex flex-col gap-2 border-t border-dark-100 dark:border-dark-800/80 pt-3 font-mono text-xs">
-                                        <div className="flex items-center justify-between text-dark-400 dark:text-dark-500 mb-1">
-                                            <span>Output Analysis:</span>
-                                            {aiResponse.includes('```') && (
+                    {!isZenMode && (
+                        <div className="lg:col-span-4 flex flex-col gap-5">
+                            
+                            {/* Right AI Intellisense Drawer Card */}
+                            {aiIntellisense && (() => {
+                                const aiBoxProps = getBoxStyleProps(boxStyle, styles);
+                                return (
+                                    <div 
+                                        className={`p-5 rounded-2xl border flex flex-col justify-between flex-shrink-0 transition-all duration-300 ${aiBoxProps.className} ${
+                                            fullscreenBox === 'ai' 
+                                                ? 'fixed inset-0 z-[100] m-0 rounded-none w-screen h-screen bg-white dark:bg-dark-900/95 p-6 md:p-8 overflow-y-auto' 
+                                                : ''
+                                        }`}
+                                        style={{
+                                            ...aiBoxProps.style,
+                                            ...(fullscreenBox === 'ai' ? { borderRadius: '0' } : {})
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-between mb-4 border-b border-dark-100 dark:border-dark-800/80 pb-3">
+                                            <h2 className="font-bold text-dark-900 dark:text-white flex items-center gap-1.5">
+                                                <svg className="w-4 h-4 text-primary-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                                AI Copilot Coprocessor
+                                            </h2>
+                                            <div className="flex items-center gap-2">
+                                                <span className="bg-[#10b981]/15 text-[#10b981] dark:bg-[#10b981]/25 dark:text-[#10b981] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Active</span>
                                                 <button
-                                                    onClick={applyAiSuggestion}
-                                                    className="text-[10px] text-primary-500 hover:text-primary-400 uppercase tracking-wider font-bold cursor-pointer"
+                                                    onClick={() => setFullscreenBox(fullscreenBox === 'ai' ? null : 'ai')}
+                                                    className="p-1 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded transition cursor-pointer flex items-center justify-center"
+                                                    title={fullscreenBox === 'ai' ? "Exit Fullscreen (Esc)" : "Fullscreen AI Copilot"}
                                                 >
-                                                    Apply to Editor
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        <div className={`rounded-xl p-4 bg-[#0a0f1d] border border-dark-850/80 overflow-y-auto text-dark-200 leading-5 whitespace-pre-wrap select-text scrollbar-thin ${
-                                            fullscreenBox === 'ai' ? 'flex-1 min-h-[400px] max-h-[calc(100vh-280px)]' : 'max-h-[140px]'
-                                        }`}>
-                                            {aiLoading ? (
-                                                <div className="flex flex-col gap-2 items-center justify-center min-h-[80px] text-dark-400">
-                                                    <svg className="animate-spin h-6 w-6 text-primary-500" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                                    </svg>
-                                                    <span className="text-[10px] uppercase tracking-widest animate-pulse font-bold mt-1 text-primary-450">Processing...</span>
-                                                </div>
-                                            ) : aiResponse ? (
-                                                aiResponse
-                                            ) : (
-                                                <span className="text-dark-500">Intellisense ready. Click a button to begin.</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Interactive Console Terminal */}
-                        {(() => {
-                            const terminalBoxProps = getBoxStyleProps(boxStyle, styles);
-                            return (
-                                <div 
-                                    className={`rounded-2xl border bg-[#070b14] shadow-2xl overflow-hidden font-mono flex flex-col transition-all duration-300 ${terminalBoxProps.className} ${
-                                        fullscreenBox === 'terminal' 
-                                            ? 'fixed inset-0 z-[100] m-0 rounded-none w-screen h-screen p-6 md:p-8' 
-                                            : aiIntellisense ? 'h-[250px]' : 'h-[500px] lg:h-[570px]'
-                                    }`}
-                                    style={{
-                                        ...terminalBoxProps.style,
-                                        ...(fullscreenBox === 'terminal' ? { borderRadius: '0' } : {})
-                                    }}
-                                >
-                                    {/* Terminal Header */}
-                                    <div className="px-4 py-3 bg-[#0a0f1d] border-b border-dark-950 flex items-center justify-between flex-shrink-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-3 h-3 rounded-full bg-red-500/80" />
-                                            <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                                            <span className="w-3 h-3 rounded-full bg-green-500/80" />
-                                            <span className="text-xs text-dark-400 font-bold ml-2">UNIX TERMINAL CONSOLE</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            {performanceMetrics.time > 0 && (
-                                                <div className="flex items-center gap-3 text-[10px] text-emerald-400 uppercase tracking-widest font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                                    <span>Time: {performanceMetrics.time} ms</span>
-                                                    <span>Memory: {performanceMetrics.memory} KB</span>
-                                                </div>
-                                            )}
-                                            <button
-                                                onClick={handleClearTerminal}
-                                                className="text-xs text-dark-400 hover:text-dark-200 transition cursor-pointer"
-                                            >
-                                                Clear
-                                            </button>
-                                            <button
-                                                onClick={() => setFullscreenBox(fullscreenBox === 'terminal' ? null : 'terminal')}
-                                                className="p-1 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded transition cursor-pointer flex items-center justify-center"
-                                                title={fullscreenBox === 'terminal' ? "Exit Fullscreen (Esc)" : "Fullscreen Terminal"}
-                                            >
-                                                {fullscreenBox === 'terminal' ? (
-                                                    <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v-6m0 6l7 7" />
-                                                    </svg>
-                                                ) : (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-5V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                                                    </svg>
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Terminal output viewport */}
-                                    <div className="p-5 flex-1 overflow-y-auto text-xs leading-5 flex flex-col gap-1.5 scrollbar-thin">
-                                        {terminalOutput.map((log, index) => {
-                                            let color = 'text-[#00ffaa]'; // stdout default green
-                                            if (log.type === 'system') color = 'text-purple-400 font-bold';
-                                            if (log.type === 'info') color = 'text-cyan-400 font-semibold';
-                                            if (log.type === 'stderr') color = 'text-red-400 font-semibold bg-red-950/20 px-2 py-0.5 rounded border border-red-500/10';
-
-                                            return (
-                                                <div key={index} className={`whitespace-pre-wrap ${color}`}>
-                                                    {log.text}
-                                                </div>
-                                            );
-                                        })}
-                                        {terminalOutput.some(log => log.type === 'stderr') && !debugMode && (
-                                            <div className="mt-2 p-3 rounded-xl bg-red-950/20 border border-red-500/30 flex items-center justify-between gap-3 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-                                                    <span className="text-[11px] text-red-300 font-medium animate-none">Execution error detected.</span>
-                                                </div>
-                                                <button
-                                                    onClick={handleAutoFixError}
-                                                    className="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] uppercase tracking-wider shadow shadow-red-500/30 hover:shadow-red-500/50 transition cursor-pointer"
-                                                >
-                                                    Debug with AI
+                                                    {fullscreenBox === 'ai' ? (
+                                                        <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v-6m0 6l7 7" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-5V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                                        </svg>
+                                                    )}
                                                 </button>
                                             </div>
-                                        )}
-                                        <div ref={terminalEndRef} />
-                                    </div>
-                                </div>
-                            );
-                        })()}
+                                        </div>
 
-                    </div>
+                                        {/* Copilot Action Buttons */}
+                                        <div className="grid grid-cols-2 gap-2 mb-4">
+                                            <button
+                                                onClick={() => handleCopilotAction('explain')}
+                                                disabled={aiLoading}
+                                                className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
+                                            >
+                                                Explain
+                                            </button>
+                                            <button
+                                                onClick={() => handleCopilotAction('optimize')}
+                                                disabled={aiLoading}
+                                                className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
+                                            >
+                                                Optimize
+                                            </button>
+                                            <button
+                                                onClick={() => handleCopilotAction('fix_bugs')}
+                                                disabled={aiLoading}
+                                                className="py-2.5 px-2 text-xs font-semibold rounded-xl border border-dark-200 dark:border-dark-800 text-dark-750 dark:text-dark-250 hover:border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition cursor-pointer text-center"
+                                            >
+                                                Audit Bugs
+                                            </button>
+                                            <button
+                                                onClick={() => handleCopilotAction('custom')}
+                                                disabled={aiLoading || !aiQuery.trim()}
+                                                className="py-2.5 px-2 text-xs font-semibold rounded-xl bg-primary-500/10 hover:bg-primary-500/20 text-primary-500 border border-primary-500/20 transition cursor-pointer text-center disabled:opacity-50"
+                                            >
+                                                Submit
+                                            </button>
+                                        </div>
+
+                                        {/* Custom Copilot Prompt Field */}
+                                        <div className="mb-4">
+                                            <textarea
+                                                value={aiQuery}
+                                                onChange={(e) => setAiQuery(e.target.value)}
+                                                placeholder="Ask AI to complete, edit, or customize..."
+                                                className="w-full p-3 text-xs rounded-xl bg-dark-50 dark:bg-dark-900 border border-dark-250 dark:border-dark-800 text-dark-750 dark:text-dark-200 focus:outline-none focus:border-primary-500 min-h-[60px] resize-none"
+                                            />
+                                        </div>
+
+                                        {/* AI suggestions output panel */}
+                                        <div className="flex flex-col gap-2 border-t border-dark-100 dark:border-dark-800/80 pt-3 font-mono text-xs">
+                                            <div className="flex items-center justify-between text-dark-400 dark:text-dark-500 mb-1">
+                                                <span>Output Analysis:</span>
+                                                {aiResponse.includes('```') && (
+                                                    <button
+                                                        onClick={applyAiSuggestion}
+                                                        className="text-[10px] text-primary-500 hover:text-primary-400 uppercase tracking-wider font-bold cursor-pointer"
+                                                    >
+                                                        Apply to Editor
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className={`rounded-xl p-4 bg-[#0a0f1d] border border-dark-850/80 overflow-y-auto text-dark-200 text-left leading-5 whitespace-pre-wrap select-text scrollbar-thin ${
+                                                fullscreenBox === 'ai' ? 'flex-1 min-h-[400px] max-h-[calc(100vh-280px)]' : 'max-h-[140px]'
+                                            }`}>
+                                                {aiLoading ? (
+                                                    <div className="flex flex-col gap-2 items-center justify-center min-h-[80px] text-dark-400">
+                                                        <svg className="animate-spin h-6 w-6 text-primary-500" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                        </svg>
+                                                        <span className="text-[10px] uppercase tracking-widest animate-pulse font-bold mt-1 text-primary-450">Processing...</span>
+                                                    </div>
+                                                ) : aiResponse ? (
+                                                    aiResponse
+                                                ) : (
+                                                    <span className="text-dark-500">Intellisense ready. Click a button to begin.</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Interactive Console Terminal */}
+                            {(() => {
+                                const terminalBoxProps = getBoxStyleProps(boxStyle, styles);
+                                return (
+                                    <div 
+                                        className={`rounded-2xl border bg-[#070b14] shadow-2xl overflow-hidden font-mono flex flex-col transition-all duration-300 ${terminalBoxProps.className} ${
+                                            fullscreenBox === 'terminal' 
+                                                ? 'fixed inset-0 z-[100] m-0 rounded-none w-screen h-screen p-6 md:p-8' 
+                                                : aiIntellisense ? 'h-[250px]' : 'h-[500px] lg:h-[570px]'
+                                        }`}
+                                        style={{
+                                            ...terminalBoxProps.style,
+                                            ...(fullscreenBox === 'terminal' ? { borderRadius: '0' } : {})
+                                        }}
+                                    >
+                                        {/* Terminal Header with Tab Selectors */}
+                                        <div className="px-4 py-3 bg-[#0a0f1d] border-b border-dark-950 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => setActiveTerminalTab('console')}
+                                                    className={`px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer ${
+                                                        activeTerminalTab === 'console' 
+                                                            ? 'bg-primary-500/10 text-primary-450 border border-primary-500/35' 
+                                                            : 'text-dark-400 hover:text-dark-200 border border-transparent'
+                                                    }`}
+                                                >
+                                                    CONSOLE
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTerminalTab('history')}
+                                                    className={`px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer ${
+                                                        activeTerminalTab === 'history' 
+                                                            ? 'bg-primary-500/10 text-primary-450 border border-primary-500/35' 
+                                                            : 'text-dark-400 hover:text-dark-200 border border-transparent'
+                                                    }`}
+                                                >
+                                                    HISTORY ({executionHistory.length})
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveTerminalTab('profiler')}
+                                                    className={`px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer ${
+                                                        activeTerminalTab === 'profiler' 
+                                                            ? 'bg-primary-500/10 text-primary-450 border border-primary-500/35' 
+                                                            : 'text-dark-400 hover:text-dark-200 border border-transparent'
+                                                    }`}
+                                                >
+                                                    PROFILER
+                                                </button>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                {performanceMetrics.time > 0 && activeTerminalTab === 'console' && (
+                                                    <div className="hidden md:flex items-center gap-3 text-[10px] text-emerald-400 uppercase tracking-widest font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                                                        <span>Time: {performanceMetrics.time} ms</span>
+                                                        <span>Memory: {performanceMetrics.memory} KB</span>
+                                                    </div>
+                                                )}
+                                                {activeTerminalTab === 'console' && (
+                                                    <button
+                                                        onClick={handleClearTerminal}
+                                                        className="text-xs text-dark-400 hover:text-dark-200 transition cursor-pointer"
+                                                    >
+                                                        Clear
+                                                    </button>
+                                                )}
+                                                {activeTerminalTab === 'profiler' && (
+                                                    <button
+                                                        onClick={runProfilerBenchmark}
+                                                        disabled={isRunning}
+                                                        className="px-2.5 py-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14" />
+                                                        </svg>
+                                                        Benchmark
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => setFullscreenBox(fullscreenBox === 'terminal' ? null : 'terminal')}
+                                                    className="p-1 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded transition cursor-pointer flex items-center justify-center"
+                                                    title={fullscreenBox === 'terminal' ? "Exit Fullscreen (Esc)" : "Fullscreen Terminal"}
+                                                >
+                                                    {fullscreenBox === 'terminal' ? (
+                                                        <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v-6m0 6l7 7" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-5V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Terminal Content viewports based on selected tab */}
+                                        <div className="p-5 flex-1 overflow-y-auto text-xs leading-5 flex flex-col gap-3 scrollbar-thin text-left select-text">
+                                            {activeTerminalTab === 'console' && (
+                                                <div className="flex flex-col gap-1.5">
+                                                    {terminalOutput.map((log, index) => {
+                                                        let color = 'text-[#00ffaa]'; // stdout default green
+                                                        if (log.type === 'system') color = 'text-purple-400 font-bold';
+                                                        if (log.type === 'info') color = 'text-cyan-400 font-semibold';
+                                                        if (log.type === 'stderr') color = 'text-red-400 font-semibold bg-red-950/20 px-2 py-0.5 rounded border border-red-500/10';
+
+                                                        return (
+                                                            <div key={index} className={`whitespace-pre-wrap ${color}`}>
+                                                                {log.text}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {terminalOutput.some(log => log.type === 'stderr') && !debugMode && (
+                                                        <div className="mt-2 p-3 rounded-xl bg-red-950/20 border border-red-500/30 flex items-center justify-between gap-3 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                                                                <span className="text-[11px] text-red-300 font-medium">Execution error detected.</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={handleAutoFixError}
+                                                                className="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] uppercase tracking-wider shadow shadow-red-500/30 hover:shadow-red-500/50 transition cursor-pointer"
+                                                            >
+                                                                Debug with AI
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    <div ref={terminalEndRef} />
+                                                </div>
+                                            )}
+
+                                            {activeTerminalTab === 'history' && (
+                                                <div className="flex flex-col gap-3">
+                                                    {executionHistory.length === 0 ? (
+                                                        <div className="text-dark-500 text-center py-8">
+                                                            No past executions recorded in this session.
+                                                        </div>
+                                                    ) : (
+                                                        executionHistory.map((item) => (
+                                                            <div key={item.id} className="flex flex-col gap-2 p-3 rounded-xl bg-[#0e1424] border border-dark-850/85 hover:border-dark-750 transition text-left">
+                                                                <div className="flex items-center justify-between text-[10px]">
+                                                                    <span className="font-semibold text-dark-400">{item.timestamp} - {item.language.toUpperCase()}</span>
+                                                                    <span className={`px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px] ${item.success ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                                                        {item.success ? 'Success' : 'Failed'}
+                                                                    </span>
+                                                                </div>
+                                                                <pre className="text-[10px] font-mono text-dark-300 line-clamp-3 bg-black/40 p-2 rounded overflow-hidden leading-relaxed text-left">
+                                                                    {item.code}
+                                                                </pre>
+                                                                <div className="flex items-center justify-between mt-1 pt-1 border-t border-dark-850/40">
+                                                                    <span className="text-[10px] text-dark-550 font-sans font-medium">Time: {item.time}ms | Memory: {item.memory}KB</span>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setCode(item.code);
+                                                                            setLanguage(item.language);
+                                                                            setTerminalOutput(prev => [...prev, { type: 'system', text: `Restored execution buffer from ${item.timestamp} run.` }]);
+                                                                            setActiveTerminalTab('console');
+                                                                        }}
+                                                                        className="text-[10px] text-primary-400 hover:text-primary-300 font-bold uppercase tracking-wider cursor-pointer"
+                                                                    >
+                                                                        Restore Code
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {activeTerminalTab === 'profiler' && (
+                                                <div className="flex flex-col gap-3">
+                                                    {benchmarkData ? (
+                                                        <div className="flex flex-col gap-3.5 p-4 bg-[#0e1424] border border-dark-850/80 rounded-xl text-left">
+                                                            <div className="flex items-center justify-between border-b border-dark-800 pb-2">
+                                                                <h3 className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Big-O Complexity Profile</h3>
+                                                                <span className="text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold px-2.5 py-0.5 rounded font-mono">
+                                                                    {benchmarkData.complexity}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-[11px] text-dark-400 font-sans leading-relaxed text-left">
+                                                                {benchmarkData.explanation}
+                                                            </p>
+                                                            
+                                                            <div className="flex flex-col gap-3 mt-1">
+                                                                <div className="grid grid-cols-2 text-[10px] font-bold text-dark-500 border-b border-dark-855 pb-1 uppercase tracking-wider">
+                                                                    <span>Input Size (N)</span>
+                                                                    <span className="text-right">Simulated Time</span>
+                                                                </div>
+                                                                {benchmarkData.runs.map((run, i) => (
+                                                                    <div key={i} className="flex flex-col gap-1.5">
+                                                                        <div className="grid grid-cols-2 text-[11px] text-dark-250 font-mono">
+                                                                            <span>N = {run.inputSize.toLocaleString()}</span>
+                                                                            <span className="text-right text-cyan-400">{run.timeMs.toFixed(3)} ms</span>
+                                                                        </div>
+                                                                        <div className="w-full h-1 bg-black/60 rounded-full overflow-hidden">
+                                                                            <div 
+                                                                                className="h-full bg-gradient-to-r from-cyan-500 to-primary-500 rounded-full transition-all duration-500" 
+                                                                                style={{ width: `${Math.min(100, (run.timeMs / (benchmarkData.runs[3].timeMs || 1)) * 100)}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-dark-500 text-center py-8 flex flex-col items-center gap-2">
+                                                            <span>No active profiling data exists.</span>
+                                                            <button
+                                                                onClick={runProfilerBenchmark}
+                                                                className="px-3 py-1.5 rounded bg-cyan-600/15 hover:bg-cyan-600/30 text-cyan-400 border border-cyan-500/25 text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
+                                                            >
+                                                                Run Benchmark Now
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                        </div>
+                    )}
                 </div>
 
             </div>
@@ -1214,6 +1787,66 @@ Schema:
                             </button>
                         )}
                     </div>
+                </div>
+            </div>
+        )}
+
+        {/* Keyboard Shortcuts Dialog */}
+        {isShortcutsOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in">
+                <div className="max-w-md w-full mx-4 p-6 rounded-3xl bg-slate-900 border border-white/10 shadow-2xl relative overflow-hidden text-left animate-scale-up">
+                    <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl pointer-events-none" />
+                    
+                    <div className="flex items-center justify-between mb-5">
+                        <h3 className="text-base font-bold text-white flex items-center gap-2">
+                            <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                            </svg>
+                            Keyboard Shortcuts
+                        </h3>
+                        <button 
+                            onClick={() => setIsShortcutsOpen(false)}
+                            className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col gap-3.5 mb-6">
+                        <div className="flex items-center justify-between text-xs border-b border-white/5 pb-2">
+                            <span className="text-slate-400">Run Code</span>
+                            <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded font-mono text-white text-[10px]">Ctrl + Enter</kbd>
+                        </div>
+                        <div className="flex items-center justify-between text-xs border-b border-white/5 pb-2">
+                            <span className="text-slate-400">Toggle Zen/Focus Mode</span>
+                            <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded font-mono text-white text-[10px]">Ctrl + Shift + Z</kbd>
+                        </div>
+                        <div className="flex items-center justify-between text-xs border-b border-white/5 pb-2">
+                            <span className="text-slate-400">Toggle Navbar Visibility</span>
+                            <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded font-mono text-white text-[10px]">Ctrl + Shift + B</kbd>
+                        </div>
+                        <div className="flex items-center justify-between text-xs border-b border-white/5 pb-2">
+                            <span className="text-slate-400">Keyboard Shortcuts Guide</span>
+                            <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded font-mono text-white text-[10px]">Ctrl + Shift + K</kbd>
+                        </div>
+                        <div className="flex items-center justify-between text-xs border-b border-white/5 pb-2">
+                            <span className="text-slate-400">Clear Terminal Console</span>
+                            <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded font-mono text-white text-[10px]">Ctrl + L</kbd>
+                        </div>
+                        <div className="flex items-center justify-between text-xs border-b border-white/5 pb-2">
+                            <span className="text-slate-400">Exit Fullscreen Panel</span>
+                            <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded font-mono text-white text-[10px]">Escape</kbd>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => setIsShortcutsOpen(false)}
+                        className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white font-semibold text-xs transition cursor-pointer text-center"
+                    >
+                        Got it
+                    </button>
                 </div>
             </div>
         )}
