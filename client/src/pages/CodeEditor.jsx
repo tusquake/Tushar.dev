@@ -514,7 +514,7 @@ export default function CodeEditor() {
     
     const textareaRef = useRef(null);
     const lineNumbersRef = useRef(null);
-    const terminalEndRef = useRef(null);
+    const terminalViewportRef = useRef(null);
 
     // Sync scroll of line numbers and textarea
     const handleScroll = () => {
@@ -523,9 +523,11 @@ export default function CodeEditor() {
         }
     };
 
-    // Auto scroll terminal to bottom on new output
+    // Auto scroll terminal internally on new output (without scrolling the page window)
     useEffect(() => {
-        terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (terminalViewportRef.current) {
+            terminalViewportRef.current.scrollTop = terminalViewportRef.current.scrollHeight;
+        }
     }, [terminalOutput]);
 
     // Handle boilerplate change on language change
@@ -1609,7 +1611,7 @@ Schema:
                                         </div>
 
                                         {/* Terminal Content viewports based on selected tab */}
-                                        <div className="p-5 flex-1 overflow-y-auto text-xs leading-5 flex flex-col gap-3 scrollbar-thin text-left select-text">
+                                        <div ref={terminalViewportRef} className="p-5 flex-1 overflow-y-auto text-xs leading-5 flex flex-col gap-3 scrollbar-thin text-left select-text">
                                             {activeTerminalTab === 'console' && (
                                                 <div className="flex flex-col gap-1.5">
                                                     {terminalOutput.map((log, index) => {
@@ -1638,7 +1640,6 @@ Schema:
                                                             </button>
                                                         </div>
                                                     )}
-                                                    <div ref={terminalEndRef} />
                                                 </div>
                                             )}
 
