@@ -183,6 +183,21 @@ const Navbar = () => {
                             </button>
                         </div>
 
+                        {/* Hide Navbar Toggle */}
+                        <div className="flex items-center mr-3" title="Hide Navigation Bar (Ctrl+Shift+N)">
+                            <button
+                                onClick={() => {
+                                    window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: false }));
+                                }}
+                                className="p-2 text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-dark-50 dark:hover:bg-dark-800 rounded-lg transition-all cursor-pointer"
+                                aria-label="Hide Navbar"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                </svg>
+                            </button>
+                        </div>
+
                         {/* Auth buttons */}
                         {isAuthenticated ? (
                             <div className="relative" id="profile-dropdown-container">
@@ -297,6 +312,21 @@ const Navbar = () => {
                                             : 'translate-x-0 bg-[#7c3aed] shadow-[#7c3aed]/30'
                                     }`}
                                 />
+                            </button>
+                        </div>
+
+                        {/* Mobile Hide Navbar Toggle */}
+                        <div className="flex items-center mr-1.5" title="Hide Navbar">
+                            <button
+                                onClick={() => {
+                                    window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: false }));
+                                }}
+                                className="p-2 text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800 rounded-lg transition-all cursor-pointer"
+                                aria-label="Hide Navbar"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                </svg>
                             </button>
                         </div>
                         <button
