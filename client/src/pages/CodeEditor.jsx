@@ -87,8 +87,27 @@ export default function CodeEditor() {
     const [theme, setTheme] = useState('neon-horizon'); // neon-horizon, cyberpunk, obsidian, aurora
     const [boxStyle, setBoxStyle] = useState('glowing-glass'); // glowing-glass, frosted-glass, solid-border, retro-neon
     const [fullscreenBox, setFullscreenBox] = useState(null); // 'editor' | 'ai' | 'terminal' | null
+    const [isHeaderVisible, setIsHeaderVisible] = useState(() => {
+        const saved = localStorage.getItem('isHeaderVisible');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
     const [aiIntellisense, setAiIntellisense] = useState(true);
     const [isRunning, setIsRunning] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('isHeaderVisible', JSON.stringify(isHeaderVisible));
+    }, [isHeaderVisible]);
+
+    useEffect(() => {
+        const handleKeyDownHeader = (e) => {
+            if (e.key.toLowerCase() === 'h' && e.ctrlKey && e.shiftKey) {
+                e.preventDefault();
+                setIsHeaderVisible(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDownHeader);
+        return () => window.removeEventListener('keydown', handleKeyDownHeader);
+    }, []);
 
     // Handle body overflow and Escape key to close fullscreen
     useEffect(() => {
@@ -605,7 +624,7 @@ Schema:
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 {/* Header Controls Panel */}
-                {(() => {
+                {isHeaderVisible && (() => {
                     const headerBoxProps = getBoxStyleProps(boxStyle, styles);
                     return (
                         <div 
@@ -713,10 +732,41 @@ Schema:
                                         />
                                     </button>
                                 </div>
+
+                                {/* Hide Header Option */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] font-bold text-dark-400 dark:text-dark-500 uppercase tracking-wider">Workspace</label>
+                                    <button
+                                        onClick={() => setIsHeaderVisible(false)}
+                                        className="px-3.5 py-1.5 rounded-lg text-sm bg-white dark:bg-dark-900 border border-dark-300 dark:border-dark-800 text-dark-700 dark:text-dark-200 outline-none hover:bg-dark-50 dark:hover:bg-dark-800 hover:text-red-500 dark:hover:text-red-400 hover:border-red-500/30 transition flex items-center gap-1.5 cursor-pointer"
+                                        title="Minimize Header Controls (Ctrl+Shift+H)"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+                                        </svg>
+                                        Hide Header
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     );
                 })()}
+
+                {/* Show Header Controls sleek trigger */}
+                {!isHeaderVisible && (
+                    <div className="flex justify-end mb-4 animate-fade-in">
+                        <button
+                            onClick={() => setIsHeaderVisible(true)}
+                            className="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-800/80 text-dark-700 dark:text-dark-200 hover:border-primary-500 dark:hover:border-primary-500 transition flex items-center gap-1.5 shadow-md hover:shadow-primary-500/10 cursor-pointer"
+                            title="Show Header Controls (Ctrl+Shift+H)"
+                        >
+                            <svg className="w-3.5 h-3.5 text-primary-500 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                            </svg>
+                            Show Header Controls
+                        </button>
+                    </div>
+                )}
 
                 {/* Main Workspace Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
