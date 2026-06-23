@@ -88,7 +88,8 @@ const register = async (req, res) => {
                     achievements: user.achievements || [],
                     widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
                 },
-                accessToken
+                accessToken,
+                refreshToken
             }
         });
     } catch (error) {
@@ -183,7 +184,8 @@ const login = async (req, res) => {
                     achievements: user.achievements || [],
                     widgets: user.widgets || { showStats: true, showAchievements: true, showActivity: true, showSkills: true }
                 },
-                accessToken
+                accessToken,
+                refreshToken
             }
         });
     } catch (error) {
@@ -201,7 +203,11 @@ const login = async (req, res) => {
 // @access  Public
 const refreshAccessToken = async (req, res) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        let refreshToken = req.cookies.refreshToken;
+
+        if (!refreshToken) {
+            refreshToken = req.body.refreshToken || req.headers['x-refresh-token'];
+        }
 
         if (!refreshToken) {
             return res.status(401).json({
@@ -244,7 +250,11 @@ const refreshAccessToken = async (req, res) => {
 // @access  Public
 const logout = async (req, res) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        let refreshToken = req.cookies.refreshToken;
+
+        if (!refreshToken) {
+            refreshToken = req.body.refreshToken || req.headers['x-refresh-token'];
+        }
 
         if (refreshToken) {
             // Clear refresh token from user

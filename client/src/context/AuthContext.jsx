@@ -48,9 +48,12 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const response = await authAPI.login({ email, password });
-            const { user, accessToken } = response.data.data;
+            const { user, accessToken, refreshToken } = response.data.data;
 
             localStorage.setItem('accessToken', accessToken);
+            if (refreshToken) {
+                localStorage.setItem('refreshToken', refreshToken);
+            }
             localStorage.setItem('user', JSON.stringify(user));
 
             setUser(user);
@@ -66,9 +69,12 @@ export const AuthProvider = ({ children }) => {
     const register = async (name, email, password) => {
         try {
             const response = await authAPI.register({ name, email, password });
-            const { user, accessToken } = response.data.data;
+            const { user, accessToken, refreshToken } = response.data.data;
 
             localStorage.setItem('accessToken', accessToken);
+            if (refreshToken) {
+                localStorage.setItem('refreshToken', refreshToken);
+            }
             localStorage.setItem('user', JSON.stringify(user));
 
             setUser(user);
@@ -83,11 +89,13 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await authAPI.logout();
+            const fallbackRefreshToken = localStorage.getItem('refreshToken');
+            await authAPI.logout(fallbackRefreshToken);
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
             localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
             setUser(null);
             setIsAuthenticated(false);

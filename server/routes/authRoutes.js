@@ -157,7 +157,7 @@ router.get('/google/callback', (req, res, next) => {
                 createdAt: user.createdAt
             };
 
-            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
         } catch (error) {
             console.error('Google OAuth Callback Redirection Error:', error);
             return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=RedirectionError&msg=${encodeURIComponent(error.message)}`);
@@ -203,10 +203,10 @@ router.get('/github/callback', (req, res, next) => {
                 createdAt: user.createdAt
             };
 
-            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
         } catch (error) {
             console.error('GitHub OAuth Callback Redirection Error:', error);
-            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(userObj))}`);
+            return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=RedirectionError&msg=${encodeURIComponent(error.message)}`);
         }
     })(req, res, next);
 });

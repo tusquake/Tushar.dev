@@ -232,6 +232,7 @@ const Login = () => {
         const token = params.get('token');
         const userStr = params.get('user');
         const error = params.get('error');
+        const refreshToken = params.get('refreshToken');
 
         if (error) {
             if (error === 'session_expired') {
@@ -243,6 +244,9 @@ const Login = () => {
             try {
                 const parsedUser = JSON.parse(decodeURIComponent(userStr));
                 localStorage.setItem('accessToken', token);
+                if (refreshToken) {
+                    localStorage.setItem('refreshToken', refreshToken);
+                }
                 localStorage.setItem('user', JSON.stringify(parsedUser));
                 window.location.href = '/learning';
             } catch (e) {

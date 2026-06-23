@@ -55,7 +55,8 @@ api.interceptors.response.use(
 
             try {
                 // Try to refresh the token
-                const response = await api.post('/auth/refresh');
+                const fallbackRefreshToken = localStorage.getItem('refreshToken');
+                const response = await api.post('/auth/refresh', { refreshToken: fallbackRefreshToken });
                 const { accessToken } = response.data.data;
 
                 // Save new token
@@ -67,6 +68,7 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 // Refresh failed, clear tokens and redirect to login if not viewing public profile
                 localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
                 if (!window.location.pathname.startsWith('/p/')) {
                     window.location.href = '/login';
@@ -83,8 +85,8 @@ api.interceptors.response.use(
 export const authAPI = {
     register: (data) => api.post('/auth/register', data),
     login: (data) => api.post('/auth/login', data),
-    logout: () => api.post('/auth/logout'),
-    refreshToken: () => api.post('/auth/refresh'),
+    logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
+    refreshToken: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
     getProfile: () => api.get('/user/profile'),
     getPublicProfile: (userId) => api.get(`/auth/profile/public/${userId}`),
     forgotPassword: (email) => api.post('/auth/forgot-password', { email }),

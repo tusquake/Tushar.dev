@@ -215,6 +215,7 @@ const AppContent = () => {
               <button 
                 onClick={() => {
                   localStorage.removeItem('accessToken');
+                  localStorage.removeItem('refreshToken');
                   localStorage.removeItem('user');
                   window.location.href = '/login';
                 }}
@@ -262,6 +263,7 @@ const AppContent = () => {
               <button 
                 onClick={() => {
                   localStorage.removeItem('accessToken');
+                  localStorage.removeItem('refreshToken');
                   localStorage.removeItem('user');
                   window.location.href = '/login';
                 }}
